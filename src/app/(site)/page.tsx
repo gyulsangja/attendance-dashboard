@@ -1,10 +1,5 @@
 'use client'
 
-import {
-KeyboardArrowDown
-
-} from '@mui/icons-material';
-
 import { useState } from 'react';
 
 import MenuItem from '@mui/material/MenuItem';
@@ -31,24 +26,24 @@ const rows = [
   { id: 1, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
   { id: 2, name: '홍길동', content: '반차', date: '2026-06-10(수)', detail: '오전' },
   { id: 3, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
-  { id: 4, name: 'Stark', content: '연차', date: '2026-06-10(수)' },
-  { id: 5, name: 'Targaryen', content: '연차', date: '2026-06-10(수)' },
-  { id: 6, name: 'Melisandre', content: '연차', date: '2026-06-10(수)' },
-  { id: 7, name: 'Clifford', content: '연차', date: '2026-06-10(수)' },
-  { id: 8, name: 'Frances', content: '연차', date: '2026-06-10(수)' },
-  { id: 9, name: 'Roxie', content: '연차', date: '2026-06-10(수)' },
+  { id: 4, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
+  { id: 5, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
+  { id: 6, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
+  { id: 7, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
+  { id: 8, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
+  { id: 9, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
 ];
 
 const rows2 = [
   { id: 1, name: '홍길동', content: '지각', date: '2026-06-10(수)', detail: '09:10'},
   { id: 2, name: '홍길동', content: '결근', date: '2026-06-10(수)', detail: '' },
   { id: 3, name: '홍길동', content: '조기퇴근', date: '2026-06-10(수)' },
-  { id: 4, name: 'Stark', content: '지각', date: '2026-06-10(수)' },
-  { id: 5, name: 'Targaryen', content: '지각', date: '2026-06-10(수)' },
-  { id: 6, name: 'Melisandre', content: '지각', date: '2026-06-10(수)' },
-  { id: 7, name: 'Clifford', content: '지각', date: '2026-06-10(수)' },
-  { id: 8, name: 'Frances', content: '지각', date: '2026-06-10(수)' },
-  { id: 9, name: 'Roxie', content: '연차', date: '2026-06-10(수)' },
+  { id: 4, name: '홍길동', content: '지각', date: '2026-06-10(수)' },
+  { id: 5, name: '홍길동', content: '지각', date: '2026-06-10(수)' },
+  { id: 6, name: '홍길동', content: '지각', date: '2026-06-10(수)' },
+  { id: 7, name: '홍길동', content: '지각', date: '2026-06-10(수)' },
+  { id: 8, name: '홍길동', content: '지각', date: '2026-06-10(수)' },
+  { id: 9, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
 ];
 
 const paginationModel = { page: 0, pageSize: 5 };
@@ -224,7 +219,20 @@ export default function Home() {
       </div>
       <div className='w-1/3 px-5'>
       <section className=''>
-        <h1 className='font-bold text-2xl mb-3'><button className='cursor-pointer'>6월 근태정보 입력현황 <KeyboardArrowDown/></button></h1>
+        <div className='mb-3'>
+        <FormControl variant="standard">
+            <Select
+              id="demo-simple-select"
+              value={date}
+              onChange={handleChange}
+              sx={{fontWeight: "bold", fontSize: "1.3em"}}
+            >
+              <MenuItem value={'26년 6월 2주차'}>6월 2주차 근태정보 입력현황</MenuItem>
+              <MenuItem value={'26년 6월 1주차'}>6월 1주차 근태정보 입력현황</MenuItem>
+              <MenuItem value={'26년 5월 5주차'}>5월 5주차 근태정보 입력현황</MenuItem>
+            </Select>
+          </FormControl>
+          </div>
         <div className='p-5 rounded-lg bg-white'>
 
           <ul className='flex flex-wrap'>

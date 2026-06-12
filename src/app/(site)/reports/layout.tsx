@@ -1,6 +1,10 @@
 'use client'
 
-import {KeyboardArrowDown} from '@mui/icons-material'
+import { useState } from 'react';
+
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Link from 'next/link';
 import { usePathname } from "next/navigation";
 import {recordNav} from '@/app/_constants/nav/nav'
@@ -12,11 +16,29 @@ export default function layout({
   children: React.ReactNode;
 }>) {
     const pathname = usePathname();
+
+    const [date, setDate] = useState('26년 6월 2주차');
+    
+      const handleChange = (event: SelectChangeEvent) => {
+        setDate(event.target.value as string);
+      };
+
   return (
     <>
      <div>
-      <h1 className="font-bold text-2xl mb-3">
-        <button className='cursor-pointer'>5월 통계 <KeyboardArrowDown/></button>
+      <h1 className="font-bold mb-3">
+      <FormControl variant="standard">
+            <Select
+              id="demo-simple-select"
+              value={date}
+              onChange={handleChange}
+              sx={{fontWeight: "bold", fontSize: "1.3em"}}
+            >
+              <MenuItem value={'26년 6월 2주차'}>6월 2주차 통계</MenuItem>
+              <MenuItem value={'26년 6월 1주차'}>6월 1주차 통계</MenuItem>
+              <MenuItem value={'26년 5월 5주차'}>5월 5주차 통계</MenuItem>
+            </Select>
+          </FormControl>
       </h1>
       <div className='p-5 rounded-lg bg-white'>
            <ul className='flex flex-wrap'>

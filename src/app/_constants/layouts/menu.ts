@@ -22,7 +22,7 @@ export const menus = [
   {
     id: 3,
     title: "운영관리",
-    href: "/operations",
+    href: "/management",
     icon: DisplaySettingsRounded,
   },
   {

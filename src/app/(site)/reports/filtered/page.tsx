@@ -16,6 +16,36 @@ const formatDateWithWeekday = (date: string) => {
   return `${date}(${WEEKDAYS[parsedDate.getDay()]})`;
 };
 
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import Paper from '@mui/material/Paper';
+import { koKR } from "@mui/x-data-grid/locales";
+
+
+const columns: GridColDef[] = [
+  { field: 'id', headerName: '순번'},
+  { field: 'date', headerName: '일자', flex: 1},
+  { field: 'name', headerName: '이름', flex: 1},
+  { field: 'content', headerName: '내용', flex: 1},
+  {field: 'contentdetail',headerName: '비고', flex: 0.3}
+
+];
+
+const rows = [
+  { id: 1, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
+  { id: 2, name: '홍길동', content: '반차', date: '2026-06-10(수)', detail: '오전' },
+  { id: 3, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
+  { id: 4, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
+  { id: 5, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
+  { id: 6, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
+  { id: 7, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
+  { id: 8, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
+  { id: 9, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
+];
+
+const paginationModel = { page: 0, pageSize: 5 };
+
+
+
 export default function page() {
   return (
     <>
@@ -35,30 +65,32 @@ export default function page() {
         <li className='mr-1'><button className='p-2 bg-black text-white rounded-sm cursor-pointer'>표</button></li>
         <li><button className='p-2 bg-mauve-100 rounded-sm cursor-pointer'>달력</button></li>
       </ul>
-      <table className='w-full mt-5'>
-        <thead>
-          <tr>
-            <th className='border border-gray-300 py-2 bg-mauve-100'>순번</th>
-            <th className='border border-gray-300 py-2 bg-mauve-100'>이름</th>
-            <th className='border border-gray-300 py-2 bg-mauve-100'><button className='cursor-pointer'>내용 <ArrowDropDown/></button></th>
-            <th className='border border-gray-300 py-2 bg-mauve-100'><button className='cursor-pointer'>날짜 <ArrowDropDown/></button></th>
-            <th className='border border-gray-300 py-2 bg-mauve-100'>비고</th>
-          </tr>
-        </thead>
-        <tbody>
-          {
-            reports.map((i, idx)=>(
-                <tr key={idx}>
-                  <td className='border border-gray-300 py-2 text-center'>{idx+1}</td>
-                  <td className='border border-gray-300 py-2 text-center'>{i.name}</td>
-                  <td className='border border-gray-300 py-2 text-center'>{i.content}   {i.contentdetail ?  `| ${i.contentdetail}` : ''}</td>
-                  <td className='border border-gray-300 py-2 text-center'>{formatDateWithWeekday(i.date)}</td>
-                  <td className='border border-gray-300 py-2 text-center'></td>
-                </tr>
-            ))
-          }
-        </tbody>
-      </table>
+        <div className='mt-5'>
+      <Paper sx={{ height: 'auto', width: '100%' }}>
+        <DataGrid
+          rows={reports}
+          columns={columns}
+          initialState={{ pagination: { paginationModel } }}
+          pageSizeOptions={[10, 20]}
+          columnHeaderHeight={44}
+          rowHeight={44}
+          sx={{
+            border: 0,
+            '& .MuiDataGrid-columnHeader': {
+                backgroundColor: '#f3f1f3',
+            },
+              '& .MuiDataGrid-columnHeaderTitle': {
+              fontWeight: 'bold',
+              textAlign: 'center'
+            },
+
+          }}
+          localeText={{
+            ...koKR.components.MuiDataGrid.defaultProps.localeText,
+          }}
+        />
+      </Paper>
+      </div>
     </div>
     </>
   );
