@@ -14,7 +14,8 @@ import {
   ListItemText,
   Collapse,
 
-  Paper
+  Paper,
+  Modal
 } from '@mui/material';
 
 import {
@@ -22,20 +23,13 @@ import {
   ExpandLess
 } from '@mui/icons-material';
 
+
+
+
+
 import {ScheduleForm} from '@/app/_components/index'
 import {reports} from '@/mocks/reports/reports'
 
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
-
-const formatDateWithWeekday = (date: string) => {
-  const parsedDate = new Date(`${date}T00:00:00`);
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return date;
-  }
-
-  return `${date}(${WEEKDAYS[parsedDate.getDay()]})`;
-};
 
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 
@@ -67,23 +61,27 @@ const paginationModel = { page: 0, pageSize: 5 };
 
 export default function page() {
 
-  const pathname = usePathname();
 
-    const [date, setDate] = useState('26년 6월 2주차');
+  const [date, setDate] = useState('26년 6월 2주차');
     
-      const handleChange = (event: SelectChangeEvent) => {
-        setDate(event.target.value as string);
-      };
+  const handleChange = (event: SelectChangeEvent) => {
+    setDate(event.target.value as string);
+  };
 
-      const [open, setOpen] = useState([false, false, false]);
+  const [open, setOpen] = useState([false, false, false]);
+      
 
   const handleClick = (index: number) => {
-  setOpen((prev) =>
-    prev.map((item, i) =>
-      i === index ? !item : item
-    )
-  );
-};
+    setOpen((prev) =>
+      prev.map((item, i) =>
+        i === index ? !item : item
+      )
+    );
+  };
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const modalHandleOpen = () => setModalOpen(true);
+  const modalHandleClose = () => setModalOpen(false);
 
   return (
     <>
@@ -160,19 +158,19 @@ export default function page() {
     <nav className='mt-10'>
       <ul className='flex'>
         <li className='mr-2'>
-          <button className='bg-black text-white p-2 rounded-sm cursor-pointer'>일정입력</button>
+          <button className='bg-black text-white p-2 rounded-sm cursor-pointer' onClick={modalHandleOpen}>일정입력</button>
         </li>
         <li className='mr-2'>
-          <button className='bg-black text-white p-2 rounded-sm cursor-pointer'>단말기 데이터 입력</button>
+          <button className='bg-black text-white p-2 rounded-sm cursor-pointer' onClick={modalHandleOpen}>단말기 데이터 입력</button>
         </li>
         <li className='mr-2'>
-          <button className='bg-black text-white p-2 rounded-sm cursor-pointer'>교대근무 입력</button>
+          <button className='bg-black text-white p-2 rounded-sm cursor-pointer' onClick={modalHandleOpen}>교대근무 입력</button>
         </li>
         <li className='mr-2'>
-          <button className='bg-black text-white p-2 rounded-sm cursor-pointer'>교대근무 확정</button>
+          <button className='bg-black text-white p-2 rounded-sm cursor-pointer' onClick={modalHandleOpen}>교대근무 확정</button>
         </li>
         <li className='mr-2'>
-          <button className='bg-black text-white p-2 rounded-sm cursor-pointer'>운영관리 확정</button>
+          <button className='bg-black text-white p-2 rounded-sm cursor-pointer' onClick={modalHandleOpen}>운영관리 확정</button>
         </li>        
       </ul>
     </nav>
@@ -281,7 +279,18 @@ export default function page() {
         </div>
       </div>
     </div>
-    <ScheduleForm/>
+    <Modal
+      open={modalOpen}
+      onClose={modalHandleClose}
+      aria-labelledby="modal-modal-title"
+      aria-describedby="modal-modal-description"
+    >
+        <div className="bg-white rounded-md p-5 mx-auto w-9/10 h-9/10 max-w-150 absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] overflow-hidden">
+          <ScheduleForm modalHandleClose={modalHandleClose}/>
+        </div>
+      
+    </Modal>
+    
     </>
   );
 }

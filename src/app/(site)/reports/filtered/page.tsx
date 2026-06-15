@@ -71,7 +71,7 @@ export default function page() {
           rows={reports}
           columns={columns}
           initialState={{ pagination: { paginationModel } }}
-          pageSizeOptions={[10, 20]}
+          pageSizeOptions={[5, 10]}
           columnHeaderHeight={44}
           rowHeight={44}
           sx={{

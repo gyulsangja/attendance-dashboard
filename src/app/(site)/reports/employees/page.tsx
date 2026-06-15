@@ -49,7 +49,7 @@ const rows = [
   { id: 9, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
 ];
 
-const paginationModel = { page: 0, pageSize: 5 };
+const paginationModel = { page: 0, pageSize: 10 };
 
 
 
@@ -78,7 +78,7 @@ export default function page() {
         <ListItemText primary="관리팀" />
         {open[0] ? <ExpandLess /> : <ExpandMore />}
       </ListItemButton>
-      <Collapse in={open[0]} timeout="auto" unmountOnExit>
+      <Collapse in={open[0]} timeout="auto" unmountOnExit> 
         <List component="div" disablePadding>
           <ListItemButton sx={{ pl: 4 }}>
             <ListItemText primary="홍길동" />
@@ -148,7 +148,7 @@ export default function page() {
             rows={reports}
             columns={columns}
             initialState={{ pagination: { paginationModel } }}
-            pageSizeOptions={[5, 10]}
+            pageSizeOptions={[5, 10, 20, 30]}
             columnHeaderHeight={44}
             rowHeight={44}
             sx={{
