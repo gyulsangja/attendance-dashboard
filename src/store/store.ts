@@ -1,9 +1,10 @@
 import { configureStore } from "@reduxjs/toolkit";
-import siteHeaderReducer from "@/features/ui/siteHeaderSlice";
+
+import reportPeriodReducer from './slices/reportPeriodSlice';
 
 export const store = configureStore({
   reducer: {
-    siteHeader: siteHeaderReducer,
+    reportPeriod: reportPeriodReducer,
   },
 });
 
