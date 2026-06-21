@@ -1,24 +1,40 @@
-import {manageReport} from '@/mocks/management/manageReport'
+'use client';
+
+import { useAppSelector } from '@/store/hooks';
+import { getOrganizationSnapshot } from '@/store/slices/organizationSlice';
+import { getAttendanceCodesAtDate } from '@/store/slices/attendanceCodeSlice';
 
 export default function ReportsSummaryBox() {
-  return (
-    <div className="p-5 rounded-lg bg-white">
-      <ul className='flex flex-wrap'>
-        {
-        manageReport.list.map((i, idx)=>(
-            <li 
-            key={idx}
-            className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 cursor-pointer break-keep whitespace-nowrap'
-            >
-            <p><span className='font-bold text-4xl'>{i.count}</span>건</p>
-            <p className='text-gray-500 font-bold'>{i.title}</p>
-            </li>  
-        ))
-        }
-    </ul>
-      <p className="text-right">
-        직원수 <span>0</span>명
-      </p>
-    </div>
+  const { startDate, endDate } = useAppSelector((state) => state.reportPeriod);
+  const records = useAppSelector((state) => state.management.publishedRecords)
+    .filter((record) => record.date >= startDate && record.date <= endDate);
+  const organization = useAppSelector((state) => state.organization);
+  const codeMaster = useAppSelector((state) => state.attendanceCode);
+  const attendanceCodes = getAttendanceCodesAtDate(
+    codeMaster.codes,
+    codeMaster.history,
+    endDate,
   );
+  const counts = records.flatMap((record) => record.events).reduce<Record<string, number>>((result, event) => {
+    result[event.codeId] = (result[event.codeId] ?? 0) + 1;
+    return result;
+  }, {});
+  const employeeCount = getOrganizationSnapshot(
+    organization.teams,
+    organization.employees,
+    organization.history,
+    endDate,
+  ).employees.length;
+
+  return <section className="mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
+      {attendanceCodes.filter((code) => code.isActive).map((code) => <div key={code.id} className="rounded-lg bg-slate-50 px-4 py-4">
+        <p className="whitespace-nowrap text-sm font-semibold text-slate-500">{code.label}</p>
+        <p className={`mt-1 text-3xl font-bold ${code.id === 'ABSENT' ? 'text-red-700' : 'text-slate-800'}`}>
+          {counts[code.id] ?? 0}<span className="ml-1 text-sm font-medium text-slate-400">건</span>
+        </p>
+      </div>)}
+    </div>
+    <p className="mt-4 text-right text-sm text-slate-500">조회 직원 <strong className="text-slate-800">{employeeCount}명</strong></p>
+  </section>;
 }

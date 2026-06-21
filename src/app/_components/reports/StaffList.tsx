@@ -1,5 +1,5 @@
 'use client'
-import { staffs } from '@/mocks/management/staffs';
+import { staffs } from '@/mocks';
 
 import { useState } from 'react';
 import {

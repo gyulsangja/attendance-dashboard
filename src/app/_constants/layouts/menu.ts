@@ -3,7 +3,9 @@ import {
   AlignHorizontalLeftRounded,
   SettingsRounded,
   GroupsRounded,
-  DisplaySettingsRounded
+  DisplaySettingsRounded,
+  PersonRounded,
+  AdminPanelSettingsRounded,
 } from '@mui/icons-material';
 
 export const menus = [
@@ -36,5 +38,17 @@ export const menus = [
     title: "설정",
     href: "/settings",
     icon: SettingsRounded,
+  },
+  {
+    id: 6,
+    title: "마이페이지",
+    href: "/mypage",
+    icon: PersonRounded,
+  },
+  {
+    id: 7,
+    title: "회원관리",
+    href: "/admin/users",
+    icon: AdminPanelSettingsRounded,
   },
 ];

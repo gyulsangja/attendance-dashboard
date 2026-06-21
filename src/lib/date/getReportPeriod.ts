@@ -37,5 +37,5 @@ export const getReportPeriod = (
       (item) => item.week === week,
     );
 
-  return selected;
+  return selected ?? weeks[0];
 };

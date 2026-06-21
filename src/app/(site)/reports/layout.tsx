@@ -10,9 +10,9 @@ export default function Layout({
   children: React.ReactNode;
 }>) {
   return (
-    <>
+    <main className="mx-auto max-w-[1800px]">
       <div>
-        <h1 className="font-bold mb-3">
+        <h1 className="mb-3 font-bold">
           <ReportsPeriodSelector />
         </h1>
         <ReportsSummaryBox />
@@ -21,6 +21,6 @@ export default function Layout({
       <ReportsSubNav />
 
       {children}
-    </>
+    </main>
   );
 }

@@ -27,7 +27,7 @@ import Button from '@mui/material/Button';
 
 
 
-export default function ScheduleForm({modalHandleClose}) {
+export default function ScheduleForm({modalHandleClose}: { modalHandleClose: () => void }) {
 
   const [age, setAge] = useState('');
 

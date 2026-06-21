@@ -1,3 +1,5 @@
+import { attendanceRecords } from './reports/reportData';
+
 export type AttendanceDailyCode = {
   id: number;
   attendanceDailyId: number;
@@ -5,17 +7,12 @@ export type AttendanceDailyCode = {
   detail?: string;
 };
 
-export const attendanceDailyCodes: AttendanceDailyCode[] = [
-  {
-    id: 1,
-    attendanceDailyId: 1,
-    codeId: 'LATE',
-    detail: '09:05 출근',
-  },
-  {
-    id: 2,
-    attendanceDailyId: 1,
-    codeId: 'HALF_PM',
-    detail: '오후 반차',
-  },
-];
+// 근태 이벤트 원본에서 이전 형식으로 변환한 호환 데이터입니다.
+export const attendanceDailyCodes: AttendanceDailyCode[] = attendanceRecords.flatMap(
+  (record) => record.events.map((event, index) => ({
+    id: record.id * 100 + index,
+    attendanceDailyId: record.id,
+    codeId: event.codeId,
+    detail: event.detail,
+  })),
+);

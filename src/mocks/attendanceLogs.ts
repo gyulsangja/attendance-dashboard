@@ -1,12 +1,15 @@
-export const attendanceLogs = [
-  {
-    id: 1,
-    employeeId: 1,
-    name: '홍길동',
-    department: '기술팀',
-    date: '2026-06-10',
-    checkIn: '09:05',
-    checkOut: '18:00',
-    source: 'CSV',
-  },
-];
+import { attendanceRecords, getReportEmployee } from './reports/reportData';
+
+export const attendanceLogs = attendanceRecords.map((record) => {
+  const employee = getReportEmployee(record.employeeId);
+  return {
+    id: record.id,
+    employeeId: record.employeeId,
+    name: employee?.name ?? '-',
+    department: employee?.department ?? '-',
+    date: record.date,
+    checkIn: record.checkIn,
+    checkOut: record.checkOut,
+    source: 'CSV' as const,
+  };
+});

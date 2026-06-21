@@ -1,0 +1,110 @@
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { attendanceCodes, type AttendanceCode } from '@/mocks';
+
+export type AttendanceCodeHistory = {
+  id: string;
+  codeId: string;
+  codeLabel: string;
+  effectiveDate: string;
+  changeType: string;
+  detail: string;
+  before?: AttendanceCode;
+};
+
+type AttendanceCodeState = {
+  codes: AttendanceCode[];
+  history: AttendanceCodeHistory[];
+};
+
+const initialState: AttendanceCodeState = {
+  codes: attendanceCodes.map((code) => ({ ...code })),
+  history: attendanceCodes.map((code, index) => ({
+    id: `code-history-${index}`,
+    codeId: code.id,
+    codeLabel: code.label,
+    effectiveDate: code.startDate,
+    changeType: '코드 생성',
+    detail: code.isSchedulable ? '운영관리 입력 가능' : '출퇴근 기록으로 판정',
+  })),
+};
+
+const attendanceCodeSlice = createSlice({
+  name: 'attendanceCode',
+  initialState,
+  reducers: {
+    addAttendanceCode(state, action: PayloadAction<AttendanceCode>) {
+      state.codes.push(action.payload);
+      state.history.unshift({
+        id: `code-history-${Date.now()}`,
+        codeId: action.payload.id,
+        codeLabel: action.payload.label,
+        effectiveDate: action.payload.startDate,
+        changeType: '코드 생성',
+        detail: action.payload.isSchedulable ? '운영관리 입력 가능' : '출퇴근 기록으로 판정',
+      });
+    },
+    updateAttendanceCode(
+      state,
+      action: PayloadAction<{ code: AttendanceCode; effectiveDate: string }>,
+    ) {
+      const index = state.codes.findIndex((code) => code.id === action.payload.code.id);
+      if (index < 0) return;
+      const before = { ...state.codes[index] };
+      state.codes[index] = action.payload.code;
+      state.history.unshift({
+        id: `code-history-${Date.now()}`,
+        codeId: action.payload.code.id,
+        codeLabel: action.payload.code.label,
+        effectiveDate: action.payload.effectiveDate,
+        changeType: '코드 수정',
+        detail: `${before.label} → ${action.payload.code.label}, 운영관리 입력 ${action.payload.code.isSchedulable ? '가능' : '불가'}, 특이근태 ${action.payload.code.isExceptional ? '표시' : '미표시'}`,
+        before,
+      });
+    },
+    endAttendanceCode(
+      state,
+      action: PayloadAction<{ id: string; effectiveDate: string }>,
+    ) {
+      const code = state.codes.find((item) => item.id === action.payload.id);
+      if (!code) return;
+      const before = { ...code };
+      code.endDate = action.payload.effectiveDate;
+      code.isActive = false;
+      state.history.unshift({
+        id: `code-history-${Date.now()}`,
+        codeId: code.id,
+        codeLabel: code.label,
+        effectiveDate: action.payload.effectiveDate,
+        changeType: '코드 종료',
+        detail: `${action.payload.effectiveDate}부터 신규 입력 중단`,
+        before,
+      });
+    },
+  },
+});
+
+export const {
+  addAttendanceCode,
+  updateAttendanceCode,
+  endAttendanceCode,
+} = attendanceCodeSlice.actions;
+
+export default attendanceCodeSlice.reducer;
+
+export const getAttendanceCodesAtDate = (
+  codes: AttendanceCode[],
+  history: AttendanceCodeHistory[],
+  date: string,
+) => {
+  const codeMap = new Map(codes.map((code) => [code.id, { ...code }]));
+  [...history]
+    .filter((item) => item.effectiveDate > date)
+    .sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate))
+    .forEach((item) => {
+      if (item.changeType === '코드 생성') codeMap.delete(item.codeId);
+      else if (item.before) codeMap.set(item.codeId, { ...item.before });
+    });
+  return [...codeMap.values()].filter(
+    (code) => code.startDate <= date && (!code.endDate || code.endDate > date),
+  );
+};

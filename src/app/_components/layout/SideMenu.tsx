@@ -3,16 +3,26 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {menus} from "@/app/_constants/layouts/menu"
+import { useAccess } from '@/app/_components/auth/AccessProvider';
 
 
 export default function SideMenu() {
   const pathname = usePathname();
+  const access = useAccess();
+  const visibleMenus = menus.filter((menu) =>
+    (menu.href !== '/' || access.canViewDashboard)
+    && (menu.href !== '/reports' || access.canViewReports)
+    && (menu.href !== '/management' || access.canManageOperations || access.canInputShifts)
+    && (menu.href !== '/employees' || access.canManageOrganization)
+    && (menu.href !== '/settings' || access.canManageSettings)
+    && (menu.href !== '/admin/users' || access.canManageUsers)
+  );
   return (
     <aside className="p-2">
       <nav>
         <ul>
           {
-            menus.map((i)=>{
+            visibleMenus.map((i)=>{
               const Icon = i.icon;
                const isActive =
               i.href === "/"

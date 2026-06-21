@@ -1,123 +1,345 @@
-'use client'
-import {reports} from '@/mocks/reports/reports'
+'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { Alert, Box, Chip, Paper, Tab, Tabs } from '@mui/material';
+import { CheckCircle } from '@mui/icons-material';
 import {
-  MenuItem,
-  FormControl,
-
-  Select,
-  SelectChangeEvent,
-
-  Paper,
-  Modal,
-  Button,
-  Stack
-} from '@mui/material';
-
-
+  type OperationSchedule,
+} from '@/mocks';
+import { getWeeksInMonth } from '@/lib/date';
+import { useAccess } from '@/app/_components/auth/AccessProvider';
+import OperationHeader from '@/app/_components/management/operations/OperationHeader';
+import OperationProgress, { type OperationStep } from '@/app/_components/management/operations/OperationProgress';
+import SchedulePanel from '@/app/_components/management/operations/SchedulePanel';
+import DevicePanel from '@/app/_components/management/operations/DevicePanel';
+import ShiftPanel from '@/app/_components/management/operations/ShiftPanel';
+import ConfirmPanel from '@/app/_components/management/operations/ConfirmPanel';
+import ScheduleEntryDialog from '@/app/_components/management/operations/dialogs/ScheduleEntryDialog';
+import ShiftEntryDialog from '@/app/_components/management/operations/dialogs/ShiftEntryDialog';
+import ScheduleEditDialog from '@/app/_components/management/operations/dialogs/ScheduleEditDialog';
+import TimeEditDialog, { type EditingTime } from '@/app/_components/management/operations/dialogs/TimeEditDialog';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
-  ScheduleForm,
-  StaffList,
-  ManageReport,
+  addSchedules,
+  addShifts,
+  confirmAllShifts,
+  deleteDeviceRecord,
+  deleteSchedule,
+  saveDeviceRecord,
+  setCsvUploaded,
+  setOperationMonth,
+  setOperationWeek,
+  setOperationYear,
+  setShiftConfirmed,
+  toggleManagementConfirmed,
+  updateSchedule,
+} from '@/store/slices/managementSlice';
+import { getAttendanceCodesAtDate } from '@/store/slices/attendanceCodeSlice';
+import {
+  getOrganizationSnapshot,
+  UNASSIGNED_TEAM_ID,
+  UNASSIGNED_TEAM_NAME,
+} from '@/store/slices/organizationSlice';
 
-  SwitchButton,
-} from '@/app/_components/index'
+export default function Page() {
+  const access = useAccess();
+  const dispatch = useAppDispatch();
+  const {
+    year,
+    month,
+    weekNumber,
+    schedules,
+    shifts,
+    deviceRecords,
+    csvUploaded,
+    confirmed,
+  } = useAppSelector((state) => state.management);
+  const codeMaster = useAppSelector((state) => state.attendanceCode);
+  const organization = useAppSelector((state) => state.organization);
+  const [tab, setTab] = useState(0);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [shiftOpen, setShiftOpen] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState<OperationSchedule | null>(null);
+  const [editingTime, setEditingTime] = useState<EditingTime | null>(null);
 
-
-
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
-
-import { koKR } from "@mui/x-data-grid/locales";
-
-const columns: GridColDef[] = [
-  { field: 'id', headerName: '순번'},
-  { field: 'date', headerName: '일자', flex: 1},
-  { field: 'name', headerName: '이름', flex: 1},
-  { field: 'content', headerName: '내용', flex: 1},
-  {field: 'contentdetail',headerName: '비고', flex: 0.3}
-
-];
-
-const rows = [
-  { id: 1, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
-  { id: 2, name: '홍길동', content: '반차', date: '2026-06-10(수)', detail: '오전' },
-  { id: 3, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
-  { id: 4, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
-  { id: 5, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
-  { id: 6, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
-  { id: 7, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
-  { id: 8, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
-  { id: 9, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
-];
-
-const paginationModel = { page: 0, pageSize: 5 };
-
-
-export default function page() {
-
-
-  const [date, setDate] = useState('26년 6월 2주차');
-    
-  const handleChange = (event: SelectChangeEvent) => {
-    setDate(event.target.value as string);
+  const weekOptions = useMemo(
+    () => getWeeksInMonth(year, month),
+    [year, month],
+  );
+  const selectedWeek = weekOptions.find(
+    (item) => item.week === weekNumber,
+  ) ?? weekOptions[0];
+  const week = {
+    label: `${year}년 ${month}월 ${selectedWeek?.week ?? 1}주차`,
+    startDate: selectedWeek?.startDate ?? `${year}-${String(month).padStart(2, '0')}-01`,
+    endDate: selectedWeek?.endDate ?? `${year}-${String(month).padStart(2, '0')}-07`,
   };
-      
+  const attendanceCodes = getAttendanceCodesAtDate(
+    codeMaster.codes,
+    codeMaster.history,
+    week.endDate,
+  );
+  const weekDays = useMemo(() => {
+    const days: { date: string; label: string }[] = [];
+    const end = new Date(`${week.endDate}T00:00:00`);
+    const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
 
+    for (
+      const current = new Date(`${week.startDate}T00:00:00`);
+      current <= end;
+      current.setDate(current.getDate() + 1)
+    ) {
+      days.push({
+        date: current.toISOString().slice(0, 10),
+        label: `${current.getMonth() + 1}/${current.getDate()} (${weekdays[current.getDay()]})`,
+      });
+    }
+    return days;
+  }, [week.startDate, week.endDate]);
 
+  const weekSchedules = schedules.filter(
+    (item) => item.date >= week.startDate && item.date <= week.endDate,
+  );
+  const displayedWeekSchedules = weekSchedules.map((schedule) => ({
+    ...schedule,
+    type: getAttendanceCodesAtDate(
+      codeMaster.codes,
+      codeMaster.history,
+      schedule.date,
+    ).find((code) => code.id === schedule.codeId)?.label ?? schedule.type,
+  }));
+  const weekShifts = shifts.filter(
+    (item) => item.date >= week.startDate && item.date <= week.endDate,
+  );
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const modalHandleOpen = () => setModalOpen(true);
-  const modalHandleClose = () => setModalOpen(false);
+  const pendingShifts = weekShifts.filter(
+    (item) => item.status === '승인대기',
+  ).length;
+  const steps: OperationStep[] = [
+    { label: '근태 일정', value: `${weekSchedules.length}건 입력`, done: weekSchedules.length > 0 },
+    { label: '단말기 CSV', value: csvUploaded ? '업로드 완료' : '미입력', done: csvUploaded },
+    { label: '교대근무', value: pendingShifts ? `${pendingShifts}건 승인대기` : '확정 완료', done: pendingShifts === 0 },
+    { label: '운영관리', value: confirmed ? '최종 확정' : '확정 전', done: confirmed },
+  ];
+
+  const saveEditedSchedule = () => {
+    if (!editingSchedule) return;
+    const snapshot = getOrganizationSnapshot(
+      organization.teams,
+      organization.employees,
+      organization.history,
+      editingSchedule.date,
+    );
+    const organizationEmployee = snapshot.employees.find(
+      (item) => item.id === editingSchedule.employeeId,
+    );
+    const employee = organizationEmployee && {
+      ...organizationEmployee,
+      department: organizationEmployee.teamId === UNASSIGNED_TEAM_ID
+        ? UNASSIGNED_TEAM_NAME
+        : snapshot.teams.find((team) => team.id === organizationEmployee.teamId)?.name ?? '-',
+    };
+    const code = attendanceCodes.find(
+      (item) => item.id === editingSchedule.codeId,
+    );
+    if (!employee || !code) return;
+
+    dispatch(updateSchedule({
+      ...editingSchedule,
+      department: employee.department,
+      name: employee.name,
+      type: code.label,
+      detail: `${code.label} 입력`,
+    }));
+    setEditingSchedule(null);
+  };
+
+  const openTimeEditor = (employeeId: number, date: string) => {
+    const record = deviceRecords.find(
+      (item) => item.employeeId === employeeId && item.date === date,
+    );
+    const snapshot = getOrganizationSnapshot(
+      organization.teams,
+      organization.employees,
+      organization.history,
+      date,
+    );
+    const employee = snapshot.employees.find((item) => item.id === employeeId);
+    const department = employee?.teamId === UNASSIGNED_TEAM_ID
+      ? UNASSIGNED_TEAM_NAME
+      : snapshot.teams.find((team) => team.id === employee?.teamId)?.name ?? '-';
+    setEditingTime({
+      employeeId,
+      date,
+      checkIn: record?.checkIn ?? '',
+      checkOut: record?.checkOut ?? '',
+      employeeName: employee?.name ?? '-',
+      department,
+      position: employee?.position ?? '-',
+    });
+  };
+
+  const saveDeviceTime = () => {
+    if (!editingTime) return;
+    dispatch(saveDeviceRecord(editingTime));
+    setEditingTime(null);
+  };
+
+  const deleteDeviceTime = () => {
+    if (!editingTime) return;
+    dispatch(deleteDeviceRecord({
+      employeeId: editingTime.employeeId,
+      date: editingTime.date,
+    }));
+    setEditingTime(null);
+  };
 
   return (
-    <>
-     <div>
-      <h1 className="font-bold mb-1">
-      <FormControl variant="standard">
-            <Select
-              id="demo-simple-select"
-              value={date}
-              onChange={handleChange}
-              sx={{fontWeight: "bold", fontSize: "1.3em"}}
-            >
-              <MenuItem value={'26년 6월 2주차'}>26년 6월 2주차 운영관리 </MenuItem>
-              <MenuItem value={'26년 6월 1주차'}>26년 6월 1주차 운영관리 </MenuItem>
-              <MenuItem value={'26년 5월 5주차'}>26년 5월 5주차 운영관리 </MenuItem>
-            </Select>
-          </FormControl>
-          
-      </h1>
-      <p className='mb-3'>2026.6.7-26.6.13</p>
-      <div className='p-4 rounded-lg bg-white'>
-        <h3 className='font-bold'>입력현황</h3>
-        <ManageReport/>
-      </div>
-    </div>
-    <Stack spacing={1} direction="row" sx={{justifyContent: "start", marginTop: "50px"}}>
-      <Button variant="contained" sx={{background: 'black', color: "white"}} onClick={modalHandleOpen}>일정입력</Button>
-      <Button variant="contained" sx={{background: 'black', color: "white"}} onClick={modalHandleOpen}>단말기 데이터 입력</Button>
-      <Button variant="contained" sx={{background: 'black', color: "white"}} onClick={modalHandleOpen}>교대근무 입력</Button>
-      <Button variant="contained" sx={{background: 'black', color: "white"}} onClick={modalHandleOpen}>교대근무 확정</Button>
-      <Button variant="contained" sx={{background: 'black', color: "white"}} onClick={modalHandleOpen}>운영관리 확정</Button>
-    </Stack>
+    <main className="mx-auto max-w-[1600px]">
+      <OperationHeader
+        year={year}
+        month={month}
+        weekNumber={weekNumber}
+        weekOptions={weekOptions}
+        showPeriod={access.canManageOperations || access.canInputShifts}
+        onYearChange={(value) => dispatch(setOperationYear(value))}
+        onMonthChange={(value) => dispatch(setOperationMonth(value))}
+        onWeekChange={(value) => dispatch(setOperationWeek(value))}
+      />
 
-    <div className='mt-5'>
-      <div className=' bg-white rounded-lg p-4'>
-      </div>
-    </div>
-    <Modal
-      open={modalOpen}
-      onClose={modalHandleClose}
-      aria-labelledby="modal-modal-title"
-      aria-describedby="modal-modal-description"
-    >
-        <div className="bg-white rounded-md p-5 mx-auto w-9/10 h-9/10 max-w-150 absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] overflow-hidden">
-          <ScheduleForm modalHandleClose={modalHandleClose}/>
-        </div>
-      
-    </Modal>
-    
-    </>
+      {!access.canManageOperations && !access.canInputShifts && (
+        <Alert severity="warning" sx={{ mt: 5 }}>
+          {access.roleLabel} 권한으로는 운영관리 메뉴를 사용할 수 없습니다.
+        </Alert>
+      )}
+
+      {access.canManageOperations && (
+        <>
+          <div className="mt-5 flex items-center justify-between rounded-xl border border-slate-200 bg-white p-5">
+            <div>
+              <p className="font-bold">{week.label}</p>
+              <p className="mt-1 text-sm text-slate-500">
+                {week.startDate} ~ {week.endDate}
+              </p>
+            </div>
+            <Chip
+              icon={confirmed ? <CheckCircle /> : undefined}
+              label={confirmed ? '현황통계 반영 완료' : '입력 진행 중'}
+              color={confirmed ? 'success' : 'default'}
+            />
+          </div>
+
+          <OperationProgress steps={steps} active={tab} onChange={setTab} />
+
+          <Paper
+            elevation={0}
+            sx={{
+              mt: 3,
+              border: '1px solid #e2e8f0',
+              borderRadius: 3,
+              overflow: 'hidden',
+            }}
+          >
+            <Tabs
+              value={tab}
+              onChange={(_, value) => setTab(value)}
+              sx={{ px: 2, borderBottom: '1px solid #e2e8f0' }}
+            >
+              <Tab label="근태 일정 입력" />
+              <Tab label="단말기 CSV" />
+              <Tab label="교대근무 확정" />
+              <Tab label="운영관리 확정" />
+            </Tabs>
+            <Box sx={{ p: 3 }}>
+              {tab === 0 && (
+                <SchedulePanel
+                  rows={displayedWeekSchedules}
+                  onAdd={() => setScheduleOpen(true)}
+                  onEdit={setEditingSchedule}
+                  onDelete={(id) => dispatch(deleteSchedule(id))}
+                />
+              )}
+              {tab === 1 && (
+                <DevicePanel
+                  uploaded={csvUploaded}
+                  onUpload={() => dispatch(setCsvUploaded(true))}
+                  days={weekDays}
+                  records={deviceRecords}
+                  schedules={displayedWeekSchedules}
+                  onEdit={openTimeEditor}
+                />
+              )}
+              {tab === 2 && (
+                <ShiftPanel
+                  rows={weekShifts}
+                  onAdd={() => setShiftOpen(true)}
+                  onConfirm={(id, value) => dispatch(
+                    setShiftConfirmed({ id, confirmed: value }),
+                  )}
+                  onConfirmAll={() => dispatch(confirmAllShifts())}
+                  canApprove
+                />
+              )}
+              {tab === 3 && (
+                <ConfirmPanel
+                  steps={steps}
+                  confirmed={confirmed}
+                  csvUploaded={csvUploaded}
+                  pendingShifts={pendingShifts}
+                  onToggle={() => dispatch(toggleManagementConfirmed())}
+                />
+              )}
+            </Box>
+          </Paper>
+        </>
+      )}
+
+      {access.canInputShifts && (
+        <Paper
+          elevation={0}
+          sx={{ mt: 3, border: '1px solid #e2e8f0', borderRadius: 3, p: 3 }}
+        >
+          <Alert severity="info" sx={{ mb: 3 }}>
+            기술팀 교대담당자는 일정 입력만 가능하며 확정은 경영관리팀에서 진행합니다.
+          </Alert>
+          <ShiftPanel
+            rows={weekShifts}
+            onAdd={() => setShiftOpen(true)}
+            onConfirm={() => undefined}
+            onConfirmAll={() => undefined}
+            canInput
+          />
+        </Paper>
+      )}
+
+      <ScheduleEntryDialog
+        open={scheduleOpen}
+        existing={schedules}
+        onClose={() => setScheduleOpen(false)}
+        onSave={(items) => dispatch(addSchedules(items))}
+      />
+      <ShiftEntryDialog
+        open={shiftOpen}
+        existing={shifts}
+        onClose={() => setShiftOpen(false)}
+        onSave={(items) => dispatch(addShifts(items))}
+      />
+      <ScheduleEditDialog
+        value={editingSchedule}
+        onChange={setEditingSchedule}
+        onSave={saveEditedSchedule}
+      />
+      <TimeEditDialog
+        value={editingTime}
+        canDelete={deviceRecords.some(
+          (item) =>
+            item.employeeId === editingTime?.employeeId
+            && item.date === editingTime?.date,
+        )}
+        onChange={setEditingTime}
+        onSave={saveDeviceTime}
+        onDelete={deleteDeviceTime}
+      />
+    </main>
   );
 }

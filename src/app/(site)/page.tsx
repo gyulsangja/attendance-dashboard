@@ -1,299 +1,308 @@
-'use client'
+'use client';
 
-import { useState } from 'react';
-
-import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
-
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import Paper from '@mui/material/Paper';
-import { koKR } from "@mui/x-data-grid/locales";
-
+import { useMemo, useState } from 'react';
+import Link from 'next/link';
+import { Alert, Button, Chip, LinearProgress } from '@mui/material';
 import {
-  ShiftWork
-} from '../_components/index'
+  Badge,
+  Business,
+  Groups,
+  ManageAccounts,
+} from '@mui/icons-material';
+import DashboardEventGrid, {
+  type DashboardEventRow,
+} from '@/app/_components/dashboard/DashboardEventGrid';
+import DashboardOperationStatus from '@/app/_components/dashboard/DashboardOperationStatus';
+import DashboardPeriodHeader from '@/app/_components/dashboard/DashboardPeriodHeader';
+import { getWeeksInMonth } from '@/lib/date';
+import { useAppSelector } from '@/store/hooks';
+import { getAttendanceCodesAtDate } from '@/store/slices/attendanceCodeSlice';
+import {
+  getOrganizationSnapshot,
+  UNASSIGNED_TEAM_ID,
+  UNASSIGNED_TEAM_NAME,
+} from '@/store/slices/organizationSlice';
 
-const columns: GridColDef[] = [
-  { field: 'date', headerName: '일자', flex: 1},
-  { field: 'name', headerName: '이름', flex: 1},
-  { field: 'content', headerName: '내용', flex: 1},
-  {field: 'detail',headerName: '비고', flex: 1}
-
-];
-
-const rows = [
-  { id: 1, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
-  { id: 2, name: '홍길동', content: '반차', date: '2026-06-10(수)', detail: '오전' },
-  { id: 3, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
-  { id: 4, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
-  { id: 5, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
-  { id: 6, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
-  { id: 7, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
-  { id: 8, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
-  { id: 9, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
-];
-
-const rows2 = [
-  { id: 1, name: '홍길동', content: '지각', date: '2026-06-10(수)', detail: '09:10'},
-  { id: 2, name: '홍길동', content: '결근', date: '2026-06-10(수)', detail: '' },
-  { id: 3, name: '홍길동', content: '조기퇴근', date: '2026-06-10(수)' },
-  { id: 4, name: '홍길동', content: '지각', date: '2026-06-10(수)' },
-  { id: 5, name: '홍길동', content: '지각', date: '2026-06-10(수)' },
-  { id: 6, name: '홍길동', content: '지각', date: '2026-06-10(수)' },
-  { id: 7, name: '홍길동', content: '지각', date: '2026-06-10(수)' },
-  { id: 8, name: '홍길동', content: '지각', date: '2026-06-10(수)' },
-  { id: 9, name: '홍길동', content: '연차', date: '2026-06-10(수)' },
-];
-
-const paginationModel = { page: 0, pageSize: 5 };
-
-
-
+type DashboardEventWithCode = DashboardEventRow & { codeId: string };
 
 export default function Home() {
-  const [date, setDate] = useState('26년 6월 2주차');
+  const management = useAppSelector((state) => state.management);
+  const organization = useAppSelector((state) => state.organization);
+  const codeMaster = useAppSelector((state) => state.attendanceCode);
+  const [year, setYear] = useState(management.year);
+  const [month, setMonth] = useState(management.month);
+  const [weekNumber, setWeekNumber] = useState(management.weekNumber);
 
-  const handleChange = (event: SelectChangeEvent) => {
-    setDate(event.target.value as string);
-  };
+  const weeks = useMemo(() => getWeeksInMonth(year, month), [year, month]);
+  const selectedWeek = weeks.find((week) => week.week === weekNumber) ?? weeks[0];
+  const startDate = selectedWeek?.startDate ?? `${year}-01-01`;
+  const endDate = selectedWeek?.endDate ?? `${year}-01-07`;
+  const weekKey = `${year}-${month}-${selectedWeek?.week ?? 1}`;
+  const confirmed = management.confirmedWeekKeys.includes(weekKey);
 
+  const attendanceCodes = useMemo(
+    () => getAttendanceCodesAtDate(codeMaster.codes, codeMaster.history, endDate),
+    [codeMaster, endDate],
+  );
+  const organizationSnapshot = useMemo(
+    () => getOrganizationSnapshot(
+      organization.teams,
+      organization.employees,
+      organization.history,
+      endDate,
+    ),
+    [organization, endDate],
+  );
+  const reportRecords = management.publishedRecords.filter(
+    (record) => record.date >= startDate && record.date <= endDate,
+  );
+  const workingRecords = management.deviceRecords.filter(
+    (record) => record.date >= startDate && record.date <= endDate,
+  );
+  const weekSchedules = management.schedules.filter(
+    (schedule) => schedule.date >= startDate && schedule.date <= endDate,
+  );
+  const weekShifts = management.shifts.filter(
+    (shift) => shift.date >= startDate && shift.date <= endDate,
+  );
+  const pendingShifts = weekShifts.filter((shift) => shift.status === '승인대기').length;
+
+  const eventCounts = reportRecords
+    .flatMap((record) => record.events)
+    .reduce<Record<string, number>>((result, event) => {
+      result[event.codeId] = (result[event.codeId] ?? 0) + 1;
+      return result;
+    }, {});
+
+  const exceptionalCodeIds = new Set(
+    attendanceCodes
+      .filter((code) => code.isExceptional)
+      .map((code) => code.id),
+  );
+  const eventRows: DashboardEventWithCode[] = reportRecords.flatMap((record) =>
+    record.events.map((event, index) => ({
+      id: `${record.id}-${index}`,
+      date: record.date.slice(5).replace('-', '/'),
+      department: record.department,
+      name: record.employeeName,
+      content: attendanceCodes.find((code) => code.id === event.codeId)?.label
+        ?? event.codeId,
+      detail: event.detail,
+      codeId: event.codeId,
+    })),
+  );
+  const vacationRows = eventRows.filter((row) =>
+    !exceptionalCodeIds.has(row.codeId),
+  );
+  const exceptionRows = eventRows.filter((row) =>
+    exceptionalCodeIds.has(row.codeId),
+  );
+
+  const dashboardTeams = [
+    ...organizationSnapshot.teams,
+    ...(organizationSnapshot.employees.some(
+      (employee) => employee.teamId === UNASSIGNED_TEAM_ID,
+    ) ? [{
+      id: UNASSIGNED_TEAM_ID,
+      name: UNASSIGNED_TEAM_NAME,
+      startDate: '1900-01-01',
+    }] : []),
+  ];
+  const departmentStatus = dashboardTeams.map((team) => {
+    const members = organizationSnapshot.employees.filter(
+      (employee) => employee.teamId === team.id,
+    );
+    const memberIds = new Set(members.map((member) => member.id));
+    const issues = reportRecords
+      .filter((record) => memberIds.has(record.employeeId))
+      .flatMap((record) => record.events)
+      .filter((event) => exceptionalCodeIds.has(event.codeId)).length;
+
+    return {
+      id: team.id,
+      name: team.name,
+      members: members.length,
+      issues,
+    };
+  });
+  const maxIssues = Math.max(1, ...departmentStatus.map((item) => item.issues));
+  const shiftWorkerCount = organizationSnapshot.employees.filter(
+    (employee) => employee.shiftWorker,
+  ).length;
+  const operationItems = [
+    {
+      label: '근태 일정 입력',
+      value: `${weekSchedules.length}건`,
+      done: weekSchedules.length > 0,
+    },
+    {
+      label: '단말기 출퇴근 데이터',
+      value: management.csvUploaded ? `${workingRecords.length}건 확인` : '미입력',
+      done: management.csvUploaded,
+    },
+    {
+      label: '교대근무 확정',
+      value: pendingShifts > 0 ? `${pendingShifts}건 승인대기` : '확정 완료',
+      done: pendingShifts === 0,
+    },
+    {
+      label: '현황통계 반영',
+      value: confirmed ? '반영 완료' : '확정 전',
+      done: confirmed,
+    },
+  ];
+
+  const summaryCards = [
+    {
+      label: '재직 인원',
+      value: `${organizationSnapshot.employees.length}명`,
+      detail: `${organizationSnapshot.teams.length}개 조직`,
+      icon: <Groups />,
+    },
+    {
+      label: '교대근무자',
+      value: `${shiftWorkerCount}명`,
+      detail: '직원 설정 기준',
+      icon: <ManageAccounts />,
+    },
+    {
+      label: '근태 발생',
+      value: `${eventRows.length}건`,
+      detail: confirmed ? '확정 데이터' : '미확정 주차',
+      icon: <Badge />,
+    },
+    {
+      label: '활성 근태코드',
+      value: `${attendanceCodes.length}개`,
+      detail: `${attendanceCodes.filter((code) => code.isSchedulable).length}개 일정 입력 가능`,
+      icon: <Business />,
+    },
+  ];
 
   return (
-    <>
-    <div className='flex flex-wrap'>
-      <div className='w-2/3 px-5'>
-      <section>
-        <div className='mb-3'>
-          <FormControl variant="standard">
-            <Select
-              id="demo-simple-select"
-              value={date}
-              onChange={handleChange}
-              sx={{fontWeight: "bold", fontSize: "1.5em"}}
-            >
-              <MenuItem value={'26년 6월 2주차'}>6월 2주차 통계</MenuItem>
-              <MenuItem value={'26년 6월 1주차'}>6월 1주차 통계</MenuItem>
-              <MenuItem value={'26년 5월 5주차'}>5월 5주차 통계</MenuItem>
-            </Select>
-          </FormControl>
-          <p>2026.6.7 ~ 2026.6.13</p>
-        </div>
-        <div className='p-5 rounded-lg bg-white'>
-          <ul className='flex flex-wrap'>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 cursor-pointer break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>지각</p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>조퇴</p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>결근</p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>병가</p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>연차/반차</p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>현지 출/퇴근</p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>특별/경조/대체 휴가</p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>자택근무</p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>교육</p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>출산</p>
-              </li>
-          </ul>
-          <p className='text-right'>직원수 <span>0</span>명</p>
-        </div>
-      </section>
-      
-      <section className='mt-10'>
-        <h3 className='font-bold mb-3'>휴가 현황</h3>
-        <div className='p-4 bg-white rounded-lg'>
-          <Paper sx={{ height: 'auto', width: '100%' }}>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            initialState={{ pagination: { paginationModel } }}
-            pageSizeOptions={[5, 10]}
-            columnHeaderHeight={44}
-            rowHeight={44}
-            sx={{
-              border: 0,
-              '& .MuiDataGrid-columnHeader': {
-                  backgroundColor: '#f3f1f3',
-              },
-               '& .MuiDataGrid-columnHeaderTitle': {
-                fontWeight: 'bold',
-                textAlign: 'center'
-              },
+    <main className="mx-auto max-w-[1800px]">
+      <DashboardPeriodHeader
+        year={year}
+        month={month}
+        weekNumber={selectedWeek?.week ?? 1}
+        weeks={weeks}
+        confirmed={confirmed}
+        onYearChange={(value) => {
+          setYear(value);
+          setWeekNumber(1);
+        }}
+        onMonthChange={(value) => {
+          setMonth(value);
+          setWeekNumber(1);
+        }}
+        onWeekChange={setWeekNumber}
+      />
 
-            }}
-            localeText={{
-              ...koKR.components.MuiDataGrid.defaultProps.localeText,
-            }}
-          />
-        </Paper>
-        </div>
-      </section>
+      {!confirmed && (
+        <Alert severity="warning" sx={{ mt: 3 }}>
+          선택한 주차는 운영관리 확정 전입니다. 근태 통계는 표시되지 않으며,
+          오른쪽 진행 현황에서 관리팀의 입력 상태를 확인할 수 있습니다.
+        </Alert>
+      )}
 
-      <section className='mt-10'>
-        <h3 className='font-bold mb-3'>특이사항</h3>
-        <div className='p-4 bg-white rounded-lg'>
-          <Paper sx={{ height: 'auto', width: '100%' }}>
-          <DataGrid
-            rows={rows2}
-            columns={columns}
-            initialState={{ pagination: { paginationModel } }}
-            pageSizeOptions={[5, 10]}
-            columnHeaderHeight={44}
-            rowHeight={44}
-            sx={{
-              border: 0,
-              '& .MuiDataGrid-columnHeader': {
-                  backgroundColor: '#f3f1f3',
-              },
-               '& .MuiDataGrid-columnHeaderTitle': {
-                fontWeight: 'bold',
-                textAlign: 'center'
-              },
-
-            }}
-            localeText={{
-              ...koKR.components.MuiDataGrid.defaultProps.localeText,
-            }}
-          />
-        </Paper>
-        </div>
-      </section> 
-
-      <section className='mt-10'>
-          <h3 className='font-bold mb-3'>조직 현황</h3>
-        <div className='p-4 bg-white rounded-lg'>
-
-          <ul className='flex flex-wrap'>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 cursor-pointer break-keep whitespace-nowrap'>
-                <p className='text-gray-500 font-bold'>관리팀</p>
-                <p><span className='font-bold text-4xl'>0</span></p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 cursor-pointer break-keep whitespace-nowrap'>
-                <p className='text-gray-500 font-bold'>관리팀</p>
-                <p><span className='font-bold text-4xl'>0</span></p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 cursor-pointer break-keep whitespace-nowrap'>
-                <p className='text-gray-500 font-bold'>관리팀</p>
-                <p><span className='font-bold text-4xl'>0</span></p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 cursor-pointer break-keep whitespace-nowrap'>
-                <p className='text-gray-500 font-bold'>관리팀</p>
-                <p><span className='font-bold text-4xl'>0</span></p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 cursor-pointer break-keep whitespace-nowrap'>
-                <p className='text-gray-500 font-bold'>전 직원</p>
-                <p><span className='font-bold text-4xl'>0</span></p>
-              </li>
-          </ul>
-        </div>
-        </section>
-        
-      
-      </div>
-      <div className='w-1/3 px-5'>
-      <section className=''>
-        <div className='mb-3'>
-        <FormControl variant="standard">
-            <Select
-              id="demo-simple-select"
-              value={date}
-              onChange={handleChange}
-              sx={{fontWeight: "bold", fontSize: "1.3em"}}
-            >
-              <MenuItem value={'26년 6월 2주차'}>6월 2주차 근태정보 입력현황</MenuItem>
-              <MenuItem value={'26년 6월 1주차'}>6월 1주차 근태정보 입력현황</MenuItem>
-              <MenuItem value={'26년 5월 5주차'}>5월 5주차 근태정보 입력현황</MenuItem>
-            </Select>
-          </FormControl>
+      <section className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {summaryCards.map((card) => (
+          <div
+            key={card.label}
+            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-500">{card.label}</p>
+                <p className="mt-2 text-3xl font-bold text-slate-900">{card.value}</p>
+                <p className="mt-1 text-xs text-slate-400">{card.detail}</p>
+              </div>
+              <div className="rounded-lg bg-slate-100 p-3 text-slate-600">{card.icon}</div>
+            </div>
           </div>
-        <div className='p-5 rounded-lg bg-white'>
+        ))}
+      </section>
 
-          <ul className='flex flex-wrap'>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 cursor-pointer break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>지각</p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>조퇴</p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>결근</p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>병가</p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>연차/반차</p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>현지 출/퇴근</p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>특별/경조/대체 휴가</p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>자택근무</p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>교육</p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p><span className='font-bold text-4xl'>0</span>건</p>
-                <p className='text-gray-500 font-bold'>출산</p>
-              </li>
-
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p className='text-gray-500 font-bold'>교대근무 계획</p>
-                <p><span className='font-bold text-2xl'>미입력</span></p>
-              </li>
-              <li className='text-center  rounded-md p-4 shadow-2xs bg-mauve-100 m-2 break-keep whitespace-nowrap'>
-                <p className='text-gray-500 font-bold'>단말기 데이터</p>
-                <p><span className='font-bold text-2xl'>미입력</span></p>
-              </li>
-          </ul>
+      <section className="mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-bold">주간 근태 요약</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              설정에서 관리하는 전체 활성 근태코드 기준입니다.
+            </p>
+          </div>
+          <Button component={Link} href="/reports" size="small">
+            현황통계 상세 보기
+          </Button>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
+          {attendanceCodes.map((code) => (
+            <div key={code.id} className="rounded-lg bg-slate-50 px-4 py-4">
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-2.5 w-2.5 rounded-full"
+                  style={{ backgroundColor: code.color }}
+                />
+                <span className="truncate text-sm font-semibold text-slate-500">
+                  {code.label}
+                </span>
+              </div>
+              <p className="mt-2 text-2xl font-bold">{eventCounts[code.id] ?? 0}건</p>
+            </div>
+          ))}
         </div>
       </section>
-        <section className='px-2 mt-10'>
-          <h3 className='font-bold mb-3'>교대근무</h3>
-          <ShiftWork/>
+
+      <div className="mt-5 grid gap-5 xl:grid-cols-[1.7fr_1fr]">
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-bold">부서별 근태 특이사항</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                휴가성 일정을 제외한 지각·조퇴·결근 등의 발생 건수입니다.
+              </p>
+            </div>
+            <Chip size="small" label={`${organizationSnapshot.teams.length}개 조직`} />
+          </div>
+          <div className="mt-5 space-y-4">
+            {departmentStatus.map((department) => (
+              <div key={department.id}>
+                <div className="mb-1.5 flex justify-between text-sm">
+                  <span className="font-semibold text-slate-700">{department.name}</span>
+                  <span className="text-slate-500">
+                    {department.members}명 · 특이사항 {department.issues}건
+                  </span>
+                </div>
+                <LinearProgress
+                  variant="determinate"
+                  value={(department.issues / maxIssues) * 100}
+                  sx={{
+                    height: 7,
+                    borderRadius: 4,
+                    bgcolor: '#f1f5f9',
+                    '& .MuiLinearProgress-bar': { bgcolor: '#64748b' },
+                  }}
+                />
+              </div>
+            ))}
+          </div>
         </section>
+
+        <DashboardOperationStatus items={operationItems} />
       </div>
-    </div>
-    </>
+
+      <div className="mt-5 grid gap-5 2xl:grid-cols-2">
+        <DashboardEventGrid
+          title="휴가·근무 일정"
+          description="연차, 반차, 병가, 재택근무 등 확정된 일정입니다."
+          rows={vacationRows}
+        />
+        <DashboardEventGrid
+          title="확인할 근태 특이사항"
+          description="경영진이 확인할 지각, 조퇴, 결근 등의 내역입니다."
+          rows={exceptionRows}
+        />
+      </div>
+    </main>
   );
 }
