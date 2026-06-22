@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Add, Edit, StopCircle } from '@mui/icons-material';
+import { Add, Edit, Save, StopCircle } from '@mui/icons-material';
 import { Alert, Button, Chip, IconButton, Paper, Tab, Tabs, TextField, Tooltip } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { koKR } from '@mui/x-data-grid/locales';
@@ -13,6 +13,7 @@ import {
   addAttendanceCode,
   endAttendanceCode,
   getAttendanceCodesAtDate,
+  updateWorkTimePolicy,
   updateAttendanceCode,
   type AttendanceCodeHistory,
 } from '@/store/slices/attendanceCodeSlice';
@@ -20,7 +21,8 @@ import {
 export default function Page() {
   const access = useAccess();
   const dispatch = useAppDispatch();
-  const { codes, history } = useAppSelector((state) => state.attendanceCode);
+  const { codes, history, workTimePolicy } = useAppSelector((state) => state.attendanceCode);
+  const [policy, setPolicy] = useState(workTimePolicy);
   const [tab, setTab] = useState(0);
   const [asOfDate, setAsOfDate] = useState(new Date().toISOString().slice(0, 10));
   const [editingCode, setEditingCode] = useState<AttendanceCode | null>(null);
@@ -37,10 +39,6 @@ export default function Page() {
   const codeColumns: GridColDef<AttendanceCode>[] = [
     { field: 'id', headerName: '코드 ID', minWidth: 150, flex: 1 },
     { field: 'label', headerName: '표시명', minWidth: 130, flex: 1 },
-    {
-      field: 'color', headerName: '색상', minWidth: 100, flex: 0.7,
-      renderCell: ({ value }) => <span className="h-5 w-5 rounded-full" style={{ backgroundColor: value }} />,
-    },
     {
       field: 'isSchedulable', headerName: '운영관리 입력', minWidth: 140, flex: 1,
       renderCell: ({ value }) => <Chip size="small" label={value ? '입력 가능' : '자동 판정'} />,
@@ -109,6 +107,51 @@ export default function Page() {
         </Button>
       </div>
 
+      <Paper elevation={0} className="mt-5 border border-slate-200 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="font-bold">일반 근무 출퇴근 기준시간</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              CSV 업로드 시 일반 구성원의 지각·조퇴 자동 판정에 사용합니다. 교대근무자는 교대 일정의 기준시간을 사용합니다.
+            </p>
+          </div>
+          <Button
+            variant="contained"
+            startIcon={<Save />}
+            onClick={() => dispatch(updateWorkTimePolicy(policy))}
+          >
+            기준시간 저장
+          </Button>
+        </div>
+        <div className="mt-5 grid gap-4 md:grid-cols-3">
+          {[
+            ['기본 근무', 'regularStart', 'regularEnd'],
+            ['오전 반차', 'halfAmStart', 'halfAmEnd'],
+            ['오후 반차', 'halfPmStart', 'halfPmEnd'],
+          ].map(([label, startKey, endKey]) => (
+            <div key={label} className="rounded-xl bg-slate-50 p-4">
+              <p className="mb-3 font-bold">{label}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <TextField
+                  type="time"
+                  label="출근 기준"
+                  value={policy[startKey as keyof typeof policy]}
+                  onChange={(event) => setPolicy({ ...policy, [startKey]: event.target.value })}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+                <TextField
+                  type="time"
+                  label="퇴근 기준"
+                  value={policy[endKey as keyof typeof policy]}
+                  onChange={(event) => setPolicy({ ...policy, [endKey]: event.target.value })}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </Paper>
+
       <Paper elevation={0} className="mt-5 border border-slate-200">
         <div className="flex items-center justify-between gap-4 px-5 py-3">
           <Tabs value={tab} onChange={(_event, value) => setTab(value)}>
@@ -141,6 +184,7 @@ export default function Page() {
       </Paper>
 
       <AttendanceCodeDialog
+        key={dialogOpen ? editingCode?.id ?? 'new-code' : 'closed-code'}
         open={dialogOpen}
         code={editingCode}
         onClose={() => setDialogOpen(false)}

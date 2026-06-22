@@ -40,4 +40,31 @@
 .rdp-root.schedule-calendar .rdp-month{width: 100%;}
 .rdp-root.schedule-calendar table{width: 100%;}
 
+.shift-month-calendar .fc .fc-col-header-cell-cushion,
+.shift-month-calendar .fc .fc-daygrid-day-number {
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.shift-month-calendar .fc .fc-daygrid-day-frame {
+  min-height: 92px;
+}
+
+.shift-month-calendar .fc .fc-daygrid-day.selected-operation-week {
+  background: #eff6ff;
+  box-shadow: inset 0 0 0 1px #bfdbfe;
+}
+
+.shift-month-calendar .fc .fc-day-other {
+  background: #f8fafc;
+}
+
+.shift-month-calendar .fc .fc-event {
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 1px 3px;
+}
 

@@ -29,7 +29,7 @@ export default function DashboardPeriodHeader({
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div>
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">경영 대시보드</h1>
+          <h1 className="text-2xl font-bold">대시보드</h1>
           <span className={`rounded-full px-3 py-1 text-xs font-bold ${
             confirmed
               ? 'bg-emerald-100 text-emerald-700'
@@ -39,11 +39,11 @@ export default function DashboardPeriodHeader({
           </span>
         </div>
         <p className="mt-2 text-sm text-slate-500">
-          {selectedWeek?.startDate} ~ {selectedWeek?.endDate} 기준 전사 현황입니다.
+          {selectedWeek?.startDate} ~ {selectedWeek?.endDate} 기준 주간 전사 현황입니다.
         </p>
       </div>
 
-      <div className="flex gap-2 rounded-xl border border-slate-200 bg-white p-3">
+      <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-3">
         <FormControl size="small" sx={{ minWidth: 100 }}>
           <InputLabel>연도</InputLabel>
           <Select
@@ -82,6 +82,7 @@ export default function DashboardPeriodHeader({
             ))}
           </Select>
         </FormControl>
+
       </div>
     </div>
   );

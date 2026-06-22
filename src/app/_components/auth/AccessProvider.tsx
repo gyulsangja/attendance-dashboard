@@ -29,6 +29,7 @@ export function useAccess() {
       canManageOrganization: config.canManageOrganization,
       canManageSettings: config.canManageSettings,
       canInputShifts: config.canInputShifts,
+      canApproveShifts: config.canApproveShifts,
       canManageUsers: config.canManageUsers,
     };
   }, [currentUser, role]);

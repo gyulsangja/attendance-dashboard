@@ -30,7 +30,7 @@ export default function ReportsSummaryBox() {
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
       {attendanceCodes.filter((code) => code.isActive).map((code) => <div key={code.id} className="rounded-lg bg-slate-50 px-4 py-4">
         <p className="whitespace-nowrap text-sm font-semibold text-slate-500">{code.label}</p>
-        <p className={`mt-1 text-3xl font-bold ${code.id === 'ABSENT' ? 'text-red-700' : 'text-slate-800'}`}>
+        <p className="mt-1 text-3xl font-bold text-slate-800">
           {counts[code.id] ?? 0}<span className="ml-1 text-sm font-medium text-slate-400">건</span>
         </p>
       </div>)}

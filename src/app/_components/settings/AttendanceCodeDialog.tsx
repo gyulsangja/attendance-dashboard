@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   Button,
   Dialog,
@@ -23,7 +23,6 @@ type Props = {
 const emptyCode = (): AttendanceCode => ({
   id: '',
   label: '',
-  color: '#64748b',
   isActive: true,
   isSchedulable: true,
   isExceptional: false,
@@ -31,14 +30,10 @@ const emptyCode = (): AttendanceCode => ({
 });
 
 export default function AttendanceCodeDialog({ open, code, onClose, onSave }: Props) {
-  const [form, setForm] = useState<AttendanceCode>(emptyCode());
+  const [form, setForm] = useState<AttendanceCode>(() =>
+    code ? { ...code } : emptyCode()
+  );
   const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().slice(0, 10));
-
-  useEffect(() => {
-    if (!open) return;
-    setForm(code ? { ...code } : emptyCode());
-    setEffectiveDate(new Date().toISOString().slice(0, 10));
-  }, [open, code]);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -62,15 +57,6 @@ export default function AttendanceCodeDialog({ open, code, onClose, onSave }: Pr
             onChange={(event) => setForm({ ...form, label: event.target.value })}
           />
         </div>
-
-        <TextField
-          fullWidth
-          type="color"
-          label="표시 색상"
-          value={form.color}
-          onChange={(event) => setForm({ ...form, color: event.target.value })}
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
 
         <FormControlLabel
           control={(

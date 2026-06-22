@@ -14,9 +14,27 @@ export type AttendanceCodeHistory = {
 type AttendanceCodeState = {
   codes: AttendanceCode[];
   history: AttendanceCodeHistory[];
+  workTimePolicy: WorkTimePolicy;
+};
+
+export type WorkTimePolicy = {
+  regularStart: string;
+  regularEnd: string;
+  halfAmStart: string;
+  halfAmEnd: string;
+  halfPmStart: string;
+  halfPmEnd: string;
 };
 
 const initialState: AttendanceCodeState = {
+  workTimePolicy: {
+    regularStart: '09:00',
+    regularEnd: '18:00',
+    halfAmStart: '14:00',
+    halfAmEnd: '18:00',
+    halfPmStart: '09:00',
+    halfPmEnd: '13:00',
+  },
   codes: attendanceCodes.map((code) => ({ ...code })),
   history: attendanceCodes.map((code, index) => ({
     id: `code-history-${index}`,
@@ -32,6 +50,9 @@ const attendanceCodeSlice = createSlice({
   name: 'attendanceCode',
   initialState,
   reducers: {
+    updateWorkTimePolicy(state, action: PayloadAction<WorkTimePolicy>) {
+      state.workTimePolicy = action.payload;
+    },
     addAttendanceCode(state, action: PayloadAction<AttendanceCode>) {
       state.codes.push(action.payload);
       state.history.unshift({
@@ -84,6 +105,7 @@ const attendanceCodeSlice = createSlice({
 });
 
 export const {
+  updateWorkTimePolicy,
   addAttendanceCode,
   updateAttendanceCode,
   endAttendanceCode,

@@ -7,6 +7,7 @@ import { shiftSchedules } from '@/mocks';
 
 const shiftColor: Record<string, string> = {
   주간: '#64748b',
+  오후: '#0f766e',
   야간: '#1e293b',
 };
 

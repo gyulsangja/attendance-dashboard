@@ -1,15 +1,20 @@
 'use client';
 
 import {
+  Alert,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
+  FormGroup,
   Stack,
   TextField,
 } from '@mui/material';
 import { useAppSelector } from '@/store/hooks';
+import { getAttendanceCodesAtDate } from '@/store/slices/attendanceCodeSlice';
 import { getOrganizationSnapshot } from '@/store/slices/organizationSlice';
 
 export type EditingTime = {
@@ -20,6 +25,7 @@ export type EditingTime = {
   employeeName?: string;
   department?: string;
   position?: string;
+  attendanceCodeIds: string[];
 };
 
 type Props = {
@@ -38,6 +44,12 @@ export default function TimeEditDialog({
   onDelete,
 }: Props) {
   const organization = useAppSelector((state) => state.organization);
+  const codeMaster = useAppSelector((state) => state.attendanceCode);
+  const attendanceCodes = getAttendanceCodesAtDate(
+    codeMaster.codes,
+    codeMaster.history,
+    value?.date ?? new Date().toISOString().slice(0, 10),
+  );
   const employees = getOrganizationSnapshot(
     organization.teams,
     organization.employees,
@@ -76,6 +88,31 @@ export default function TimeEditDialog({
             })}
             slotProps={{ inputLabel: { shrink: true } }}
           />
+          <Alert severity="info">
+            해당 날짜에 사용 가능한 전체 근태코드를 직접 추가하거나 해제할 수 있습니다.
+          </Alert>
+          <FormGroup>
+            {attendanceCodes.map((code) => (
+              <FormControlLabel
+                key={code.id}
+                label={code.label}
+                control={(
+                  <Checkbox
+                    checked={value?.attendanceCodeIds.includes(code.id) ?? false}
+                    onChange={(event) => {
+                      if (!value) return;
+                      onChange({
+                        ...value,
+                        attendanceCodeIds: event.target.checked
+                          ? [...value.attendanceCodeIds, code.id]
+                          : value.attendanceCodeIds.filter((item) => item !== code.id),
+                      });
+                    }}
+                  />
+                )}
+              />
+            ))}
+          </FormGroup>
         </Stack>
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'space-between' }}>

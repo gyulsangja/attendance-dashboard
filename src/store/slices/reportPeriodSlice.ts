@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { getReportPeriod } from '@/lib/date';
+import { getPreviousWeekPeriod, getReportPeriod } from '@/lib/date';
 
 export type MonthValue = 'all' | number;
 export type WeekValue = 'all' | number;
@@ -13,12 +13,17 @@ type ReportPeriodState = {
   label: string;
 };
 
-const period = getReportPeriod(2026, 6, 'all');
+const defaultReportWeek = getPreviousWeekPeriod();
+const period = getReportPeriod(
+  defaultReportWeek.year,
+  defaultReportWeek.month,
+  defaultReportWeek.weekNumber,
+);
 
 const initialState: ReportPeriodState = {
-  year: 2026,
-  month: 6,
-  week: 'all',
+  year: defaultReportWeek.year,
+  month: defaultReportWeek.month,
+  week: defaultReportWeek.weekNumber,
   startDate: period.startDate,
   endDate: period.endDate,
   label: period.label,

@@ -12,7 +12,9 @@ import {
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { koKR } from '@mui/x-data-grid/locales';
 import { type AttendanceRecord, type OperationSchedule } from '@/mocks';
+import { getKoreanPublicHoliday } from '@/lib/date';
 import { useAppSelector } from '@/store/hooks';
+import { getAttendanceCodesAtDate } from '@/store/slices/attendanceCodeSlice';
 import {
   getOrganizationSnapshot,
   UNASSIGNED_TEAM_ID,
@@ -34,6 +36,7 @@ export default function WeeklyAttendanceGrid({
 }: WeeklyAttendanceGridProps) {
   const [department, setDepartment] = useState('all');
   const organization = useAppSelector((state) => state.organization);
+  const codeMaster = useAppSelector((state) => state.attendanceCode);
   const organizationSnapshot = getOrganizationSnapshot(
     organization.teams,
     organization.employees,
@@ -43,6 +46,7 @@ export default function WeeklyAttendanceGrid({
   const weekEmployees = organizationSnapshot.employees.map((employee) => ({
     id: employee.id,
     name: employee.name,
+    shiftWorker: employee.shiftWorker,
     department: employee.teamId === UNASSIGNED_TEAM_ID
       ? UNASSIGNED_TEAM_NAME
       : organizationSnapshot.teams.find((team) => team.id === employee.teamId)?.name ?? '-',
@@ -75,13 +79,25 @@ export default function WeeklyAttendanceGrid({
     ...days.map((day) => ({
       field: day.date,
       headerName: day.label,
+      headerClassName: getKoreanPublicHoliday(day.date)
+        || new Date(`${day.date}T00:00:00`).getDay() === 0
+        ? 'attendance-holiday-header'
+        : new Date(`${day.date}T00:00:00`).getDay() === 6
+          ? 'attendance-saturday-header'
+          : '',
+      cellClassName: getKoreanPublicHoliday(day.date)
+        || new Date(`${day.date}T00:00:00`).getDay() === 0
+        ? 'attendance-holiday-cell'
+        : new Date(`${day.date}T00:00:00`).getDay() === 6
+          ? 'attendance-saturday-cell'
+          : '',
       minWidth: 130,
       flex: 1,
       align: 'center' as const,
       headerAlign: 'center' as const,
       sortable: false,
       filterable: false,
-      renderCell: ({ row }: { row: { id: number } }) => {
+      renderCell: ({ row }: { row: { id: number; shiftWorker: boolean } }) => {
         const record = records.find(
           (item) =>
             item.employeeId === row.id && item.date === day.date,
@@ -90,6 +106,23 @@ export default function WeeklyAttendanceGrid({
           (item) =>
             item.employeeId === row.id && item.date === day.date,
         );
+        const codesAtDate = getAttendanceCodesAtDate(
+          codeMaster.codes,
+          codeMaster.history,
+          day.date,
+        );
+        const recordLabels = record?.events.map(
+          (event) => codesAtDate.find((code) => code.id === event.codeId)?.label
+            ?? event.codeId,
+        ) ?? [];
+        const publicHoliday = row.shiftWorker
+          ? null
+          : getKoreanPublicHoliday(day.date);
+        const attendanceLabels = [...new Set([
+          ...(publicHoliday ? [publicHoliday.name] : []),
+          ...items.map((item) => item.type),
+          ...recordLabels,
+        ])];
 
         return (
           <Box
@@ -113,10 +146,10 @@ export default function WeeklyAttendanceGrid({
               {record?.checkOut ? `퇴 ${record.checkOut}` : '퇴 -'}
             </div>
 
-            {items.length > 0 && (
+            {attendanceLabels.length > 0 && (
               <Chip
                 size="small"
-                label={items.map((item) => item.type).join(', ')}
+                label={attendanceLabels.join(', ')}
                 sx={{
                   mt: 0.5,
                   height: 20,
@@ -188,6 +221,26 @@ export default function WeeklyAttendanceGrid({
               width: '100%',
               textAlign: 'center',
               fontWeight: 700,
+            },
+            '& .attendance-holiday-header': {
+              bgcolor: '#fff1f2',
+              color: '#dc2626',
+            },
+            '& .attendance-saturday-header': {
+              bgcolor: '#eff6ff',
+              color: '#2563eb',
+            },
+            '& .attendance-holiday-cell': {
+              bgcolor: '#fff7f7',
+            },
+            '& .attendance-saturday-cell': {
+              bgcolor: '#f7faff',
+            },
+            '& .attendance-holiday-cell:hover': {
+              bgcolor: '#fff1f2',
+            },
+            '& .attendance-saturday-cell:hover': {
+              bgcolor: '#eff6ff',
             },
             '& .MuiDataGrid-cell': {
               p: 0,
