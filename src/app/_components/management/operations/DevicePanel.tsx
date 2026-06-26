@@ -3,11 +3,15 @@
 import { useState, type ChangeEvent, type DragEvent } from 'react';
 import { Alert, Button, CircularProgress } from '@mui/material';
 import { CloudDownload, CloudUpload } from '@mui/icons-material';
-import { type AttendanceRecord, type OperationSchedule } from '@/mocks';
-import { type DeviceUploadSummary } from '@/store/slices/managementSlice';
+import {
+  type AttendanceRecord,
+  type DeviceUploadSummary,
+  type OperationSchedule,
+} from '@/types/domain';
 import WeeklyAttendanceGrid from './WeeklyAttendanceGrid';
 
 type DevicePanelProps = {
+  apiFallback?: boolean;
   uploaded: boolean;
   uploadSummary: DeviceUploadSummary | null;
   onUpload: (file: File) => Promise<DeviceUploadSummary>;
@@ -20,9 +24,11 @@ type DevicePanelProps = {
   schedules: OperationSchedule[];
   onEdit: (employeeId: number, date: string) => void;
   locked?: boolean;
+  recordsReadOnly?: boolean;
 };
 
 export default function DevicePanel({
+  apiFallback = false,
   uploaded,
   uploadSummary,
   onUpload,
@@ -32,6 +38,7 @@ export default function DevicePanel({
   schedules,
   onEdit,
   locked = false,
+  recordsReadOnly = false,
 }: DevicePanelProps) {
   const [processing, setProcessing] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -41,8 +48,9 @@ export default function DevicePanel({
   const handleFile = async (file?: File) => {
     if (!file || locked) return;
     setFileError('');
-    if (!file.name.toLowerCase().endsWith('.csv')) {
-      setFileError('CSV 파일만 업로드할 수 있습니다.');
+    const lowerFileName = file.name.toLowerCase();
+    if (!lowerFileName.endsWith('.csv') && !lowerFileName.endsWith('.xlsx')) {
+      setFileError('CSV 또는 XLSX 파일만 업로드할 수 있습니다.');
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -72,23 +80,49 @@ export default function DevicePanel({
   };
 
   const downloadTemplate = () => {
-    const escapeCsv = (value: string) => `"${value.replaceAll('"', '""')}"`;
-    const dateHeaders = days.flatMap((day) => [day.date, day.date]);
-    const timeHeaders = days.flatMap(() => ['출근시간', '퇴근시간']);
-    const employeeRows = templateEmployees.map((employee) => [
-      escapeCsv(employee.employeeName),
-      escapeCsv(employee.department),
-      ...days.flatMap(() => ['', '']),
-    ].join(','));
+    const escapeCsv = (value: string | number) => `"${String(value).replaceAll('"', '""')}"`;
+    const headers = [
+      '날짜',
+      '부서',
+      '이름',
+      '근태 규칙',
+      '직군',
+      '카드 번호',
+      '출근',
+      '퇴근',
+      '지각',
+      '외출',
+      '복귀',
+      '마지막 출입 시간',
+      '총 근무',
+      '상태',
+    ];
+    const employeeRows = days.flatMap((day) =>
+      templateEmployees.map((employee) => [
+        day.date,
+        '기본 그룹',
+        employee.employeeName,
+        '',
+        employee.department,
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+      ].map(escapeCsv).join(',')),
+    );
     const content = `\uFEFF${[
-      ['구성원명', '부서', ...dateHeaders].join(','),
-      ['', '', ...timeHeaders].join(','),
+      headers.map(escapeCsv).join(','),
       ...employeeRows,
     ].join('\n')}`;
     const url = URL.createObjectURL(new Blob([content], { type: 'text/csv;charset=utf-8' }));
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = 'attendance_upload_template.csv';
+    anchor.download = 'attendance_device_template.csv';
     anchor.click();
     URL.revokeObjectURL(url);
   };
@@ -114,27 +148,33 @@ export default function DevicePanel({
         <div>
           <h2 className="font-bold">단말기 출퇴근 데이터</h2>
           <p className="mt-1 text-sm text-slate-500">
-            CSV 업로드 후 근태 일정과 출퇴근 시간을 함께 검토하고 수정합니다.
+            출입통제 파일 업로드 후 근태 일정과 출퇴근 시간을 함께 검토하고 수정합니다.
           </p>
           <p className="mt-1 text-xs text-slate-400">
-            구성원은 세로 행, 날짜별 출근·퇴근 시간은 가로 열로 입력합니다.
+            소장님이 전달한 출입통제 파일 컬럼 기준으로 업로드합니다.
           </p>
         </div>
 
         <div className="flex gap-2">
           <Button variant="text" startIcon={<CloudDownload />} onClick={downloadTemplate}>
-            CSV 양식 받기
+            출입통제 CSV 양식 받기
           </Button>
           {uploaded && (
             <Button component="label" variant="outlined" startIcon={<CloudUpload />} disabled={processing || locked}>
-              CSV 다시 업로드
-              <input hidden type="file" accept=".csv,text/csv" onChange={handleChange} />
+              파일 다시 업로드
+              <input hidden type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={handleChange} />
             </Button>
           )}
         </div>
       </div>
 
       {fileError && <Alert severity="error" sx={{ mt: 3 }}>{fileError}</Alert>}
+
+      {apiFallback && (
+        <Alert severity="info" sx={{ mt: 3 }}>
+          백엔드 출퇴근 조회 API가 아직 실제 목록을 반환하지 않아 프론트 단말기 기록을 표시합니다.
+        </Alert>
+      )}
 
       {summary && (
         <Alert severity={summarySeverity} sx={{ mt: 3 }}>
@@ -158,7 +198,8 @@ export default function DevicePanel({
           days={days}
           records={records}
           schedules={schedules}
-          onEdit={locked ? () => undefined : onEdit}
+          onEdit={onEdit}
+          readOnly={locked || recordsReadOnly}
         />
       ) : (
         <div
@@ -168,11 +209,11 @@ export default function DevicePanel({
           onDrop={locked ? undefined : handleDrop}
         >
           {processing ? <CircularProgress size={44} /> : <CloudUpload sx={{ fontSize: 44, color: '#64748b' }} />}
-          <p className="mt-2 font-bold">CSV 파일을 선택하거나 이곳에 놓아주세요</p>
-          <p className="mt-1 text-xs text-slate-500">최대 5MB · UTF-8/EUC-KR 지원</p>
+          <p className="mt-2 font-bold">CSV 또는 XLSX 파일을 선택하거나 이곳에 놓아주세요</p>
+          <p className="mt-1 text-xs text-slate-500">최대 5MB · CSV는 UTF-8/EUC-KR 지원</p>
           <Button component="label" variant="contained" disabled={processing || locked} sx={{ mt: 3, bgcolor: '#0f172a' }}>
             {processing ? '처리 중...' : '파일 선택'}
-            <input hidden type="file" accept=".csv,text/csv" onChange={handleChange} />
+            <input hidden type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={handleChange} />
           </Button>
         </div>
       )}

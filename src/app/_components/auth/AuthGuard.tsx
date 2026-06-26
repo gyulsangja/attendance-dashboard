@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { CircularProgress } from '@mui/material';
+import { tokenStorage } from '@/api/tokenStorage';
 import { useAccess } from './AccessProvider';
 
 export const getDefaultPath = (role: string) => {
@@ -14,6 +15,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const access = useAccess();
+  const isRestoringSession = !access.isAuthenticated
+    && Boolean(tokenStorage.getAccessToken() && tokenStorage.getSessionUser());
 
   const allowed = pathname === '/mypage'
     || (pathname === '/' && access.canViewDashboard)
@@ -25,14 +28,15 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     || (pathname.startsWith('/admin') && access.canManageUsers);
 
   useEffect(() => {
+    if (isRestoringSession) return;
     if (!access.isAuthenticated) {
       router.replace('/login');
       return;
     }
     if (!allowed) router.replace(getDefaultPath(access.role));
-  }, [access.isAuthenticated, access.role, allowed, router]);
+  }, [access.isAuthenticated, access.role, allowed, isRestoringSession, router]);
 
-  if (!access.isAuthenticated || !allowed) {
+  if (isRestoringSession || !access.isAuthenticated || !allowed) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <CircularProgress size={32} />

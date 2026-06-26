@@ -2,8 +2,12 @@
 
 import { Add, Edit, Groups } from '@mui/icons-material';
 import { Button, List, ListItemButton, ListItemText } from '@mui/material';
-import type { OrganizationEmployee, OrganizationTeam } from '@/store/slices/organizationSlice';
-import { UNASSIGNED_TEAM_ID, UNASSIGNED_TEAM_NAME } from '@/store/slices/organizationSlice';
+import {
+  UNASSIGNED_TEAM_ID,
+  UNASSIGNED_TEAM_NAME,
+  type OrganizationEmployee,
+  type OrganizationTeam,
+} from '@/store/slices/organizationSlice';
 
 type TeamPanelProps = {
   teams: OrganizationTeam[];
@@ -12,7 +16,17 @@ type TeamPanelProps = {
   onSelect: (teamId: string) => void;
   onAdd: () => void;
   onEdit: (team: OrganizationTeam) => void;
+  editDisabled?: boolean;
 };
+
+const TEXT = {
+  organization: '\uc870\uc9c1',
+  addTeam: '\ud300 \ucd94\uac00',
+  allMembers: '\uc804\uccb4 \uad6c\uc131\uc6d0',
+  memberSuffix: '\uba85',
+};
+
+const memberCountLabel = (count: number) => `${count}${TEXT.memberSuffix}`;
 
 export default function TeamPanel({
   teams,
@@ -21,16 +35,17 @@ export default function TeamPanel({
   onSelect,
   onAdd,
   onEdit,
+  editDisabled = false,
 }: TeamPanelProps) {
   return (
     <aside className="w-64 shrink-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2 font-bold">
           <Groups fontSize="small" />
-          조직
+          {TEXT.organization}
         </div>
-        <Button size="small" startIcon={<Add />} onClick={onAdd}>
-          팀 추가
+        <Button size="small" startIcon={<Add />} disabled={editDisabled} onClick={onAdd}>
+          {TEXT.addTeam}
         </Button>
       </div>
 
@@ -40,7 +55,7 @@ export default function TeamPanel({
           onClick={() => onSelect('all')}
           sx={{ mb: 0.5, borderRadius: 2 }}
         >
-          <ListItemText primary="전체 구성원" secondary={`${employees.length}명`} />
+          <ListItemText primary={TEXT.allMembers} secondary={memberCountLabel(employees.length)} />
         </ListItemButton>
 
         <ListItemButton
@@ -50,9 +65,9 @@ export default function TeamPanel({
         >
           <ListItemText
             primary={UNASSIGNED_TEAM_NAME}
-            secondary={`${employees.filter(
+            secondary={memberCountLabel(employees.filter(
               (employee) => employee.teamId === UNASSIGNED_TEAM_ID,
-            ).length}명`}
+            ).length)}
           />
         </ListItemButton>
 
@@ -66,13 +81,13 @@ export default function TeamPanel({
               onClick={() => onSelect(team.id)}
               sx={{ mb: 0.5, borderRadius: 2 }}
             >
-              <ListItemText primary={team.name} secondary={`${count}명`} />
+              <ListItemText primary={team.name} secondary={memberCountLabel(count)} />
               <Edit
                 fontSize="small"
-                sx={{ color: '#94a3b8' }}
+                sx={{ color: editDisabled ? '#cbd5e1' : '#94a3b8', pointerEvents: editDisabled ? 'none' : 'auto' }}
                 onClick={(event) => {
                   event.stopPropagation();
-                  onEdit(team);
+                  if (!editDisabled) onEdit(team);
                 }}
               />
             </ListItemButton>

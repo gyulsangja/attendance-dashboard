@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   Button,
   Dialog,
@@ -16,8 +16,17 @@ import {
   Switch,
   TextField,
 } from '@mui/material';
-import type { OrganizationEmployee, OrganizationTeam } from '@/store/slices/organizationSlice';
-import { UNASSIGNED_TEAM_ID, UNASSIGNED_TEAM_NAME } from '@/store/slices/organizationSlice';
+import {
+  UNASSIGNED_TEAM_ID,
+  UNASSIGNED_TEAM_NAME,
+  type OrganizationEmployee,
+  type OrganizationTeam,
+} from '@/store/slices/organizationSlice';
+
+export type EmployeeDialogOption = {
+  value: string;
+  label: string;
+};
 
 type EmployeeDialogProps = {
   open: boolean;
@@ -25,18 +34,55 @@ type EmployeeDialogProps = {
   teams: OrganizationTeam[];
   defaultTeamId: string;
   nextId: number;
+  positionOptions?: EmployeeDialogOption[];
+  jobTitleOptions?: EmployeeDialogOption[];
+  holdStatusOptions?: EmployeeDialogOption[];
   onClose: () => void;
   onSave: (employee: OrganizationEmployee, effectiveDate: string) => void;
 };
 
-const emptyEmployee = (id: number, teamId: string): OrganizationEmployee => ({
+const TEXT = {
+  editTitle: '\uc9c1\uc6d0 \uc815\ubcf4 \uc218\uc815',
+  addTitle: '\uc9c1\uc6d0 \ub4f1\ub85d',
+  name: '\uc774\ub984',
+  team: '\ubd80\uc11c/\ud300',
+  position: '\uc9c1\uae09',
+  workType: '\uadfc\ubb34\uc720\ud615',
+  holdStatus: '\uc7ac\uc9c1\uc0c1\ud0dc',
+  select: '\uc120\ud0dd',
+  shiftWorker: '\uad50\ub300\uadfc\ubb34 \ub300\uc0c1\uc790',
+  effectiveDate: '\ubcc0\uacbd \uc801\uc6a9\uc77c',
+  hireDate: '\uc785\uc0ac\uc77c',
+  cancel: '\ucde8\uc18c',
+  save: '\uc800\uc7a5',
+};
+
+const today = () => new Date().toISOString().slice(0, 10);
+
+const fallbackPositions = ['\uc0ac\uc6d0', '\uc8fc\uc784', '\ub300\ub9ac', '\uacfc\uc7a5', '\ucc28\uc7a5', '\ubd80\uc7a5'];
+const fallbackHoldStatuses: EmployeeDialogOption[] = [
+  { value: 'HOLD_ACTIVE', label: '\uc7ac\uc9c1' },
+  { value: 'HOLD_LEAVE', label: '\ud734\uc9c1' },
+  { value: 'HOLD_RETIRED', label: '\ud1f4\uc0ac' },
+];
+
+const toOptions = (values: string[]): EmployeeDialogOption[] =>
+  values.map((value) => ({ value, label: value }));
+
+const emptyEmployee = (
+  id: number,
+  teamId: string,
+  defaultPosition: string,
+  defaultHoldStatus: string,
+): OrganizationEmployee => ({
   id,
   name: '',
   teamId,
-  position: '사원',
+  position: defaultPosition,
   jobTitle: '',
   shiftWorker: false,
-  startDate: new Date().toISOString().slice(0, 10),
+  startDate: today(),
+  backendHoldStatusCode: defaultHoldStatus,
 });
 
 export default function EmployeeDialog({
@@ -45,79 +91,121 @@ export default function EmployeeDialog({
   teams,
   defaultTeamId,
   nextId,
+  positionOptions = [],
+  jobTitleOptions = [],
+  holdStatusOptions = [],
   onClose,
   onSave,
 }: EmployeeDialogProps) {
-  const [form, setForm] = useState<OrganizationEmployee>(
-    emptyEmployee(nextId, defaultTeamId),
+  return (
+    <EmployeeDialogContent
+      key={`${employee?.id ?? 'new'}-${nextId}-${defaultTeamId}-${positionOptions.map((item) => item.value).join('|')}-${jobTitleOptions.map((item) => item.value).join('|')}-${holdStatusOptions.map((item) => item.value).join('|')}-${open}`}
+      open={open}
+      employee={employee}
+      teams={teams}
+      defaultTeamId={defaultTeamId}
+      nextId={nextId}
+      positionOptions={positionOptions}
+      jobTitleOptions={jobTitleOptions}
+      holdStatusOptions={holdStatusOptions}
+      onClose={onClose}
+      onSave={onSave}
+    />
   );
-  const [effectiveDate, setEffectiveDate] = useState(
-    new Date().toISOString().slice(0, 10),
-  );
+}
 
-  useEffect(() => {
-    if (!open) return;
-    setForm(employee ?? emptyEmployee(nextId, defaultTeamId));
-    setEffectiveDate(new Date().toISOString().slice(0, 10));
-  }, [open, employee, nextId, defaultTeamId]);
+function EmployeeDialogContent({
+  open,
+  employee,
+  teams,
+  defaultTeamId,
+  nextId,
+  positionOptions = [],
+  jobTitleOptions = [],
+  holdStatusOptions = [],
+  onClose,
+  onSave,
+}: EmployeeDialogProps) {
+  const resolvedPositionOptions = positionOptions.length > 0
+    ? positionOptions
+    : toOptions(fallbackPositions);
+  const resolvedHoldStatusOptions = holdStatusOptions.length > 0
+    ? holdStatusOptions
+    : fallbackHoldStatuses;
+  const defaultPosition = resolvedPositionOptions[0]?.value ?? '';
+  const defaultHoldStatus = resolvedHoldStatusOptions[0]?.value ?? '';
+  const [form, setForm] = useState<OrganizationEmployee>(
+    () => employee ?? emptyEmployee(nextId, defaultTeamId, defaultPosition, defaultHoldStatus),
+  );
+  const [effectiveDate, setEffectiveDate] = useState(today);
+  const dateValue = employee ? effectiveDate : form.startDate;
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{employee ? '직원 정보 수정' : '직원 등록'}</DialogTitle>
+      <DialogTitle>{employee ? TEXT.editTitle : TEXT.addTitle}</DialogTitle>
       <DialogContent sx={{ pt: '12px !important' }}>
         <Stack spacing={2.5}>
           <TextField
             fullWidth
-            label="이름"
+            label={TEXT.name}
             value={form.name}
             onChange={(event) => setForm({ ...form, name: event.target.value })}
           />
 
           <FormControl fullWidth>
-            <InputLabel>부서</InputLabel>
+            <InputLabel>{TEXT.team}</InputLabel>
             <Select
-              label="부서"
+              label={TEXT.team}
               value={form.teamId}
-              onChange={(event) => {
-                const teamId = event.target.value;
-                setForm({
-                  ...form,
-                  teamId,
-                });
-              }}
-          >
-              <MenuItem value={UNASSIGNED_TEAM_ID}>
-                {UNASSIGNED_TEAM_NAME}
-              </MenuItem>
+              onChange={(event) => setForm({ ...form, teamId: event.target.value })}
+            >
+              <MenuItem value={UNASSIGNED_TEAM_ID}>{UNASSIGNED_TEAM_NAME}</MenuItem>
               {teams.map((team) => (
-                <MenuItem key={team.id} value={team.id}>
-                  {team.name}
-                </MenuItem>
+                <MenuItem key={team.id} value={team.id}>{team.name}</MenuItem>
               ))}
             </Select>
           </FormControl>
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <FormControl fullWidth>
-              <InputLabel>직위</InputLabel>
+              <InputLabel>{TEXT.position}</InputLabel>
               <Select
-                label="직위"
+                label={TEXT.position}
                 value={form.position}
                 onChange={(event) => setForm({ ...form, position: event.target.value })}
               >
-                {['사원', '대리', '과장', '차장', '부장', '임원'].map((position) => (
-                  <MenuItem key={position} value={position}>{position}</MenuItem>
+                {resolvedPositionOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
                 ))}
               </Select>
             </FormControl>
 
-            <TextField
-              fullWidth
-              label="직무"
-              placeholder="예: 기술지원"
-              value={form.jobTitle}
-              onChange={(event) => setForm({ ...form, jobTitle: event.target.value })}
-            />
+            <FormControl fullWidth>
+              <InputLabel>{TEXT.workType}</InputLabel>
+              <Select
+                label={TEXT.workType}
+                value={form.jobTitle}
+                onChange={(event) => setForm({ ...form, jobTitle: event.target.value })}
+              >
+                <MenuItem value="">{TEXT.select}</MenuItem>
+                {jobTitleOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel>{TEXT.holdStatus}</InputLabel>
+              <Select
+                label={TEXT.holdStatus}
+                value={form.backendHoldStatusCode ?? defaultHoldStatus}
+                onChange={(event) => setForm({ ...form, backendHoldStatusCode: event.target.value })}
+              >
+                {resolvedHoldStatusOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </div>
 
           <FormControlLabel
@@ -128,14 +216,14 @@ export default function EmployeeDialog({
                 onChange={(event) => setForm({ ...form, shiftWorker: event.target.checked })}
               />
             )}
-            label="교대근무 대상자"
+            label={TEXT.shiftWorker}
           />
 
           <TextField
             fullWidth
             type="date"
-            label={employee ? '변경 적용일' : '입사일'}
-            value={employee ? effectiveDate : form.startDate}
+            label={employee ? TEXT.effectiveDate : TEXT.hireDate}
+            value={dateValue}
             onChange={(event) => {
               if (employee) setEffectiveDate(event.target.value);
               else setForm({ ...form, startDate: event.target.value });
@@ -145,20 +233,20 @@ export default function EmployeeDialog({
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 3 }}>
-        <Button onClick={onClose}>취소</Button>
+        <Button onClick={onClose}>{TEXT.cancel}</Button>
         <Button
           variant="contained"
-          disabled={!form.name.trim() || !form.jobTitle.trim() || !form.teamId}
+          disabled={!form.name.trim() || !form.teamId}
           onClick={() => onSave(
             {
               ...form,
               name: form.name.trim(),
               jobTitle: form.jobTitle.trim(),
             },
-            employee ? effectiveDate : form.startDate,
+            dateValue,
           )}
         >
-          저장
+          {TEXT.save}
         </Button>
       </DialogActions>
     </Dialog>

@@ -1,30 +1,16 @@
 'use client';
 
 import { useAppSelector } from '@/store/hooks';
-import { getOrganizationSnapshot } from '@/store/slices/organizationSlice';
-import { getAttendanceCodesAtDate } from '@/store/slices/attendanceCodeSlice';
+import {
+  selectReportAttendanceCodes,
+  selectReportAttendanceEventCounts,
+  selectReportEmployees,
+} from '@/selectors/reportSelectors';
 
 export default function ReportsSummaryBox() {
-  const { startDate, endDate } = useAppSelector((state) => state.reportPeriod);
-  const records = useAppSelector((state) => state.management.publishedRecords)
-    .filter((record) => record.date >= startDate && record.date <= endDate);
-  const organization = useAppSelector((state) => state.organization);
-  const codeMaster = useAppSelector((state) => state.attendanceCode);
-  const attendanceCodes = getAttendanceCodesAtDate(
-    codeMaster.codes,
-    codeMaster.history,
-    endDate,
-  );
-  const counts = records.flatMap((record) => record.events).reduce<Record<string, number>>((result, event) => {
-    result[event.codeId] = (result[event.codeId] ?? 0) + 1;
-    return result;
-  }, {});
-  const employeeCount = getOrganizationSnapshot(
-    organization.teams,
-    organization.employees,
-    organization.history,
-    endDate,
-  ).employees.length;
+  const attendanceCodes = useAppSelector(selectReportAttendanceCodes);
+  const counts = useAppSelector(selectReportAttendanceEventCounts);
+  const employeeCount = useAppSelector(selectReportEmployees).length;
 
   return <section className="mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">

@@ -45,16 +45,17 @@ export default function TimeEditDialog({
 }: Props) {
   const organization = useAppSelector((state) => state.organization);
   const codeMaster = useAppSelector((state) => state.attendanceCode);
+  const date = value?.date ?? new Date().toISOString().slice(0, 10);
   const attendanceCodes = getAttendanceCodesAtDate(
     codeMaster.codes,
     codeMaster.history,
-    value?.date ?? new Date().toISOString().slice(0, 10),
+    date,
   );
   const employees = getOrganizationSnapshot(
     organization.teams,
     organization.employees,
     organization.history,
-    value?.date ?? new Date().toISOString().slice(0, 10),
+    date,
   ).employees;
 
   return (
@@ -89,7 +90,7 @@ export default function TimeEditDialog({
             slotProps={{ inputLabel: { shrink: true } }}
           />
           <Alert severity="info">
-            해당 날짜에 사용 가능한 전체 근태코드를 직접 추가하거나 해제할 수 있습니다.
+            해당 일자에 사용 가능한 전체 근태코드를 직접 추가하거나 해제할 수 있습니다.
           </Alert>
           <FormGroup>
             {attendanceCodes.map((code) => (

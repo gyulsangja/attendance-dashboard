@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { attendanceCodes, type AttendanceCode } from '@/mocks';
+import type { WorkTimePolicy } from '@/types/domain';
 
 export type AttendanceCodeHistory = {
   id: string;
@@ -17,14 +18,15 @@ type AttendanceCodeState = {
   workTimePolicy: WorkTimePolicy;
 };
 
-export type WorkTimePolicy = {
-  regularStart: string;
-  regularEnd: string;
-  halfAmStart: string;
-  halfAmEnd: string;
-  halfPmStart: string;
-  halfPmEnd: string;
-};
+export type { WorkTimePolicy } from '@/types/domain';
+
+const codeCreationDetail = (code: AttendanceCode) =>
+  code.isSchedulable ? '운영관리에서 일정 입력 가능' : '출퇴근 기록으로 자동 판정';
+
+const codePolicyDetail = (code: AttendanceCode) =>
+  `운영관리 입력 ${code.isSchedulable ? '가능' : '불가'}, 특이근태 ${
+    code.isExceptional ? '표시' : '미표시'
+  }`;
 
 const initialState: AttendanceCodeState = {
   workTimePolicy: {
@@ -42,7 +44,7 @@ const initialState: AttendanceCodeState = {
     codeLabel: code.label,
     effectiveDate: code.startDate,
     changeType: '코드 생성',
-    detail: code.isSchedulable ? '운영관리 입력 가능' : '출퇴근 기록으로 판정',
+    detail: codeCreationDetail(code),
   })),
 };
 
@@ -61,7 +63,7 @@ const attendanceCodeSlice = createSlice({
         codeLabel: action.payload.label,
         effectiveDate: action.payload.startDate,
         changeType: '코드 생성',
-        detail: action.payload.isSchedulable ? '운영관리 입력 가능' : '출퇴근 기록으로 판정',
+        detail: codeCreationDetail(action.payload),
       });
     },
     updateAttendanceCode(
@@ -70,6 +72,7 @@ const attendanceCodeSlice = createSlice({
     ) {
       const index = state.codes.findIndex((code) => code.id === action.payload.code.id);
       if (index < 0) return;
+
       const before = { ...state.codes[index] };
       state.codes[index] = action.payload.code;
       state.history.unshift({
@@ -78,7 +81,7 @@ const attendanceCodeSlice = createSlice({
         codeLabel: action.payload.code.label,
         effectiveDate: action.payload.effectiveDate,
         changeType: '코드 수정',
-        detail: `${before.label} → ${action.payload.code.label}, 운영관리 입력 ${action.payload.code.isSchedulable ? '가능' : '불가'}, 특이근태 ${action.payload.code.isExceptional ? '표시' : '미표시'}`,
+        detail: `${before.label} -> ${action.payload.code.label}, ${codePolicyDetail(action.payload.code)}`,
         before,
       });
     },
@@ -88,6 +91,7 @@ const attendanceCodeSlice = createSlice({
     ) {
       const code = state.codes.find((item) => item.id === action.payload.id);
       if (!code) return;
+
       const before = { ...code };
       code.endDate = action.payload.effectiveDate;
       code.isActive = false;
@@ -119,6 +123,7 @@ export const getAttendanceCodesAtDate = (
   date: string,
 ) => {
   const codeMap = new Map(codes.map((code) => [code.id, { ...code }]));
+
   [...history]
     .filter((item) => item.effectiveDate > date)
     .sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate))
@@ -126,6 +131,7 @@ export const getAttendanceCodesAtDate = (
       if (item.changeType === '코드 생성') codeMap.delete(item.codeId);
       else if (item.before) codeMap.set(item.codeId, { ...item.before });
     });
+
   return [...codeMap.values()].filter(
     (code) => code.startDate <= date && (!code.endDate || code.endDate > date),
   );

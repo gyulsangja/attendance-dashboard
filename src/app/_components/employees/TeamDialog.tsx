@@ -1,0 +1,83 @@
+'use client';
+
+import {
+  Alert,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+} from '@mui/material';
+import type { OrganizationTeam } from '@/store/slices/organizationSlice';
+
+type TeamDialogProps = {
+  open: boolean;
+  editingTeam: OrganizationTeam | null;
+  teamName: string;
+  teamEffectiveDate: string;
+  teamHasMembers: boolean;
+  onNameChange: (value: string) => void;
+  onDateChange: (value: string) => void;
+  onClose: () => void;
+  onSave: () => void;
+  onDelete: () => void;
+};
+
+export default function TeamDialog({
+  open,
+  editingTeam,
+  teamName,
+  teamEffectiveDate,
+  teamHasMembers,
+  onNameChange,
+  onDateChange,
+  onClose,
+  onSave,
+  onDelete,
+}: TeamDialogProps) {
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
+      <DialogTitle>{editingTeam ? '팀 정보 수정' : '팀 추가'}</DialogTitle>
+      <DialogContent sx={{ pt: '12px !important' }}>
+        <TextField
+          autoFocus
+          fullWidth
+          label="팀 이름"
+          value={teamName}
+          onChange={(event) => onNameChange(event.target.value)}
+        />
+        <TextField
+          fullWidth
+          type="date"
+          label={editingTeam ? '변경 적용일' : '팀 생성일'}
+          value={teamEffectiveDate}
+          onChange={(event) => onDateChange(event.target.value)}
+          slotProps={{ inputLabel: { shrink: true } }}
+          sx={{ mt: 2 }}
+        />
+        {teamHasMembers && (
+          <Alert severity="info" sx={{ mt: 2 }}>
+            소속 직원이 있는 팀은 삭제할 수 없습니다. 직원을 먼저 다른 부서로 이동해 주세요.
+          </Alert>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 3 }}>
+        {editingTeam && (
+          <Button
+            color="error"
+            disabled={teamHasMembers}
+            onClick={onDelete}
+            sx={{ mr: 'auto' }}
+          >
+            팀 삭제
+          </Button>
+        )}
+        <Button onClick={onClose}>취소</Button>
+        <Button variant="contained" disabled={!teamName.trim()} onClick={onSave}>
+          저장
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}

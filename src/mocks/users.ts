@@ -1,12 +1,6 @@
-import type { UserRole } from './access';
+import type { SystemUser } from '@/types/domain';
 
-export type SystemUser = {
-  id: number;
-  username: string;
-  password: string;
-  name: string;
-  role: UserRole;
-};
+export type { SystemUser } from '@/types/domain';
 
 export const systemUsers: SystemUser[] = [
   { id: 1, username: 'admin', password: 'admin123', name: '시스템 관리자', role: 'ADMIN' },

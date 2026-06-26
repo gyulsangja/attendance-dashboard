@@ -44,7 +44,8 @@ export default function DashboardOperationStatus({
             <span className="text-sm font-semibold text-slate-600">{item.label}</span>
             <span className={`text-sm font-bold ${
               item.done ? 'text-emerald-700' : 'text-amber-700'
-            }`}>
+            }`}
+            >
               {item.value}
             </span>
           </div>

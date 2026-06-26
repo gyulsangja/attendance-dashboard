@@ -14,7 +14,7 @@ import {
   Stack,
   TextField,
 } from '@mui/material';
-import type { ShiftSchedule } from '@/mocks';
+import type { ShiftSchedule } from '@/types/domain';
 
 type Props = {
   value: ShiftSchedule | null;

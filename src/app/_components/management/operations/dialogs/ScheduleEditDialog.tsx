@@ -13,7 +13,7 @@ import {
   Stack,
   TextField,
 } from '@mui/material';
-import { type OperationSchedule } from '@/mocks';
+import type { OperationSchedule } from '@/types/domain';
 import { useAppSelector } from '@/store/hooks';
 import { getAttendanceCodesAtDate } from '@/store/slices/attendanceCodeSlice';
 import {
@@ -31,16 +31,17 @@ type Props = {
 export default function ScheduleEditDialog({ value, onChange, onSave }: Props) {
   const codeMaster = useAppSelector((state) => state.attendanceCode);
   const organization = useAppSelector((state) => state.organization);
+  const date = value?.date ?? new Date().toISOString().slice(0, 10);
   const attendanceCodes = getAttendanceCodesAtDate(
     codeMaster.codes,
     codeMaster.history,
-    value?.date ?? new Date().toISOString().slice(0, 10),
+    date,
   ).filter((code) => code.isSchedulable);
   const organizationSnapshot = getOrganizationSnapshot(
     organization.teams,
     organization.employees,
     organization.history,
-    value?.date ?? new Date().toISOString().slice(0, 10),
+    date,
   );
   const reportEmployees = organizationSnapshot.employees.map((employee) => ({
     ...employee,
@@ -48,6 +49,7 @@ export default function ScheduleEditDialog({ value, onChange, onSave }: Props) {
       ? UNASSIGNED_TEAM_NAME
       : organizationSnapshot.teams.find((team) => team.id === employee.teamId)?.name ?? '-',
   }));
+
   return (
     <Dialog open={Boolean(value)} onClose={() => onChange(null)} fullWidth maxWidth="sm">
       <DialogTitle>근태 일정 수정</DialogTitle>

@@ -1,9 +1,5 @@
-import type { AttendanceEvent } from '@/mocks';
-
-type AttendanceStandard = {
-  checkIn: string;
-  checkOut: string;
-};
+import type { AttendanceEvent } from '@/types/domain';
+import type { AttendanceStandard } from './attendanceRules';
 
 const toMinutes = (time: string) => {
   const [hour, minute] = time.split(':').map(Number);

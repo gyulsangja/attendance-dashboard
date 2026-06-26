@@ -4,12 +4,28 @@ import { Box, Button } from '@mui/material';
 import { EventAvailable } from '@mui/icons-material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { koKR } from '@mui/x-data-grid/locales';
-import type { OperationSchedule } from '@/mocks';
+import type { OperationSchedule } from '@/types/domain';
 
-export default function SchedulePanel({ rows, onAdd, onEdit, onDelete, locked = false }: { rows: OperationSchedule[]; onAdd: () => void; onEdit: (row: OperationSchedule) => void; onDelete: (id: number) => void; locked?: boolean; }) {
+type SchedulePanelProps = {
+  rows: OperationSchedule[];
+  onAdd: () => void;
+  onEdit: (row: OperationSchedule) => void;
+  onDelete: (id: number) => void;
+  locked?: boolean;
+};
+
+export default function SchedulePanel({
+  rows,
+  onAdd,
+  onEdit,
+  onDelete,
+  locked = false,
+}: SchedulePanelProps) {
   const columns: GridColDef<OperationSchedule>[] = [
-    { field: 'date', headerName: '일자', minWidth: 130, flex: .8 }, { field: 'department', headerName: '부서', minWidth: 130, flex: 1 },
-    { field: 'name', headerName: '이름', minWidth: 100, flex: .7 }, { field: 'type', headerName: '근태 일정', minWidth: 110, flex: .8 },
+    { field: 'date', headerName: '일자', minWidth: 130, flex: 0.8 },
+    { field: 'department', headerName: '부서', minWidth: 130, flex: 1 },
+    { field: 'name', headerName: '이름', minWidth: 100, flex: 0.7 },
+    { field: 'type', headerName: '근태 일정', minWidth: 110, flex: 0.8 },
     {
       field: 'actions',
       headerName: '관리',
@@ -20,36 +36,55 @@ export default function SchedulePanel({ rows, onAdd, onEdit, onDelete, locked = 
       align: 'center',
       headerAlign: 'center',
       renderCell: ({ row }) => (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 0.5,
-            width: '100%',
-            height: '100%',
-          }}
-        >
+        <div className="flex h-full items-center justify-center gap-2">
           <Button size="small" disabled={locked} onClick={() => onEdit(row)}>
             수정
           </Button>
-          <Button size="small" color="inherit" disabled={locked} onClick={() => onDelete(row.id)}>
+          <Button
+            size="small"
+            color="error"
+            disabled={locked}
+            onClick={() => onDelete(row.id)}
+          >
             삭제
           </Button>
-        </Box>
+        </div>
       ),
     },
   ];
-  return <>
-    <div className="mb-4 flex items-center justify-between">
-      <div>
-        <h2 className="font-bold">연차·반차 등 근태 일정</h2>
-        <p className="mt-1 text-sm text-slate-500">관리팀이 직원의 사전 근태 일정을 입력하고 수정합니다.</p>
+
+  return (
+    <section>
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold">근태 일정 입력</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            연차, 병가, 재택 등 사전 근태 일정을 등록합니다.
+          </p>
+        </div>
+        <Button
+          variant="contained"
+          startIcon={<EventAvailable />}
+          onClick={onAdd}
+          disabled={locked}
+        >
+          일정 추가
+        </Button>
       </div>
-      <Button variant="contained" startIcon={<EventAvailable />} disabled={locked} onClick={onAdd} sx={{ bgcolor: '#0f172a' }}>일정 입력</Button>
-    </div>
-    <Box sx={{ height: 430 }}>
-      <DataGrid rows={rows} columns={columns} localeText={koKR.components.MuiDataGrid.defaultProps.localeText} disableRowSelectionOnClick sx={{ borderColor: '#e2e8f0', '& .MuiDataGrid-columnHeader': { bgcolor: '#f8fafc' } }} />
-    </Box>
-  </>;
+      <Box sx={{ height: 430 }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          pageSizeOptions={[10, 20]}
+          disableRowSelectionOnClick
+          localeText={koKR.components.MuiDataGrid.defaultProps.localeText}
+          sx={{
+            borderColor: '#e2e8f0',
+            '& .MuiDataGrid-columnHeader': { bgcolor: '#f8fafc' },
+            '& .MuiDataGrid-columnHeaderTitle': { fontWeight: 700 },
+          }}
+        />
+      </Box>
+    </section>
+  );
 }

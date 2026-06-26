@@ -4,11 +4,13 @@ import { systemUsers, type SystemUser, type UserRole } from '@/mocks';
 type AuthState = {
   users: SystemUser[];
   currentUserId: number | null;
+  accessToken: string | null;
 };
 
 const initialState: AuthState = {
   users: systemUsers.map((user) => ({ ...user })),
   currentUserId: null,
+  accessToken: null,
 };
 
 const authSlice = createSlice({
@@ -18,8 +20,19 @@ const authSlice = createSlice({
     login(state, action: PayloadAction<number>) {
       state.currentUserId = action.payload;
     },
+    setApiSession(
+      state,
+      action: PayloadAction<{ user: SystemUser; accessToken: string }>,
+    ) {
+      const existing = state.users.find((user) => user.id === action.payload.user.id);
+      if (existing) Object.assign(existing, action.payload.user);
+      else state.users.push(action.payload.user);
+      state.currentUserId = action.payload.user.id;
+      state.accessToken = action.payload.accessToken;
+    },
     logout(state) {
       state.currentUserId = null;
+      state.accessToken = null;
     },
     changePassword(
       state,
@@ -47,6 +60,7 @@ const authSlice = createSlice({
 
 export const {
   login,
+  setApiSession,
   logout,
   changePassword,
   addSystemUser,

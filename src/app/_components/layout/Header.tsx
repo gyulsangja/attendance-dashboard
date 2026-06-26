@@ -1,11 +1,12 @@
 'use client';
 
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Chip } from '@mui/material';
 import { Logout } from '@mui/icons-material';
+import { Button, Chip } from '@mui/material';
 import { useAccess } from '@/app/_components/auth/AccessProvider';
+import { useLogoutMutation } from '@/hooks/useAuthMutations';
 import { useAppDispatch } from '@/store/hooks';
 import { logout } from '@/store/slices/authSlice';
 
@@ -13,18 +14,28 @@ export default function Header() {
   const access = useAccess();
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const logoutMutation = useLogoutMutation();
+
+  const handleLogout = () => {
+    logoutMutation.mutate(undefined, {
+      onSettled: () => {
+        dispatch(logout());
+        router.replace('/login');
+      },
+    });
+  };
 
   return (
     <header className="fixed z-50 flex h-15 w-dvw items-center justify-between bg-white px-4 shadow-2xs">
       <Link href="/" className="flex h-full items-center">
         <Image
           src="/images/commons/logo.svg"
-          alt="엘엑스 로고"
+          alt="LX 로고"
           className="w-6"
           width={91}
           height={75}
         />
-        <span className="font-bold text-xl">엘엑스</span>
+        <span className="text-xl font-bold">엘엑스</span>
       </Link>
 
       {access.currentUser && (
@@ -38,10 +49,8 @@ export default function Header() {
             size="small"
             color="inherit"
             startIcon={<Logout />}
-            onClick={() => {
-              dispatch(logout());
-              router.replace('/login');
-            }}
+            disabled={logoutMutation.isPending}
+            onClick={handleLogout}
           >
             로그아웃
           </Button>

@@ -12,25 +12,30 @@ import {
   TextField,
 } from '@mui/material';
 import { getDefaultPath } from '@/app/_components/auth/AuthGuard';
+import { useLoginMutation } from '@/hooks/useAuthMutations';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { login } from '@/store/slices/authSlice';
+import { login, setApiSession } from '@/store/slices/authSlice';
+
+const defaultUsername = process.env.NEXT_PUBLIC_DATA_SOURCE === 'api' ? 'dev1' : 'admin';
+const defaultPassword = process.env.NEXT_PUBLIC_DATA_SOURCE === 'api' ? 'password123' : 'admin123';
 
 export default function Page() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const loginMutation = useLoginMutation();
   const { users, currentUserId } = useAppSelector((state) => state.auth);
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin123');
-  const [remember, setRemember] = useState(false);
+  const [username, setUsername] = useState(() => (
+    typeof window === 'undefined'
+      ? defaultUsername
+      : window.localStorage.getItem('attendance-saved-id') ?? defaultUsername
+  ));
+  const [password, setPassword] = useState(defaultPassword);
+  const [remember, setRemember] = useState(() => (
+    typeof window === 'undefined'
+      ? false
+      : Boolean(window.localStorage.getItem('attendance-saved-id'))
+  ));
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    const savedId = window.localStorage.getItem('attendance-saved-id');
-    if (savedId) {
-      setUsername(savedId);
-      setRemember(true);
-    }
-  }, []);
 
   useEffect(() => {
     const currentUser = users.find((user) => user.id === currentUserId);
@@ -38,18 +43,25 @@ export default function Page() {
   }, [currentUserId, users, router]);
 
   const submit = () => {
-    const user = users.find(
-      (item) => item.username === username.trim() && item.password === password,
-    );
-    if (!user) {
-      setError('아이디 또는 비밀번호가 올바르지 않습니다.');
-      return;
-    }
+    if (loginMutation.isPending) return;
+    setError('');
 
-    if (remember) window.localStorage.setItem('attendance-saved-id', user.username);
-    else window.localStorage.removeItem('attendance-saved-id');
-    dispatch(login(user.id));
-    router.replace(getDefaultPath(user.role));
+    loginMutation.mutate(
+      { username, password },
+      {
+        onSuccess: ({ user, accessToken }) => {
+          if (remember) window.localStorage.setItem('attendance-saved-id', user.username);
+          else window.localStorage.removeItem('attendance-saved-id');
+
+          if (accessToken) dispatch(setApiSession({ user, accessToken }));
+          else dispatch(login(user.id));
+          router.replace(getDefaultPath(user.role));
+        },
+        onError: (error) => {
+          setError(error instanceof Error ? error.message : '로그인에 실패했습니다.');
+        },
+      },
+    );
   };
 
   return (
@@ -67,9 +79,9 @@ export default function Page() {
 
       <div className="flex w-full flex-col justify-center px-6 lg:w-1/2">
         <div className="mx-auto w-full max-w-[460px]">
-          <h1 className="text-center text-4xl font-black">안녕하세요!</h1>
+          <h1 className="text-center text-4xl font-black">안녕하세요</h1>
           <p className="mt-4 text-center text-slate-500">
-            출퇴근 관리 시스템에 로그인해주세요.
+            출퇴근 관리 시스템에 로그인해 주세요.
           </p>
 
           {error && <Alert severity="error" sx={{ mt: 4 }}>{error}</Alert>}
@@ -80,7 +92,9 @@ export default function Page() {
               label="아이디"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
-              onKeyDown={(event) => event.key === 'Enter' && submit()}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') submit();
+              }}
             />
             <TextField
               fullWidth
@@ -88,7 +102,9 @@ export default function Page() {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              onKeyDown={(event) => event.key === 'Enter' && submit()}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') submit();
+              }}
             />
           </Stack>
 
@@ -107,19 +123,26 @@ export default function Page() {
             fullWidth
             size="large"
             variant="contained"
+            disabled={loginMutation.isPending}
             onClick={submit}
             sx={{ mt: 3, py: 1.4 }}
           >
-            로그인
+            {loginMutation.isPending ? '로그인 중' : '로그인'}
           </Button>
 
           <div className="mt-6 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
-            <p className="font-bold">검토용 계정</p>
-            <p className="mt-2">관리자: admin / admin123</p>
-            <p>경영진: executive / 1234</p>
-            <p>교대담당: shift / 1234</p>
-            <p>조직담당: organization / 1234</p>
-            <p>일반 사용자: user / 1234</p>
+            <p className="font-bold">검증용 계정</p>
+            {process.env.NEXT_PUBLIC_DATA_SOURCE === 'api' ? (
+              <p className="mt-2">백엔드 테스트: dev1 / password123</p>
+            ) : (
+              <>
+                <p className="mt-2">관리자: admin / admin123</p>
+                <p>경영진: executive / 1234</p>
+                <p>교대 담당: shift / 1234</p>
+                <p>조직 담당: organization / 1234</p>
+                <p>일반 사용자: user / 1234</p>
+              </>
+            )}
           </div>
         </div>
       </div>

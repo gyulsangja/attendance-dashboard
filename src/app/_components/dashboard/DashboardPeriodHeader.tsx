@@ -1,6 +1,7 @@
-'use client';
+﻿'use client';
 
 import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import { getYearOptions } from '@/lib/date';
 
 type Props = {
   year: number;
@@ -24,6 +25,7 @@ export default function DashboardPeriodHeader({
   onWeekChange,
 }: Props) {
   const selectedWeek = weeks.find((week) => week.week === weekNumber) ?? weeks[0];
+  const yearOptions = getYearOptions(year);
 
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
@@ -34,12 +36,13 @@ export default function DashboardPeriodHeader({
             confirmed
               ? 'bg-emerald-100 text-emerald-700'
               : 'bg-amber-100 text-amber-700'
-          }`}>
+          }`}
+          >
             {confirmed ? '현황통계 반영 완료' : '운영관리 진행 중'}
           </span>
         </div>
         <p className="mt-2 text-sm text-slate-500">
-          {selectedWeek?.startDate} ~ {selectedWeek?.endDate} 기준 주간 전사 현황입니다.
+          {selectedWeek?.startDate} ~ {selectedWeek?.endDate} 기준 주간 회사 현황입니다.
         </p>
       </div>
 
@@ -51,7 +54,7 @@ export default function DashboardPeriodHeader({
             value={year}
             onChange={(event) => onYearChange(Number(event.target.value))}
           >
-            {[2025, 2026, 2027].map((item) => (
+            {yearOptions.map((item) => (
               <MenuItem key={item} value={item}>{item}년</MenuItem>
             ))}
           </Select>
@@ -82,7 +85,6 @@ export default function DashboardPeriodHeader({
             ))}
           </Select>
         </FormControl>
-
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import {
   FormControl,
@@ -8,6 +8,7 @@ import {
   SelectChangeEvent,
   Stack,
 } from '@mui/material';
+import { getYearOptions } from '@/lib/date';
 
 type WeekOption = { week: number };
 
@@ -32,6 +33,8 @@ export default function OperationHeader({
   onMonthChange,
   onWeekChange,
 }: OperationHeaderProps) {
+  const yearOptions = getYearOptions(year);
+
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div>
@@ -53,7 +56,7 @@ export default function OperationHeader({
                   onYearChange(Number(event.target.value))
                 }
               >
-                {[2026, 2025, 2024].map((value) => (
+                {yearOptions.map((value) => (
                   <MenuItem key={value} value={String(value)}>
                     {value}년
                   </MenuItem>

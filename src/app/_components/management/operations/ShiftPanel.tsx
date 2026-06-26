@@ -1,14 +1,14 @@
 'use client';
 
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
 import koLocale from '@fullcalendar/core/locales/ko';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import FullCalendar from '@fullcalendar/react';
 import {
   Alert,
   Button,
   Stack,
 } from '@mui/material';
-import type { ShiftSchedule } from '@/mocks';
+import type { ShiftSchedule } from '@/types/domain';
 
 type ShiftPanelProps = {
   rows: ShiftSchedule[];
@@ -24,10 +24,9 @@ type ShiftPanelProps = {
 };
 
 const shiftColors: Record<string, string> = {
-  주간: '#2563eb',
-  오후: '#0f766e',
-  야간: '#4338ca',
-  휴무: '#64748b',
+  '09:00 ~ 18:00': '#2563eb',
+  '12:00 ~ 21:00': '#0f766e',
+  '21:00 ~ 익일 09:00': '#4338ca',
 };
 
 const toDateKey = (date: Date) => [
@@ -35,6 +34,11 @@ const toDateKey = (date: Date) => [
   String(date.getMonth() + 1).padStart(2, '0'),
   String(date.getDate()).padStart(2, '0'),
 ].join('-');
+
+const isInSelectedWeek = (
+  date: string,
+  selectedWeek: { startDate: string; endDate: string },
+) => date >= selectedWeek.startDate && date <= selectedWeek.endDate;
 
 export default function ShiftPanel({
   rows,
@@ -48,13 +52,9 @@ export default function ShiftPanel({
   canInput = false,
   canApprove = false,
 }: ShiftPanelProps) {
-  const weekRows = rows.filter(
-    (item) => item.shift !== '휴무'
-      && item.date >= selectedWeek.startDate
-      && item.date <= selectedWeek.endDate,
-  );
-  const events = rows.filter((schedule) => schedule.shift !== '휴무').map((schedule) => {
-    const color = shiftColors[schedule.shift] ?? '#475569';
+  const weekRows = rows.filter((item) => isInSelectedWeek(item.date, selectedWeek));
+  const events = rows.map((schedule) => {
+    const color = shiftColors[schedule.time] ?? '#475569';
     return {
       id: String(schedule.id),
       title: `${schedule.name} · ${schedule.time}`,
@@ -77,7 +77,12 @@ export default function ShiftPanel({
         </div>
         <Stack direction="row" spacing={1}>
           {canInput && (
-            <Button variant="contained" disabled={confirmed} onClick={onAdd} sx={{ bgcolor: '#0f172a' }}>
+            <Button
+              variant="contained"
+              disabled={confirmed}
+              onClick={onAdd}
+              sx={{ bgcolor: '#0f172a' }}
+            >
               선택 주차 일정 입력
             </Button>
           )}
@@ -101,7 +106,7 @@ export default function ShiftPanel({
       </Alert>
       {confirmed && (
         <Alert severity="warning" sx={{ mb: 2 }}>
-          선택 주차의 교대근무 일정이 확정되어 입력·수정·삭제할 수 없습니다. 일정을 변경하려면 먼저 확정을 취소하세요.
+          선택 주차의 교대근무 일정이 확정되어 입력, 수정, 삭제할 수 없습니다. 일정을 변경하려면 먼저 확정을 취소하세요.
         </Alert>
       )}
 
@@ -121,7 +126,7 @@ export default function ShiftPanel({
           dayMaxEvents={4}
           dayCellClassNames={({ date }) => {
             const key = toDateKey(date);
-            return key >= selectedWeek.startDate && key <= selectedWeek.endDate
+            return isInSelectedWeek(key, selectedWeek)
               ? ['selected-operation-week']
               : [];
           }}
@@ -140,7 +145,6 @@ export default function ShiftPanel({
           }}
         />
       </div>
-
     </>
   );
 }

@@ -3,29 +3,22 @@
 import { useState } from 'react';
 import {
   Box,
-  Chip,
   FormControl,
   InputLabel,
   MenuItem,
   Select,
 } from '@mui/material';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { DataGrid } from '@mui/x-data-grid';
 import { koKR } from '@mui/x-data-grid/locales';
-import { type AttendanceRecord, type OperationSchedule } from '@/mocks';
-import { getKoreanPublicHoliday } from '@/lib/date';
-import { useAppSelector } from '@/store/hooks';
-import { getAttendanceCodesAtDate } from '@/store/slices/attendanceCodeSlice';
-import {
-  getOrganizationSnapshot,
-  UNASSIGNED_TEAM_ID,
-  UNASSIGNED_TEAM_NAME,
-} from '@/store/slices/organizationSlice';
+import { useWeeklyAttendanceGrid } from '@/app/_components/management/operations/hooks/useWeeklyAttendanceGrid';
+import type { AttendanceRecord, OperationSchedule } from '@/types/domain';
 
 type WeeklyAttendanceGridProps = {
   days: { date: string; label: string }[];
   records: AttendanceRecord[];
   schedules: OperationSchedule[];
   onEdit: (employeeId: number, date: string) => void;
+  readOnly?: boolean;
 };
 
 export default function WeeklyAttendanceGrid({
@@ -33,144 +26,17 @@ export default function WeeklyAttendanceGrid({
   records,
   schedules,
   onEdit,
+  readOnly = false,
 }: WeeklyAttendanceGridProps) {
   const [department, setDepartment] = useState('all');
-  const organization = useAppSelector((state) => state.organization);
-  const codeMaster = useAppSelector((state) => state.attendanceCode);
-  const organizationSnapshot = getOrganizationSnapshot(
-    organization.teams,
-    organization.employees,
-    organization.history,
-    days[0]?.date ?? '2026-06-01',
-  );
-  const weekEmployees = organizationSnapshot.employees.map((employee) => ({
-    id: employee.id,
-    name: employee.name,
-    shiftWorker: employee.shiftWorker,
-    department: employee.teamId === UNASSIGNED_TEAM_ID
-      ? UNASSIGNED_TEAM_NAME
-      : organizationSnapshot.teams.find((team) => team.id === employee.teamId)?.name ?? '-',
-  }));
-  const departments = [
-    ...new Set(weekEmployees.map((employee) => employee.department)),
-  ];
-  const rows = weekEmployees.filter(
-    (employee) =>
-      department === 'all' || employee.department === department,
-  );
-
-  const columns: GridColDef[] = [
-    {
-      field: 'department',
-      headerName: '부서',
-      minWidth: 120,
-      flex: 0.9,
-      align: 'center',
-      headerAlign: 'center',
-    },
-    {
-      field: 'name',
-      headerName: '이름',
-      minWidth: 90,
-      flex: 0.7,
-      align: 'center',
-      headerAlign: 'center',
-    },
-    ...days.map((day) => ({
-      field: day.date,
-      headerName: day.label,
-      headerClassName: getKoreanPublicHoliday(day.date)
-        || new Date(`${day.date}T00:00:00`).getDay() === 0
-        ? 'attendance-holiday-header'
-        : new Date(`${day.date}T00:00:00`).getDay() === 6
-          ? 'attendance-saturday-header'
-          : '',
-      cellClassName: getKoreanPublicHoliday(day.date)
-        || new Date(`${day.date}T00:00:00`).getDay() === 0
-        ? 'attendance-holiday-cell'
-        : new Date(`${day.date}T00:00:00`).getDay() === 6
-          ? 'attendance-saturday-cell'
-          : '',
-      minWidth: 130,
-      flex: 1,
-      align: 'center' as const,
-      headerAlign: 'center' as const,
-      sortable: false,
-      filterable: false,
-      renderCell: ({ row }: { row: { id: number; shiftWorker: boolean } }) => {
-        const record = records.find(
-          (item) =>
-            item.employeeId === row.id && item.date === day.date,
-        );
-        const items = schedules.filter(
-          (item) =>
-            item.employeeId === row.id && item.date === day.date,
-        );
-        const codesAtDate = getAttendanceCodesAtDate(
-          codeMaster.codes,
-          codeMaster.history,
-          day.date,
-        );
-        const recordLabels = record?.events.map(
-          (event) => codesAtDate.find((code) => code.id === event.codeId)?.label
-            ?? event.codeId,
-        ) ?? [];
-        const publicHoliday = row.shiftWorker
-          ? null
-          : getKoreanPublicHoliday(day.date);
-        const attendanceLabels = [...new Set([
-          ...(publicHoliday ? [publicHoliday.name] : []),
-          ...items.map((item) => item.type),
-          ...recordLabels,
-        ])];
-
-        return (
-          <Box
-            onClick={() => onEdit(row.id, day.date)}
-            sx={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textAlign: 'center',
-              cursor: 'pointer',
-              px: 0.5,
-              '&:hover': { bgcolor: '#f8fafc' },
-            }}
-          >
-            <div className="whitespace-nowrap text-xs font-semibold">
-              {record?.checkIn ? `출 ${record.checkIn}` : '출 -'}{' '}
-              <span className="text-slate-400">/</span>{' '}
-              {record?.checkOut ? `퇴 ${record.checkOut}` : '퇴 -'}
-            </div>
-
-            {attendanceLabels.length > 0 && (
-              <Chip
-                size="small"
-                label={attendanceLabels.join(', ')}
-                sx={{
-                  mt: 0.5,
-                  height: 20,
-                  maxWidth: '100%',
-                  bgcolor: '#f1f5f9',
-                  color: '#475569',
-                  fontSize: 10,
-                  fontWeight: 700,
-                  '& .MuiChip-label': {
-                    px: 0.75,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  },
-                }}
-              />
-            )}
-          </Box>
-        );
-      },
-    })),
-  ];
+  const { rows, columns, departments } = useWeeklyAttendanceGrid({
+    days,
+    records,
+    schedules,
+    department,
+    onEdit,
+    readOnly,
+  });
 
   return (
     <div className="mt-6">
@@ -178,7 +44,7 @@ export default function WeeklyAttendanceGrid({
         <div>
           <h3 className="font-bold">주간 출퇴근 통합 현황</h3>
           <p className="mt-1 text-sm text-slate-500">
-            날짜 셀을 클릭하면 출퇴근 시간을 수정할 수 있습니다.
+            {readOnly ? 'API 모드 또는 확정 상태에서는 출퇴근 시간 수동 수정을 제한합니다.' : '날짜 셀을 클릭하면 출퇴근 시간을 수정할 수 있습니다.'}
           </p>
         </div>
 

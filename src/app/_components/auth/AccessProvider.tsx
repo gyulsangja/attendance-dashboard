@@ -1,19 +1,33 @@
-'use client';
+﻿'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { tokenStorage } from '@/api/tokenStorage';
+import { applyDevelopmentAccessOverride } from '@/adapters/authAdapter';
 import { userRoles } from '@/mocks';
-import { useAppSelector } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { setApiSession } from '@/store/slices/authSlice';
 
 export type { UserRole } from '@/mocks';
 
-// 기존 레이아웃 구조를 유지하기 위한 얇은 래퍼입니다.
 export function AccessProvider({ children }: { children: React.ReactNode }) {
+  const dispatch = useAppDispatch();
+  const { currentUserId } = useAppSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (currentUserId) return;
+
+    const accessToken = tokenStorage.getAccessToken();
+    const user = tokenStorage.getSessionUser();
+    if (accessToken && user) dispatch(setApiSession({ user: applyDevelopmentAccessOverride(user), accessToken }));
+  }, [currentUserId, dispatch]);
+
   return children;
 }
 
 export function useAccess() {
   const { users, currentUserId } = useAppSelector((state) => state.auth);
-  const currentUser = users.find((user) => user.id === currentUserId) ?? null;
+  const storedCurrentUser = users.find((user) => user.id === currentUserId) ?? null;
+  const currentUser = storedCurrentUser ? applyDevelopmentAccessOverride(storedCurrentUser) : null;
   const role = currentUser?.role ?? 'EXECUTIVE';
 
   return useMemo(() => {
@@ -34,3 +48,5 @@ export function useAccess() {
     };
   }, [currentUser, role]);
 }
+
+

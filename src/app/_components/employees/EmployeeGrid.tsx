@@ -4,14 +4,19 @@ import { Delete, Edit } from '@mui/icons-material';
 import { Chip, IconButton, Tooltip } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { koKR } from '@mui/x-data-grid/locales';
-import type { OrganizationEmployee, OrganizationTeam } from '@/store/slices/organizationSlice';
-import { UNASSIGNED_TEAM_ID, UNASSIGNED_TEAM_NAME } from '@/store/slices/organizationSlice';
+import {
+  UNASSIGNED_TEAM_ID,
+  UNASSIGNED_TEAM_NAME,
+  type OrganizationEmployee,
+  type OrganizationTeam,
+} from '@/store/slices/organizationSlice';
 
 type EmployeeGridProps = {
   employees: OrganizationEmployee[];
   teams: OrganizationTeam[];
   onEdit: (employee: OrganizationEmployee) => void;
   onDelete: (employee: OrganizationEmployee) => void;
+  editDisabled?: boolean;
 };
 
 export default function EmployeeGrid({
@@ -19,14 +24,10 @@ export default function EmployeeGrid({
   teams,
   onEdit,
   onDelete,
+  editDisabled = false,
 }: EmployeeGridProps) {
   const columns: GridColDef<OrganizationEmployee>[] = [
-    {
-      field: 'name',
-      headerName: '이름',
-      minWidth: 110,
-      flex: 0.8,
-    },
+    { field: 'name', headerName: '이름', minWidth: 110, flex: 0.8 },
     {
       field: 'teamId',
       headerName: '부서',
@@ -34,20 +35,10 @@ export default function EmployeeGrid({
       flex: 1,
       valueGetter: (_value, row) => row.teamId === UNASSIGNED_TEAM_ID
         ? UNASSIGNED_TEAM_NAME
-        : teams.find((team) => team.id === row.teamId)?.name ?? '-',
+        : teams.find((team) => team.id === row.teamId)?.name ?? row.teamId,
     },
-    {
-      field: 'position',
-      headerName: '직위',
-      minWidth: 100,
-      flex: 0.7,
-    },
-    {
-      field: 'jobTitle',
-      headerName: '직무',
-      minWidth: 140,
-      flex: 1,
-    },
+    { field: 'position', headerName: '직위', minWidth: 100, flex: 0.7 },
+    { field: 'jobTitle', headerName: '직무', minWidth: 140, flex: 1 },
     {
       field: 'shiftWorker',
       headerName: '교대근무',
@@ -77,10 +68,12 @@ export default function EmployeeGrid({
       headerAlign: 'center',
       renderCell: ({ row }) => (
         <div className="flex h-full items-center justify-center">
-          <Tooltip title="수정">
-            <IconButton size="small" onClick={() => onEdit(row)}>
-              <Edit fontSize="small" />
-            </IconButton>
+          <Tooltip title={editDisabled ? 'API 수정 미구현' : '수정'}>
+            <span>
+              <IconButton size="small" disabled={editDisabled} onClick={() => onEdit(row)}>
+                <Edit fontSize="small" />
+              </IconButton>
+            </span>
           </Tooltip>
           <Tooltip title="삭제">
             <IconButton size="small" color="error" onClick={() => onDelete(row)}>

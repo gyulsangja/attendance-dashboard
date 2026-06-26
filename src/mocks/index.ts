@@ -7,17 +7,14 @@ export {
   attendanceRecords,
   reportEmployees,
   getReportEmployeesForDate,
-  getRecordsInPeriod,
   getReportEmployee,
   type AttendanceEvent,
   type AttendanceRecord,
   type ReportEmployee,
 } from './reports/reportData';
 export {
-  deviceUploadMock,
   confirmedOperationWeeks,
   operationSchedules,
-  operationWeeks,
   shiftSchedules,
   shiftWorkers,
   type OperationSchedule,

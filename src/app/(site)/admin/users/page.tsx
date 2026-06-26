@@ -1,45 +1,46 @@
-'use client';
+﻿'use client';
 
-import { useState } from 'react';
-import { Add, Delete } from '@mui/icons-material';
+import { useMemo, useState } from 'react';
+import { Add } from '@mui/icons-material';
+import { Alert, Button, CircularProgress } from '@mui/material';
+import UserDialog from '@/app/_components/admin/UserDialog';
+import UserGrid from '@/app/_components/admin/UserGrid';
+import { useCommonCodesQuery } from '@/hooks/useCommonCodeQueries';
 import {
-  Alert,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-  TextField,
-  Tooltip,
-} from '@mui/material';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { koKR } from '@mui/x-data-grid/locales';
-import { userRoles, type SystemUser, type UserRole } from '@/mocks';
-import { useAccess } from '@/app/_components/auth/AccessProvider';
+  useDeleteUserMutation,
+  useInsertUserMutation,
+  useModifyUserMutation,
+  useUsersQuery,
+} from '@/hooks/useUserQueries';
+import { isApiDataSource } from '@/repositories/config';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   addSystemUser,
   deleteSystemUser,
   updateSystemUserRole,
 } from '@/store/slices/authSlice';
+import type { SystemUser, UserRole } from '@/types/domain';
 
 const newUser = (): Omit<SystemUser, 'id'> => ({
   username: '',
   password: '1234',
   name: '',
-  role: 'EXECUTIVE',
+  role: 'GENERAL',
 });
 
 export default function Page() {
-  const access = useAccess();
   const dispatch = useAppDispatch();
-  const { users, currentUserId } = useAppSelector((state) => state.auth);
+  const { users: storeUsers, currentUserId } = useAppSelector((state) => state.auth);
+  const usersQuery = useUsersQuery();
+  const commonCodesQuery = useCommonCodesQuery();
+  const insertUserMutation = useInsertUserMutation();
+  const modifyUserMutation = useModifyUserMutation();
+  const deleteUserMutation = useDeleteUserMutation();
+  const users = isApiDataSource ? usersQuery.data ?? [] : storeUsers;
+  const backendRoleCodes = useMemo(
+    () => (commonCodesQuery.data ?? []).filter((code) => code.groupCode === 'G_USER_LEVEL'),
+    [commonCodesQuery.data],
+  );
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(newUser());
   const [error, setError] = useState('');
@@ -49,140 +50,116 @@ export default function Page() {
       setError('이미 사용 중인 아이디입니다.');
       return;
     }
-    dispatch(addSystemUser({
+
+    const user = {
       ...form,
-      id: Math.max(0, ...users.map((user) => user.id)) + 1,
+      id: Math.max(0, ...users.map((item) => item.id)) + 1,
       username: form.username.trim(),
       name: form.name.trim(),
-    }));
-    setOpen(false);
+    };
+
+    if (!isApiDataSource) {
+      dispatch(addSystemUser(user));
+      setOpen(false);
+      return;
+    }
+
+    insertUserMutation.mutate(user, {
+      onSuccess: () => setOpen(false),
+      onError: (error) =>
+        setError(error instanceof Error ? error.message : '사용자 등록에 실패했습니다.'),
+    });
   };
 
-  const columns: GridColDef<SystemUser>[] = [
-    { field: 'username', headerName: '아이디', minWidth: 140, flex: 1 },
-    { field: 'name', headerName: '이름', minWidth: 140, flex: 1 },
-    {
-      field: 'role',
-      headerName: '권한',
-      minWidth: 210,
-      flex: 1.4,
-      renderCell: ({ row }) => (
-        <Select
-          size="small"
-          fullWidth
-          value={row.role}
-          disabled={row.id === currentUserId}
-          onChange={(event) => dispatch(updateSystemUserRole({
-            userId: row.id,
-            role: event.target.value as UserRole,
-          }))}
-          sx={{ my: 0.5 }}
-        >
-          {userRoles.map((role) => (
-            <MenuItem key={role.id} value={role.id}>{role.label}</MenuItem>
-          ))}
-        </Select>
-      ),
-    },
-    {
-      field: 'description',
-      headerName: '사용 범위',
-      minWidth: 280,
-      flex: 2,
-      valueGetter: (_value, row) => userRoles.find((role) => role.id === row.role)?.description ?? '-',
-    },
-    {
-      field: 'actions',
-      headerName: '관리',
-      width: 90,
-      sortable: false,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: ({ row }) => (
-        <Tooltip title={row.id === currentUserId ? '현재 로그인 계정은 삭제할 수 없습니다.' : '회원 삭제'}>
-          <span>
-            <IconButton
-              size="small"
-              color="error"
-              disabled={row.id === currentUserId}
-              onClick={() => {
-                if (window.confirm(`${row.name} 회원을 삭제하시겠습니까?`)) {
-                  dispatch(deleteSystemUser(row.id));
-                }
-              }}
-            >
-              <Delete fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
-      ),
-    },
-  ];
+  const openDialog = () => {
+    setForm(newUser());
+    setError('');
+    setOpen(true);
+  };
+
+  const changeRole = (userId: number, role: UserRole) => {
+    const user = users.find((item) => item.id === userId);
+    if (!user) return;
+
+    if (!isApiDataSource) {
+      dispatch(updateSystemUserRole({ userId, role }));
+      return;
+    }
+
+    modifyUserMutation.mutate({ ...user, role });
+  };
+
+  const deleteUser = (user: SystemUser) => {
+    if (!window.confirm(`${user.name} 사용자를 삭제하시겠습니까?`)) return;
+
+    if (!isApiDataSource) {
+      dispatch(deleteSystemUser(user.id));
+      return;
+    }
+
+    deleteUserMutation.mutate(user);
+  };
 
   return (
     <main className="mx-auto max-w-[1400px]">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">회원 관리</h1>
+          <h1 className="text-2xl font-bold">사용자 관리</h1>
           <p className="mt-1 text-sm text-slate-500">
-            시스템 사용자와 메뉴 접근 권한을 관리합니다.
+            시스템 사용자의 메뉴 접근 권한을 관리합니다.
           </p>
         </div>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => {
-            setForm(newUser());
-            setError('');
-            setOpen(true);
-          }}
-        >
-          회원 추가
+        <Button variant="contained" startIcon={<Add />} onClick={openDialog}>
+          사용자 추가
         </Button>
       </div>
 
       <Alert severity="info" sx={{ mt: 4 }}>
-        관리자 본인의 권한 변경과 계정 삭제는 제한됩니다.
+        백엔드 권한 코드는 실제 API의 role_code이며, 프론트 권한은 화면 정책에 맞춰 변환한 값입니다. 사용자 수정 API가 확정되기 전까지 API 모드에서는 권한 변경을 제한합니다.
       </Alert>
 
-      <div className="mt-4 h-[590px] rounded-xl bg-white">
-        <DataGrid
-          rows={users}
-          columns={columns}
-          rowHeight={64}
-          pageSizeOptions={[10, 20]}
-          initialState={{ pagination: { paginationModel: { page: 0, pageSize: 10 } } }}
-          disableRowSelectionOnClick
-          localeText={koKR.components.MuiDataGrid.defaultProps.localeText}
-          sx={{
-            borderColor: '#e2e8f0',
-            '& .MuiDataGrid-columnHeader': { bgcolor: '#f8fafc' },
-            '& .MuiDataGrid-columnHeaderTitle': { fontWeight: 700 },
-          }}
-        />
-      </div>
+      {usersQuery.isError && (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          사용자 목록을 불러오지 못했습니다.
+        </Alert>
+      )}
 
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>회원 추가</DialogTitle>
-        <DialogContent sx={{ pt: '12px !important' }}>
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-          <Stack spacing={2.5}>
-            <TextField fullWidth label="이름" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
-            <TextField fullWidth label="아이디" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} />
-            <TextField fullWidth type="password" label="초기 비밀번호" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
-            <FormControl fullWidth>
-              <InputLabel>권한</InputLabel>
-              <Select label="권한" value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as UserRole })}>
-                {userRoles.map((role) => <MenuItem key={role.id} value={role.id}>{role.label}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button onClick={() => setOpen(false)}>취소</Button>
-          <Button variant="contained" disabled={!form.name.trim() || !form.username.trim() || form.password.length < 4} onClick={save}>저장</Button>
-        </DialogActions>
-      </Dialog>
+      {commonCodesQuery.isError && (
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          권한 공통코드를 불러오지 못해 백엔드 권한 코드를 그대로 표시합니다.
+        </Alert>
+      )}
+
+      {(modifyUserMutation.isError || deleteUserMutation.isError) && (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          사용자 정보 변경 중 오류가 발생했습니다. 백엔드 사용자 저장 DTO 확인이 필요합니다.
+        </Alert>
+      )}
+
+      {isApiDataSource && usersQuery.isLoading ? (
+        <div className="flex min-h-[360px] items-center justify-center">
+          <CircularProgress size={32} />
+        </div>
+      ) : (
+        <UserGrid
+          users={users}
+          currentUserId={currentUserId}
+          backendRoleCodes={backendRoleCodes}
+          roleChangeDisabled={isApiDataSource}
+          onRoleChange={changeRole}
+          onDelete={deleteUser}
+        />
+      )}
+
+      <UserDialog
+        open={open}
+        form={form}
+        error={error}
+        saving={insertUserMutation.isPending}
+        onFormChange={setForm}
+        onClose={() => setOpen(false)}
+        onSave={save}
+      />
     </main>
   );
 }

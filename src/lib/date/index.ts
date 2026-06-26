@@ -6,3 +6,4 @@ export * from './getCurrentWeek';
 export * from './formatDate';
 export * from './koreanPublicHolidays';
 export * from './getPreviousWeekPeriod';
+export * from './getYearOptions';
