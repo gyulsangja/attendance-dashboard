@@ -23,7 +23,7 @@ type Props = {
   open: boolean;
   existing: OperationSchedule[];
   onClose: () => void;
-  onSave: (items: OperationSchedule[]) => void;
+  onSave: (items: OperationSchedule[]) => void | Promise<void>;
 };
 
 export default function ScheduleEntryDialog({
@@ -34,8 +34,8 @@ export default function ScheduleEntryDialog({
 }: Props) {
   const entry = useScheduleEntryDrafts({ existing });
 
-  const save = () => {
-    onSave(entry.buildSchedules());
+  const save = async () => {
+    await onSave(entry.buildSchedules());
     onClose();
   };
 

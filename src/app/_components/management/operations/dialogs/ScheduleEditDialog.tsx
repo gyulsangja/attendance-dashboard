@@ -25,7 +25,7 @@ import {
 type Props = {
   value: OperationSchedule | null;
   onChange: (value: OperationSchedule | null) => void;
-  onSave: () => void;
+  onSave: () => void | Promise<void>;
 };
 
 export default function ScheduleEditDialog({ value, onChange, onSave }: Props) {
@@ -101,7 +101,7 @@ export default function ScheduleEditDialog({ value, onChange, onSave }: Props) {
       </DialogContent>
       <DialogActions>
         <Button onClick={() => onChange(null)}>취소</Button>
-        <Button variant="contained" onClick={onSave}>수정 저장</Button>
+        <Button variant="contained" onClick={() => { void onSave(); }}>수정 저장</Button>
       </DialogActions>
     </Dialog>
   );

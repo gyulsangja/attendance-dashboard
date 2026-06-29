@@ -1,9 +1,20 @@
 export type SystemSettingDto = {
   regularStart?: string;
+  regular_start?: string;
   regularEnd?: string;
+  regular_end?: string;
   halfAmStart?: string;
+  half_am_start?: string;
   halfAmEnd?: string;
+  half_am_end?: string;
   halfPmStart?: string;
+  half_pm_start?: string;
   halfPmEnd?: string;
+  half_pm_end?: string;
+  setting?: SystemSettingDto;
+  settinginfo?: SystemSettingDto;
+  systemsetting?: SystemSettingDto;
+  systemSetting?: SystemSettingDto;
+  data?: SystemSettingDto;
   [key: string]: unknown;
 };

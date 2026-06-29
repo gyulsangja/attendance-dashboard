@@ -21,6 +21,10 @@ export type CommonCodeDto = {
   refVal1?: string;
   ref_val2?: string;
   refVal2?: string;
+  ret_val1?: string;
+  retVal1?: string;
+  ret_val2?: string;
+  retVal2?: string;
   reg_val1?: string;
   regVal1?: string;
   reg_val2?: string;

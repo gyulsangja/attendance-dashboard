@@ -37,8 +37,8 @@ export const adaptCommonCodeDtoToCommonCode = (dto: CommonCodeDto): CommonCode =
     label: dto.detail_code_name ?? dto.detailCodeName ?? dto.code_name ?? dto.codeName ?? dto.name ?? detailCode,
     sortOrder: Number(dto.sort_order ?? dto.sortOrder ?? 0),
     isActive: (dto.use_status ?? dto.useStatus ?? dto.use_yn ?? dto.useYn ?? 'Y') !== 'N',
-    refVal1: dto.ref_val1 ?? dto.refVal1 ?? dto.reg_val1 ?? dto.regVal1 ?? '',
-    refVal2: dto.ref_val2 ?? dto.refVal2 ?? dto.reg_val2 ?? dto.regVal2 ?? '',
+    refVal1: dto.ref_val1 ?? dto.refVal1 ?? dto.ret_val1 ?? dto.retVal1 ?? dto.reg_val1 ?? dto.regVal1 ?? '',
+    refVal2: dto.ref_val2 ?? dto.refVal2 ?? dto.ret_val2 ?? dto.retVal2 ?? dto.reg_val2 ?? dto.regVal2 ?? '',
     etc: dto.etc ?? dto.remark ?? '',
   };
 };
@@ -49,10 +49,12 @@ export const adaptCommonCodeToDto = (code: CommonCode): CommonCodeDto => ({
   detail_code_name: code.label,
   sort_order: code.sortOrder,
   use_status: code.isActive ? 'Y' : 'N',
-  reg_val1: code.refVal1,
-  reg_val2: code.refVal2,
   ref_val1: code.refVal1,
   ref_val2: code.refVal2,
+  ret_val1: code.refVal1,
+  ret_val2: code.refVal2,
+  reg_val1: code.refVal1,
+  reg_val2: code.refVal2,
   etc: code.etc,
 });
 

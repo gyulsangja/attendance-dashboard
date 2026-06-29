@@ -8,8 +8,14 @@ export type AttendanceManagerDto = {
   attendCardNo?: number | string;
   emp_name?: string;
   empName?: string;
+  dept_code?: string;
+  deptCode?: string;
   dept_name?: string;
   deptName?: string;
+  rank_code?: string;
+  rankCode?: string;
+  rank_name?: string;
+  rankName?: string;
   position?: string;
   attend_date?: string;
   attendDate?: string;
@@ -29,6 +35,8 @@ export type AttendanceManagerDto = {
   totalWorking?: string;
   attend_code?: string;
   attendCode?: string;
+  attend_code_name?: string;
+  attendCodeName?: string;
   detail_code?: string;
   detailCode?: string;
   attend_reason?: string;
@@ -50,7 +58,14 @@ export type AttendanceManagerListResponseDto = {
   attendYearList?: AttendanceManagerDto[];
   attendManagerList?: AttendanceManagerDto[];
   attendmanagerlist?: AttendanceManagerDto[];
+  items?: AttendanceManagerDto[];
+  rows?: AttendanceManagerDto[];
+  list?: AttendanceManagerDto[];
   data?: AttendanceManagerDto[];
+  totalCount?: number | string;
+  total_count?: number | string;
+  deviceTimeCount?: number | string;
+  device_time_count?: number | string;
   status?: string;
   message?: string;
 };

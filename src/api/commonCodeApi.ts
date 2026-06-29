@@ -1,4 +1,4 @@
-﻿import { apiClient } from './client';
+import { apiClient } from './client';
 import type {
   CommonCodeDto,
   CommonCodeListResponseDto,
@@ -63,10 +63,17 @@ export const commonCodeApi = {
     });
   },
 
-  deleteCode(detailCode: string) {
-    return apiClient<string>(`/api/common/code/delete/${detailCode}`, {
-      method: 'POST',
-    });
+  async deleteCode(detailCode: string) {
+    try {
+      return await apiClient<string>(`/api/common/code/delete/${detailCode}`, {
+        method: 'POST',
+      });
+    } catch {
+      return apiClient<string>(`/api/common/group/delete/${detailCode}`, {
+        method: 'POST',
+      });
+    }
   },
 };
+
 

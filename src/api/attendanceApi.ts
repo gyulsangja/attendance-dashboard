@@ -21,6 +21,9 @@ const getAttendanceRows = (
     response.employeelist ??
     response.attendManagerList ??
     response.attendmanagerlist ??
+    response.items ??
+    response.rows ??
+    response.list ??
     response.data ??
     []
   );

@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { useAttendanceRecordsQuery } from '@/hooks/useAttendanceRecordQueries';
+import { useOperationSchedulesQuery } from '@/hooks/useOperationScheduleQueries';
 import { buildAttendanceWeekKey } from '@/lib/attendance/attendancePeriodKey';
 import { filterItemsByPeriod } from '@/lib/management/operationWeek';
 import { isApiDataSource } from '@/repositories/config';
@@ -34,6 +35,7 @@ export const useManagementOperationState = () => {
   const weekOptions = useAppSelector(selectOperationWeekOptions);
   const weekShiftWorkers = useAppSelector(selectOperationWeekShiftWorkers);
   const weeklyReport = useAppSelector(selectOperationWeeklyReport);
+  const apiSchedulesQuery = useOperationSchedulesQuery(week.startDate, week.endDate);
   const apiRecordsQuery = useAttendanceRecordsQuery(
     buildAttendanceWeekKey(management.year, management.month, management.weekNumber),
   );
@@ -42,13 +44,24 @@ export const useManagementOperationState = () => {
     [apiRecordsQuery.data, week],
   );
   const effectiveDeviceRecords =
-    isApiDataSource && apiWeekRecords.length > 0
+    isApiDataSource && apiRecordsQuery.isSuccess
       ? apiWeekRecords
       : management.deviceRecords;
+  const effectiveWeekSchedules =
+    isApiDataSource && apiSchedulesQuery.isSuccess
+      ? apiSchedulesQuery.data ?? []
+      : displayedWeekSchedules;
   const effectiveWeekTerminalRecords = filterItemsByPeriod(effectiveDeviceRecords, week)
     .filter((item) => Boolean(item.checkIn || item.checkOut));
   const effectiveWeekCsvUploaded = effectiveWeekTerminalRecords.length > 0;
   const effectiveSteps = steps.map((step, index) => {
+    if (index === 0) {
+      return {
+        ...step,
+        value: `${effectiveWeekSchedules.length}건 등록`,
+        done: true,
+      };
+    }
     if (index !== 1) return step;
     return {
       ...step,
@@ -63,9 +76,11 @@ export const useManagementOperationState = () => {
     ...management,
     attendanceCodes,
     deviceRecords: effectiveDeviceRecords,
-    deviceRecordsApiFallback: isApiDataSource && (apiRecordsQuery.data?.length ?? 0) === 0,
+    deviceRecordsApiFallback: isApiDataSource && apiRecordsQuery.isError,
     deviceRecordsApiLoading: isApiDataSource && apiRecordsQuery.isLoading,
-    displayedWeekSchedules,
+    displayedWeekSchedules: effectiveWeekSchedules,
+    schedulesApiFallback: isApiDataSource && apiSchedulesQuery.isError,
+    schedulesApiLoading: isApiDataSource && apiSchedulesQuery.isLoading,
     pendingShifts,
     shiftWeekConfirmed,
     steps: effectiveSteps,

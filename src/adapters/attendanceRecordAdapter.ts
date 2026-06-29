@@ -44,14 +44,14 @@ export const adaptAttendanceManagerDtoToRecord = (
   const codeId =
     dto.attend_code ?? dto.attendCode ?? dto.detail_code ?? dto.detailCode;
   const detail =
-    dto.attend_reason ?? dto.attendReason ?? dto.remark ?? dto.memo ?? dto.etc ?? '';
+    dto.attend_code_name ?? dto.attendCodeName ?? dto.attend_reason ?? dto.attendReason ?? dto.remark ?? dto.memo ?? dto.etc ?? '';
 
   return {
     id: getRecordId(dto),
     employeeId: getEmployeeId(dto),
     employeeName: getEmployeeName(dto),
-    department: dto.dept_name ?? dto.deptName ?? '-',
-    position: dto.position ?? '-',
+    department: dto.dept_name ?? dto.deptName ?? dto.dept_code ?? dto.deptCode ?? '-',
+    position: dto.rank_name ?? dto.rankName ?? dto.position ?? dto.rank_code ?? dto.rankCode ?? '-',
     date: getDate(dto),
     checkIn: dto.check_in ?? dto.checkIn ?? dto.attendance_time ?? dto.attendanceTime,
     checkOut: dto.check_out ?? dto.checkOut ?? dto.leave_working_time ?? dto.leaveWorkingTime,

@@ -6,9 +6,10 @@ const getEmployeeId = (dto: EmployeeDto) => Number(dto.emp_no ?? dto.empNo ?? 0)
 const getEmployeeName = (dto: EmployeeDto) => dto.emp_name ?? dto.empName ?? dto.name ?? '-';
 const getDepartment = (dto: EmployeeDto) =>
   dto.dept_name ?? dto.deptName ?? dto.department ?? dto.dept_code ?? dto.deptCode ?? '-';
-const getPosition = (dto: EmployeeDto) => dto.position ?? dto.rank_code ?? dto.rankCode ?? '-';
+const getPosition = (dto: EmployeeDto) =>
+  dto.rank_name ?? dto.rankName ?? dto.position ?? dto.rank_code ?? dto.rankCode ?? '-';
 const getJobTitle = (dto: EmployeeDto) =>
-  dto.job_title ?? dto.jobTitle ?? dto.work_type_code ?? dto.workTypeCode ?? '';
+  dto.work_type_name ?? dto.workTypeName ?? dto.job_title ?? dto.jobTitle ?? dto.work_type_code ?? dto.workTypeCode ?? '';
 const getHoldStatusCode = (dto: EmployeeDto) => dto.hold_stat_code ?? dto.holdStatCode ?? '';
 const isShiftWorker = (dto: EmployeeDto) => {
   const shiftValue = dto.shift_yn ?? dto.shiftYn ?? dto.work_type_code ?? dto.workTypeCode ?? 'N';

@@ -24,12 +24,13 @@ export const useManagementOperations = () => {
     codeMaster,
     deviceRecords: state.deviceRecords,
     organization,
+    week: state.week,
   });
   const deviceUpload = useDeviceUpload({
     deviceRecords: state.deviceRecords,
     organization,
     policy: codeMaster.workTimePolicy,
-    schedules: state.schedules,
+    schedules: state.displayedWeekSchedules,
     shifts: state.shifts,
     week: state.week,
     weekDays: state.weekDays,
@@ -43,6 +44,7 @@ export const useManagementOperations = () => {
     deviceUpload,
     scheduleEditing,
     shiftWeekActions,
+    week: state.week,
   });
 
   return {

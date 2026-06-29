@@ -18,7 +18,7 @@ export const employeeApi = {
 
   async selectAll() {
     const response = await apiClient<EmployeeListResponseDto>('/api/employee/select');
-    return response.employeelist ?? response.employeeList ?? response.list ?? response.data ?? [];
+    return response.employeelist ?? response.employeeList ?? response.items ?? response.rows ?? response.list ?? response.data ?? [];
   },
 
   async selectOne(empNo: number | string) {
@@ -56,6 +56,8 @@ export const employeeApi = {
       ?? response.employeeAttendList
       ?? response.attendlist
       ?? response.attendList
+      ?? response.items
+      ?? response.rows
       ?? response.list
       ?? response.data
       ?? [];
@@ -75,6 +77,8 @@ export const employeeApi = {
       ?? response.employeeAttendList
       ?? response.attendlist
       ?? response.attendList
+      ?? response.items
+      ?? response.rows
       ?? response.list
       ?? response.data
       ?? [];

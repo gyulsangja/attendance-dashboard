@@ -15,6 +15,10 @@ type Props = {
   codeMaster: RootState['attendanceCode'];
   deviceRecords: AttendanceRecord[];
   organization: RootState['organization'];
+  week: {
+    startDate: string;
+    endDate: string;
+  };
 };
 
 export const useManagementDialogState = ({
@@ -22,11 +26,12 @@ export const useManagementDialogState = ({
   codeMaster,
   deviceRecords,
   organization,
+  week,
 }: Props) => {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [shiftOpen, setShiftOpen] = useState(false);
   const [editingShift, setEditingShift] = useState<ShiftSchedule | null>(null);
-  const scheduleEditing = useScheduleEditing({ attendanceCodes, organization });
+  const scheduleEditing = useScheduleEditing({ attendanceCodes, organization, week });
   const deviceEditing = useDeviceRecordEditing({
     codeMaster,
     deviceRecords,

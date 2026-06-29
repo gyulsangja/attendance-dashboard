@@ -13,11 +13,19 @@
   department?: string;
   rank_code?: string;
   rankCode?: string;
+  rank_name?: string;
+  rankName?: string;
   position?: string;
   work_type_code?: string;
   workTypeCode?: string;
+  work_type_name?: string;
+  workTypeName?: string;
   hold_stat_code?: string;
   holdStatCode?: string;
+  hold_stat_name?: string;
+  holdStatName?: string;
+  attend_card_no?: number | string;
+  attendCardNo?: number | string;
   email?: string;
   phone_no?: string;
   phoneNo?: string;
@@ -37,8 +45,12 @@
 export type EmployeeListResponseDto = {
   employeelist?: EmployeeDto[];
   employeeList?: EmployeeDto[];
+  items?: EmployeeDto[];
+  rows?: EmployeeDto[];
   list?: EmployeeDto[];
   data?: EmployeeDto[];
+  totalCount?: number | string;
+  total_count?: number | string;
 };
 
 export type EmployeeResponseDto = {
@@ -49,10 +61,28 @@ export type EmployeeResponseDto = {
 };
 
 export type EmployeeAttendDto = {
+  id?: number | string;
+  idx?: number | string;
   emp_no?: number | string;
   empNo?: number | string;
+  emp_name?: string;
+  empName?: string;
+  dept_code?: string;
+  deptCode?: string;
+  dept_name?: string;
+  deptName?: string;
+  rank_code?: string;
+  rankCode?: string;
+  rank_name?: string;
+  rankName?: string;
   attend_code?: string;
   attendCode?: string;
+  attend_code_name?: string;
+  attendCodeName?: string;
+  detail_code?: string;
+  detailCode?: string;
+  detail_code_name?: string;
+  detailCodeName?: string;
   attend_date?: string;
   attendDate?: string;
   start_time?: string;
@@ -87,6 +117,10 @@ export type EmployeeAttendListResponseDto = {
   employeeAttendList?: EmployeeAttendDto[];
   attendlist?: EmployeeAttendDto[];
   attendList?: EmployeeAttendDto[];
+  items?: EmployeeAttendDto[];
+  rows?: EmployeeAttendDto[];
   list?: EmployeeAttendDto[];
   data?: EmployeeAttendDto[];
+  totalCount?: number | string;
+  total_count?: number | string;
 };

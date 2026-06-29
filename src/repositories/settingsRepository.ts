@@ -11,6 +11,34 @@ const defaultPolicy: WorkTimePolicy = {
   halfPmEnd: '13:00',
 };
 
+const unwrapSettingDto = (dto: import('@/api/dto/settings.dto').SystemSettingDto) =>
+  dto.setting ?? dto.settinginfo ?? dto.systemsetting ?? dto.systemSetting ?? dto.data ?? dto;
+
+const adaptSettingDtoToPolicy = (
+  dto: import('@/api/dto/settings.dto').SystemSettingDto,
+): WorkTimePolicy => {
+  const setting = unwrapSettingDto(dto);
+
+  return {
+    regularStart: setting.regularStart ?? setting.regular_start ?? defaultPolicy.regularStart,
+    regularEnd: setting.regularEnd ?? setting.regular_end ?? defaultPolicy.regularEnd,
+    halfAmStart: setting.halfAmStart ?? setting.half_am_start ?? defaultPolicy.halfAmStart,
+    halfAmEnd: setting.halfAmEnd ?? setting.half_am_end ?? defaultPolicy.halfAmEnd,
+    halfPmStart: setting.halfPmStart ?? setting.half_pm_start ?? defaultPolicy.halfPmStart,
+    halfPmEnd: setting.halfPmEnd ?? setting.half_pm_end ?? defaultPolicy.halfPmEnd,
+  };
+};
+
+const adaptPolicyToSettingDto = (policy: WorkTimePolicy) => ({
+  ...policy,
+  regular_start: policy.regularStart,
+  regular_end: policy.regularEnd,
+  half_am_start: policy.halfAmStart,
+  half_am_end: policy.halfAmEnd,
+  half_pm_start: policy.halfPmStart,
+  half_pm_end: policy.halfPmEnd,
+});
+
 export type SettingsRepository = {
   getWorkTimePolicy: () => Promise<WorkTimePolicy>;
   updateWorkTimePolicy: (policy: WorkTimePolicy) => Promise<void>;
@@ -29,21 +57,14 @@ const apiSettingsRepository: SettingsRepository = {
   async getWorkTimePolicy() {
     try {
       const dto = await settingsApi.get();
-      return {
-        regularStart: dto.regularStart ?? defaultPolicy.regularStart,
-        regularEnd: dto.regularEnd ?? defaultPolicy.regularEnd,
-        halfAmStart: dto.halfAmStart ?? defaultPolicy.halfAmStart,
-        halfAmEnd: dto.halfAmEnd ?? defaultPolicy.halfAmEnd,
-        halfPmStart: dto.halfPmStart ?? defaultPolicy.halfPmStart,
-        halfPmEnd: dto.halfPmEnd ?? defaultPolicy.halfPmEnd,
-      };
+      return adaptSettingDtoToPolicy(dto);
     } catch {
       return { ...defaultPolicy };
     }
   },
 
   async updateWorkTimePolicy(policy) {
-    await settingsApi.modify(policy);
+    await settingsApi.modify(adaptPolicyToSettingDto(policy));
   },
 };
 
