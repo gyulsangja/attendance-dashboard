@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "build:api": "powershell -ExecutionPolicy Bypass -File scripts/build-api-mode.ps1",
+    "start:3000": "next start -p 3000"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",

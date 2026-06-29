@@ -16,8 +16,9 @@ import { useLoginMutation } from '@/hooks/useAuthMutations';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { login, setApiSession } from '@/store/slices/authSlice';
 
-const defaultUsername = process.env.NEXT_PUBLIC_DATA_SOURCE === 'api' ? 'dev1' : 'admin';
-const defaultPassword = process.env.NEXT_PUBLIC_DATA_SOURCE === 'api' ? 'password123' : 'admin123';
+const isApiLoginMode = process.env.NEXT_PUBLIC_DATA_SOURCE !== 'mock';
+const defaultUsername = isApiLoginMode ? 'dev1' : 'admin';
+const defaultPassword = isApiLoginMode ? 'password123' : 'admin123';
 
 export default function Page() {
   const router = useRouter();
@@ -132,7 +133,7 @@ export default function Page() {
 
           <div className="mt-6 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
             <p className="font-bold">검증용 계정</p>
-            {process.env.NEXT_PUBLIC_DATA_SOURCE === 'api' ? (
+            {isApiLoginMode ? (
               <p className="mt-2">백엔드 테스트: dev1 / password123</p>
             ) : (
               <>
