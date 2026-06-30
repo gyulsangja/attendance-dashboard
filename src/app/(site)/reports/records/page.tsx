@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import {
   Alert,
@@ -59,9 +59,14 @@ export default function Page() {
         </div>
       </div>
 
-      {report.isApiFallback && (
+      {report.isApiEmpty && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          백엔드 출퇴근 조회 API가 아직 실제 목록을 반환하지 않아 프론트 기록을 표시합니다.
+          선택한 기간에 등록된 백엔드 출퇴근 기록이 없습니다.
+        </Alert>
+      )}
+      {report.isApiError && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          백엔드 출퇴근 조회 API 호출에 실패했습니다.
         </Alert>
       )}
 

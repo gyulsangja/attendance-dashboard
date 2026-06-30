@@ -11,7 +11,7 @@ import {
 import WeeklyAttendanceGrid from './WeeklyAttendanceGrid';
 
 type DevicePanelProps = {
-  apiFallback?: boolean;
+  apiError?: boolean;
   uploaded: boolean;
   uploadSummary: DeviceUploadSummary | null;
   onUpload: (file: File) => Promise<DeviceUploadSummary>;
@@ -28,7 +28,7 @@ type DevicePanelProps = {
 };
 
 export default function DevicePanel({
-  apiFallback = false,
+  apiError = false,
   uploaded,
   uploadSummary,
   onUpload,
@@ -170,9 +170,9 @@ export default function DevicePanel({
 
       {fileError && <Alert severity="error" sx={{ mt: 3 }}>{fileError}</Alert>}
 
-      {apiFallback && (
+      {apiError && (
         <Alert severity="info" sx={{ mt: 3 }}>
-          백엔드 출퇴근 조회 API가 아직 실제 목록을 반환하지 않아 프론트 단말기 기록을 표시합니다.
+          백엔드 출퇴근 조회 API 호출에 실패했습니다.
         </Alert>
       )}
 

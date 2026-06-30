@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useMemo } from 'react';
 import { useAttendanceRecordsQuery } from '@/hooks/useAttendanceRecordQueries';
@@ -56,10 +56,9 @@ export function useAttendanceRecordsReport() {
   const apiRecordsQuery = useAttendanceRecordsQuery(
     buildAttendanceMonthKey(year, displayMonth),
   );
-  const attendanceRecords =
-    isApiDataSource && apiRecordsQuery.data && apiRecordsQuery.data.length > 0
-      ? apiRecordsQuery.data
-      : storeAttendanceRecords;
+  const attendanceRecords = isApiDataSource
+    ? apiRecordsQuery.data ?? []
+    : storeAttendanceRecords;
 
   const handleYearChange = (value: number) => {
     dispatch(setYear(value));
@@ -170,8 +169,10 @@ export function useAttendanceRecordsReport() {
     employees,
     getCell,
     isApiLoading: isApiDataSource && apiRecordsQuery.isLoading,
-    isApiFallback: isApiDataSource && (apiRecordsQuery.data?.length ?? 0) === 0,
+    isApiEmpty: isApiDataSource && apiRecordsQuery.isSuccess && (apiRecordsQuery.data?.length ?? 0) === 0,
+    isApiError: isApiDataSource && apiRecordsQuery.isError,
     setMonth: (value: number) => dispatch(setMonth(value)),
     handleYearChange,
   };
 }
+

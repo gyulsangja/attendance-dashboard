@@ -1,4 +1,4 @@
-import { settingsApi } from '@/api/settingsApi';
+﻿import { settingsApi } from '@/api/settingsApi';
 import type { WorkTimePolicy } from '@/types/domain';
 import { isApiDataSource } from './config';
 
@@ -55,12 +55,8 @@ const mockSettingsRepository: SettingsRepository = {
 
 const apiSettingsRepository: SettingsRepository = {
   async getWorkTimePolicy() {
-    try {
-      const dto = await settingsApi.get();
-      return adaptSettingDtoToPolicy(dto);
-    } catch {
-      return { ...defaultPolicy };
-    }
+    const dto = await settingsApi.get();
+    return adaptSettingDtoToPolicy(dto);
   },
 
   async updateWorkTimePolicy(policy) {
@@ -71,3 +67,4 @@ const apiSettingsRepository: SettingsRepository = {
 export const settingsRepository = isApiDataSource
   ? apiSettingsRepository
   : mockSettingsRepository;
+

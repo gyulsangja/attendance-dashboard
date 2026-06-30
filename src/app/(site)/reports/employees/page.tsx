@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useMemo, useState } from 'react';
 import {
@@ -24,8 +24,28 @@ import {
   selectReportRecords,
 } from '@/selectors/reportSelectors';
 import { useAppSelector } from '@/store/hooks';
+import type { ReportEmployee } from '@/types/domain';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+const buildApiEmployees = (records: ReturnType<typeof useAttendanceRecordsQuery>['data']): ReportEmployee[] => {
+  const employeeMap = new Map<number, ReportEmployee>();
+
+  (records ?? []).forEach((record) => {
+    if (!employeeMap.has(record.employeeId)) {
+      employeeMap.set(record.employeeId, {
+        id: record.employeeId,
+        name: record.employeeName,
+        department: record.department,
+        position: record.position,
+      });
+    }
+  });
+
+  return [...employeeMap.values()].sort((a, b) => (
+    a.department.localeCompare(b.department, 'ko') || a.name.localeCompare(b.name, 'ko')
+  ));
+};
 
 type Row = {
   id: string;
@@ -39,12 +59,14 @@ export default function Page() {
   const { startDate, endDate } = useAppSelector(selectReportPeriod);
   const storeAttendanceRecords = useAppSelector(selectReportRecords);
   const attendanceCodes = useAppSelector(selectReportAttendanceCodes);
-  const employees = useAppSelector(selectReportEmployees);
+  const storeEmployees = useAppSelector(selectReportEmployees);
   const apiRecordsQuery = useAttendanceRecordsQuery(startDate.slice(0, 7));
-  const attendanceRecords =
-    isApiDataSource && apiRecordsQuery.data && apiRecordsQuery.data.length > 0
-      ? apiRecordsQuery.data
-      : storeAttendanceRecords;
+  const attendanceRecords = useMemo(() => (
+    isApiDataSource ? apiRecordsQuery.data ?? [] : storeAttendanceRecords
+  ), [apiRecordsQuery.data, storeAttendanceRecords]);
+  const employees = useMemo(() => (
+    isApiDataSource ? buildApiEmployees(apiRecordsQuery.data) : storeEmployees
+  ), [apiRecordsQuery.data, storeEmployees]);
   const [selected, setSelected] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [openTeams, setOpenTeams] = useState<string[]>(['개발팀']);
@@ -79,6 +101,8 @@ export default function Page() {
       ? current.filter((item) => item !== name)
       : [...current, name]
   );
+  const isApiEmpty = isApiDataSource && apiRecordsQuery.isSuccess && attendanceRecords.length === 0;
+  const isApiError = isApiDataSource && apiRecordsQuery.isError;
 
   return (
     <div className="mt-5 flex min-h-[540px] gap-5">
@@ -130,16 +154,21 @@ export default function Page() {
         </List>
       </aside>
       <section className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        {isApiDataSource && (apiRecordsQuery.data?.length ?? 0) === 0 && (
+        {isApiEmpty && (
           <Alert severity="info" sx={{ mb: 2 }}>
-            백엔드 출퇴근 조회 API가 아직 실제 목록을 반환하지 않아 프론트 기록을 표시합니다.
+            선택한 기간에 등록된 백엔드 출퇴근 기록이 없습니다.
+          </Alert>
+        )}
+        {isApiError && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            백엔드 출퇴근 조회 API 호출에 실패했습니다.
           </Alert>
         )}
         <div className="mb-5 flex items-center gap-3">
-          <Avatar sx={{ bgcolor: '#475569' }}>{employee?.name.at(0)}</Avatar>
+          <Avatar sx={{ bgcolor: '#475569' }}>{employee?.name.at(0) ?? '-'}</Avatar>
           <div>
-            <h2 className="font-bold">{employee?.name}</h2>
-            <p className="text-sm text-slate-500">{employee?.department} · {startDate} ~ {endDate}</p>
+            <h2 className="font-bold">{employee?.name ?? '선택된 직원 없음'}</h2>
+            <p className="text-sm text-slate-500">{employee?.department ?? '-'} · {startDate} ~ {endDate}</p>
           </div>
         </div>
         <Paper elevation={0} sx={{ height: 430 }}>
@@ -161,3 +190,4 @@ export default function Page() {
     </div>
   );
 }
+

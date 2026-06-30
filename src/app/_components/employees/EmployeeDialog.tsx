@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import {
@@ -157,7 +157,7 @@ function EmployeeDialogContent({
             <Select
               label={TEXT.team}
               value={form.teamId}
-              onChange={(event) => setForm({ ...form, teamId: event.target.value })}
+              onChange={(event) => setForm({ ...form, teamId: event.target.value, backendDeptCode: event.target.value })}
             >
               <MenuItem value={UNASSIGNED_TEAM_ID}>{UNASSIGNED_TEAM_NAME}</MenuItem>
               {teams.map((team) => (
@@ -172,7 +172,7 @@ function EmployeeDialogContent({
               <Select
                 label={TEXT.position}
                 value={form.position}
-                onChange={(event) => setForm({ ...form, position: event.target.value })}
+                onChange={(event) => setForm({ ...form, position: event.target.value, backendRankCode: event.target.value })}
               >
                 {resolvedPositionOptions.map((option) => (
                   <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
@@ -185,7 +185,7 @@ function EmployeeDialogContent({
               <Select
                 label={TEXT.workType}
                 value={form.jobTitle}
-                onChange={(event) => setForm({ ...form, jobTitle: event.target.value })}
+                onChange={(event) => setForm({ ...form, jobTitle: event.target.value, backendWorkTypeCode: event.target.value })}
               >
                 <MenuItem value="">{TEXT.select}</MenuItem>
                 {jobTitleOptions.map((option) => (
@@ -252,3 +252,4 @@ function EmployeeDialogContent({
     </Dialog>
   );
 }
+

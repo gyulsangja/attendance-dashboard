@@ -1,6 +1,8 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
+import { useModifyAttendanceRecordMutation } from '@/hooks/useAttendanceRecordQueries';
+import { isApiDataSource } from '@/repositories/config';
 import type { AttendanceRecord } from '@/types/domain';
 import type { EditingTime } from '@/app/_components/management/operations/dialogs/TimeEditDialog';
 import { useAppDispatch } from '@/store/hooks';
@@ -28,6 +30,7 @@ export const useDeviceRecordEditing = ({
   organization,
 }: Props) => {
   const dispatch = useAppDispatch();
+  const modifyRecordMutation = useModifyAttendanceRecordMutation();
   const [editingTime, setEditingTime] = useState<EditingTime | null>(null);
 
   const openTimeEditor = (employeeId: number, date: string) => {
@@ -73,18 +76,37 @@ export const useDeviceRecordEditing = ({
         .map((code) => [code.id, code.label]),
     );
 
+    const events = editingTime.attendanceCodeIds.flatMap((codeId) => {
+      const label = validCodeMap.get(codeId);
+      return label ? [{ codeId, detail: `관리자 확인: ${label}` }] : [];
+    });
+
+    if (isApiDataSource) {
+      void modifyRecordMutation.mutateAsync({
+        id: Number(`${editingTime.employeeId}${editingTime.date.replaceAll('-', '')}`),
+        employeeId: editingTime.employeeId,
+        employeeName: editingTime.employeeName ?? '-',
+        department: editingTime.department ?? '-',
+        position: editingTime.position ?? '-',
+        date: editingTime.date,
+        checkIn: editingTime.checkIn || undefined,
+        checkOut: editingTime.checkOut || undefined,
+        events,
+      }).then(() => setEditingTime(null));
+      return;
+    }
+
     dispatch(saveDeviceRecord({
       ...editingTime,
-      events: editingTime.attendanceCodeIds.flatMap((codeId) => {
-        const label = validCodeMap.get(codeId);
-        return label ? [{ codeId, detail: `관리팀 확인: ${label}` }] : [];
-      }),
+      events,
     }));
     setEditingTime(null);
   };
 
   const deleteDeviceTime = () => {
     if (!editingTime) return;
+
+    if (isApiDataSource) return;
 
     dispatch(deleteDeviceRecord({
       employeeId: editingTime.employeeId,
@@ -99,5 +121,8 @@ export const useDeviceRecordEditing = ({
     openTimeEditor,
     saveDeviceTime,
     deleteDeviceTime,
+    isSaving: modifyRecordMutation.isPending,
+    isError: modifyRecordMutation.isError,
   };
 };
+

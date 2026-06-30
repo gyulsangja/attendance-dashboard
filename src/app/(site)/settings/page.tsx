@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useMemo, useState } from 'react';
 import { Add } from '@mui/icons-material';
@@ -46,9 +46,9 @@ const TEXT = {
   title: '\uc124\uc815',
   description: '\uc9c1\uc6d0 \uc815\ubcf4 \ud56d\ubaa9, \uadfc\ud0dc\ucf54\ub4dc, \ucd9c\ud1f4\uadfc \uae30\uc900\uc2dc\uac04\uc744 \uc5c5\ubb34\ubcc4\ub85c \uad00\ub9ac\ud569\ub2c8\ub2e4.',
   apiInfo: 'API \ubaa8\ub4dc\uc5d0\uc11c\ub294 \uc124\uc815\ud55c \ud56d\ubaa9\ub4e4\uc744 \ubc31\uc5d4\ub4dc API\uc5d0 \uc800\uc7a5\ud569\ub2c8\ub2e4. \uc800\uc7a5 \ud6c4 \ubaa9\ub85d\uc5d0 \ubc18\uc601\ub418\uc9c0 \uc54a\uc73c\uba74 \ubc31\uc5d4\ub4dc \uc800\uc7a5 \ud544\ub4dc \ud655\uc778\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.',
-  codeLoadError: '\uadfc\ud0dc\ucf54\ub4dc API\ub97c \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud574 \ud504\ub860\ud2b8 \uae30\ubcf8 \ub370\uc774\ud130\ub97c \ud45c\uc2dc\ud569\ub2c8\ub2e4.',
+  codeLoadError: '근태코드 API를 불러오지 못했습니다.',
   codeMutationError: '\uadfc\ud0dc\ucf54\ub4dc \uc800\uc7a5 \uc911 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4. \ubc31\uc5d4\ub4dc \uacf5\ud1b5\ucf54\ub4dc \uc800\uc7a5 DTO \ud655\uc778\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.',
-  policyLoadError: '\uc2dc\uc2a4\ud15c \uc124\uc815 API\ub97c \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud574 \ud504\ub860\ud2b8 \uae30\ubcf8 \uae30\uc900\uc2dc\uac04\uc744 \uc0ac\uc6a9\ud569\ub2c8\ub2e4.',
+  policyLoadError: '시스템 설정 API를 불러오지 못했습니다.',
   policyMutationError: '\uae30\uc900\uc2dc\uac04 \uc800\uc7a5 \uc911 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4. \ubc31\uc5d4\ub4dc \uc2dc\uc2a4\ud15c \uc124\uc815 API \uad6c\ud604 \uc5ec\ubd80 \ud655\uc778\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.',
   employeeOptionsTab: '\uc9c1\uc6d0 \uc815\ubcf4 \ud56d\ubaa9',
   attendanceCodeTab: '\uadfc\ud0dc\ucf54\ub4dc',
@@ -69,7 +69,7 @@ export default function Page() {
   const workTimePolicyQuery = useWorkTimePolicyQuery();
   const updatePolicyMutation = useUpdateWorkTimePolicyMutation();
   const apiCodes = attendanceCodesQuery.data ?? [];
-  const sourceCodes = isApiDataSource && apiCodes.length > 0 ? apiCodes : codes;
+  const sourceCodes = isApiDataSource ? apiCodes : codes;
   const sourceHistory = useMemo(
     () => (isApiDataSource ? [] : history),
     [history],
@@ -212,7 +212,7 @@ export default function Page() {
         <WorkTimePolicyPanel
           policy={effectivePolicy}
           saving={updatePolicyMutation.isPending}
-          readOnly={isApiDataSource}
+          readOnly={false}
           onPolicyChange={(nextPolicy) => {
             setPolicyTouched(true);
             setPolicy(nextPolicy);
@@ -231,4 +231,5 @@ export default function Page() {
     </main>
   );
 }
+
 

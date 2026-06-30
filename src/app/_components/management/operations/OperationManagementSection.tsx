@@ -1,8 +1,7 @@
-'use client';
+﻿'use client';
 
 import { CheckCircle } from '@mui/icons-material';
 import { Alert, Box, Chip, Paper, Tab, Tabs } from '@mui/material';
-import { isApiDataSource } from '@/repositories/config';
 import type { ManagementOperations } from './useManagementOperations';
 import ConfirmPanel from './ConfirmPanel';
 import DevicePanel from './DevicePanel';
@@ -26,7 +25,7 @@ export default function OperationManagementSection({
   const {
     confirmed,
     deviceRecords,
-    deviceRecordsApiFallback,
+    deviceRecordsApiError,
     deviceUpload,
     displayedWeekSchedules,
     month,
@@ -103,7 +102,7 @@ export default function OperationManagementSection({
                   ? deviceUpload
                   : null
               }
-              apiFallback={deviceRecordsApiFallback}
+              apiError={deviceRecordsApiError}
               onUpload={actions.handleDeviceUpload}
               templateEmployees={templateEmployees}
               days={weekDays}
@@ -111,7 +110,7 @@ export default function OperationManagementSection({
               schedules={displayedWeekSchedules}
               onEdit={actions.openTimeEditor}
               locked={confirmed}
-              recordsReadOnly={isApiDataSource}
+              recordsReadOnly={false}
             />
           )}
           {tab === 2 && (

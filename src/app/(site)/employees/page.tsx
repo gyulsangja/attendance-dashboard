@@ -71,7 +71,7 @@ export default function Page() {
 
       {isApiDataSource && (
         <Alert severity="info" sx={{ mt: 3 }}>
-          직원 목록은 백엔드 API 기준으로 조회합니다. 직원 수정과 팀 추가/수정은 백엔드 API가 확정되기 전까지 제한합니다.
+          직원 목록과 직원 등록/수정/삭제는 백엔드 API 기준으로 처리합니다. 팀 추가/수정은 백엔드 API가 확정되기 전까지 제한합니다.
         </Alert>
       )}
 
@@ -157,7 +157,7 @@ export default function Page() {
                   employees={organization.visibleEmployees}
                   teams={organization.snapshotTeams}
                   onEdit={organization.openEditEmployee}
-                  editDisabled={isApiDataSource}
+                  editDisabled={false}
                   onDelete={(employee) => {
                     if (window.confirm(`${employee.name} 직원을 삭제하시겠습니까?`)) {
                       organization.removeEmployee(employee);
@@ -212,3 +212,5 @@ export default function Page() {
     </main>
   );
 }
+
+

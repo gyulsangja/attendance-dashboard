@@ -1,5 +1,6 @@
-'use client';
+﻿'use client';
 
+import { isApiDataSource } from '@/repositories/config';
 import type { ManagementOperations } from './useManagementOperations';
 import ScheduleEditDialog from './dialogs/ScheduleEditDialog';
 import ScheduleEntryDialog from './dialogs/ScheduleEntryDialog';
@@ -59,7 +60,7 @@ export default function ManagementDialogs({
       />
       <TimeEditDialog
         value={dialogs.editingTime}
-        canDelete={deviceRecords.some(
+        canDelete={!isApiDataSource && deviceRecords.some(
           (item) =>
             item.employeeId === dialogs.editingTime?.employeeId
             && item.date === dialogs.editingTime?.date,
@@ -71,3 +72,5 @@ export default function ManagementDialogs({
     </>
   );
 }
+
+

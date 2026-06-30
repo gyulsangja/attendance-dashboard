@@ -7,7 +7,7 @@
 - OpenAPI YAML: `http://192.168.0.191:8080/swagger/swagger.yaml`
 - 개발 중 API base: `NEXT_PUBLIC_API_BASE_URL=/backend-api`
 - 실제 백엔드 origin: `BACKEND_API_ORIGIN=http://192.168.0.191:8080`
-- 데이터 소스 전환: `NEXT_PUBLIC_DATA_SOURCE=api`이면 API, 그 외에는 목데이터 사용
+- 데이터 소스 전환: 기본은 API이며, NEXT_PUBLIC_DATA_SOURCE=mock으로 명시한 경우에만 목데이터 사용
 - 인증 방식: JWT 토큰 방식
 - 브라우저 CORS 우회를 위해 개발 환경에서는 Next.js rewrite(`/backend-api`)를 사용
 

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useMemo, useState } from 'react';
 import { useAttendanceRecordsQuery } from '@/hooks/useAttendanceRecordQueries';
@@ -35,10 +35,9 @@ export function useFilteredAttendanceReport() {
   const apiRecordsQuery = useAttendanceRecordsQuery(
     buildAttendanceMonthKey(year, calendarMonth),
   );
-  const attendanceRecords =
-    isApiDataSource && apiRecordsQuery.data && apiRecordsQuery.data.length > 0
-      ? apiRecordsQuery.data
-      : storeAttendanceRecords;
+  const attendanceRecords = useMemo(() => (
+    isApiDataSource ? apiRecordsQuery.data ?? [] : storeAttendanceRecords
+  ), [apiRecordsQuery.data, storeAttendanceRecords]);
   const [selectedCodes, setSelectedCodes] = useState<string[]>(
     () => attendanceCodes.map((code) => code.id),
   );
@@ -74,13 +73,16 @@ export function useFilteredAttendanceReport() {
     rows,
     viewMode,
     isApiLoading: isApiDataSource && apiRecordsQuery.isLoading,
-    isApiFallback: isApiDataSource && (apiRecordsQuery.data?.length ?? 0) === 0,
+    isApiEmpty: isApiDataSource && apiRecordsQuery.isSuccess && (apiRecordsQuery.data?.length ?? 0) === 0,
+    isApiError: isApiDataSource && apiRecordsQuery.isError,
     setSelectedCodes,
     setViewMode,
   };
 }
 
 export { WEEKDAYS };
+
+
 
 
 

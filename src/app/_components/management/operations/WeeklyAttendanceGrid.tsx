@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import {
@@ -44,7 +44,7 @@ export default function WeeklyAttendanceGrid({
         <div>
           <h3 className="font-bold">주간 출퇴근 통합 현황</h3>
           <p className="mt-1 text-sm text-slate-500">
-            {readOnly ? 'API 모드 또는 확정 상태에서는 출퇴근 시간 수동 수정을 제한합니다.' : '날짜 셀을 클릭하면 출퇴근 시간을 수정할 수 있습니다.'}
+            {readOnly ? '확정 상태에서는 출퇴근 시간 수동 수정을 제한합니다.' : '날짜 셀을 클릭하면 출퇴근 시간을 수정할 수 있습니다.'}
           </p>
         </div>
 

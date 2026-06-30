@@ -1,11 +1,15 @@
-import { attendanceApi } from '@/api/attendanceApi';
-import { adaptAttendanceManagerDtoToRecord } from '@/adapters/attendanceRecordAdapter';
+﻿import { attendanceApi } from '@/api/attendanceApi';
+import {
+  adaptAttendanceManagerDtoToRecord,
+  adaptAttendanceRecordToManagerDto,
+} from '@/adapters/attendanceRecordAdapter';
 import { attendanceRecords } from '@/mocks';
 import type { AttendanceRecord } from '@/types/domain';
 import { isApiDataSource } from './config';
 
 export type AttendanceRecordRepository = {
   selectByWeek: (week: string) => Promise<AttendanceRecord[]>;
+  modify: (record: AttendanceRecord) => Promise<void>;
 };
 
 const mockAttendanceRecordRepository: AttendanceRecordRepository = {
@@ -15,6 +19,7 @@ const mockAttendanceRecordRepository: AttendanceRecordRepository = {
       events: record.events.map((event) => ({ ...event })),
     }));
   },
+  async modify() {},
 };
 
 const overwriteDuplicateRecords = (records: AttendanceRecord[]) => {
@@ -31,6 +36,9 @@ const apiAttendanceRecordRepository: AttendanceRecordRepository = {
   async selectByWeek(week) {
     const records = await attendanceApi.selectByPeriod(week);
     return overwriteDuplicateRecords(records.map(adaptAttendanceManagerDtoToRecord));
+  },
+  async modify(record) {
+    await attendanceApi.modify(adaptAttendanceRecordToManagerDto(record));
   },
 };
 

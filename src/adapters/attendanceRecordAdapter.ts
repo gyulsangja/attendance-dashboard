@@ -1,4 +1,4 @@
-import type { AttendanceManagerDto } from '@/api/dto/attendance.dto';
+﻿import type { AttendanceManagerDto } from '@/api/dto/attendance.dto';
 import type { AttendanceRecord } from '@/types/domain';
 
 const toNumericId = (value: string) => {
@@ -59,3 +59,21 @@ export const adaptAttendanceManagerDtoToRecord = (
     memo: dto.memo ?? dto.remark ?? dto.attend_reason ?? dto.attendReason ?? dto.etc,
   };
 };
+export const adaptAttendanceRecordToManagerDto = (
+  record: AttendanceRecord,
+): AttendanceManagerDto => ({
+  id: record.id,
+  emp_no: record.employeeId,
+  emp_name: record.employeeName,
+  dept_name: record.department,
+  rank_name: record.position,
+  attend_date: record.date,
+  attend_record_date: record.date,
+  check_in: record.checkIn,
+  check_out: record.checkOut,
+  attend_code: record.events[0]?.codeId ?? '',
+  detail_code: record.events[0]?.codeId ?? '',
+  attend_reason: record.events.map((event) => event.detail).filter(Boolean).join(', '),
+  memo: record.memo,
+  etc: record.events.map((event) => event.codeId).join(','),
+});

@@ -115,7 +115,7 @@ export default function Page() {
       </div>
 
       <Alert severity="info" sx={{ mt: 4 }}>
-        백엔드 권한 코드는 실제 API의 role_code이며, 프론트 권한은 화면 정책에 맞춰 변환한 값입니다. 사용자 수정 API가 확정되기 전까지 API 모드에서는 권한 변경을 제한합니다.
+        백엔드 권한 코드는 실제 API의 role_code이며, 프론트 권한은 화면 정책에 맞춰 변환한 값입니다. 사용자 등록/권한 변경/삭제는 백엔드 API 기준으로 처리합니다.
       </Alert>
 
       {usersQuery.isError && (
@@ -145,7 +145,7 @@ export default function Page() {
           users={users}
           currentUserId={currentUserId}
           backendRoleCodes={backendRoleCodes}
-          roleChangeDisabled={isApiDataSource}
+          roleChangeDisabled={false}
           onRoleChange={changeRole}
           onDelete={deleteUser}
         />
@@ -163,3 +163,4 @@ export default function Page() {
     </main>
   );
 }
+

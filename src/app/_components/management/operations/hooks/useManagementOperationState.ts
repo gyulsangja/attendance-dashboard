@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useMemo } from 'react';
 import { useAttendanceRecordsQuery } from '@/hooks/useAttendanceRecordQueries';
@@ -43,14 +43,12 @@ export const useManagementOperationState = () => {
     () => filterItemsByPeriod(apiRecordsQuery.data ?? [], week),
     [apiRecordsQuery.data, week],
   );
-  const effectiveDeviceRecords =
-    isApiDataSource && apiRecordsQuery.isSuccess
-      ? apiWeekRecords
-      : management.deviceRecords;
-  const effectiveWeekSchedules =
-    isApiDataSource && apiSchedulesQuery.isSuccess
-      ? apiSchedulesQuery.data ?? []
-      : displayedWeekSchedules;
+  const effectiveDeviceRecords = isApiDataSource
+    ? apiWeekRecords
+    : management.deviceRecords;
+  const effectiveWeekSchedules = isApiDataSource
+    ? apiSchedulesQuery.data ?? []
+    : displayedWeekSchedules;
   const effectiveWeekTerminalRecords = filterItemsByPeriod(effectiveDeviceRecords, week)
     .filter((item) => Boolean(item.checkIn || item.checkOut));
   const effectiveWeekCsvUploaded = effectiveWeekTerminalRecords.length > 0;
@@ -76,10 +74,10 @@ export const useManagementOperationState = () => {
     ...management,
     attendanceCodes,
     deviceRecords: effectiveDeviceRecords,
-    deviceRecordsApiFallback: isApiDataSource && apiRecordsQuery.isError,
+    deviceRecordsApiError: isApiDataSource && apiRecordsQuery.isError,
     deviceRecordsApiLoading: isApiDataSource && apiRecordsQuery.isLoading,
     displayedWeekSchedules: effectiveWeekSchedules,
-    schedulesApiFallback: isApiDataSource && apiSchedulesQuery.isError,
+    schedulesApiError: isApiDataSource && apiSchedulesQuery.isError,
     schedulesApiLoading: isApiDataSource && apiSchedulesQuery.isLoading,
     pendingShifts,
     shiftWeekConfirmed,
@@ -95,3 +93,4 @@ export const useManagementOperationState = () => {
 };
 
 export type ManagementOperationState = ReturnType<typeof useManagementOperationState>;
+
