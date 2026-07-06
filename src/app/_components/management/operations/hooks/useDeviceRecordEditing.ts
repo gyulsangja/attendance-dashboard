@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useState } from 'react';
+import { useAttendanceCodesQuery } from '@/hooks/useAttendanceCodeQueries';
 import { useModifyAttendanceRecordMutation } from '@/hooks/useAttendanceRecordQueries';
 import { isApiDataSource } from '@/repositories/config';
 import type { AttendanceRecord } from '@/types/domain';
@@ -31,6 +32,7 @@ export const useDeviceRecordEditing = ({
 }: Props) => {
   const dispatch = useAppDispatch();
   const modifyRecordMutation = useModifyAttendanceRecordMutation();
+  const apiAttendanceCodesQuery = useAttendanceCodesQuery();
   const [editingTime, setEditingTime] = useState<EditingTime | null>(null);
 
   const openTimeEditor = (employeeId: number, date: string) => {
@@ -48,7 +50,9 @@ export const useDeviceRecordEditing = ({
       ? UNASSIGNED_TEAM_NAME
       : snapshot.teams.find((team) => team.id === employee?.teamId)?.name ?? '-';
     const validCodeIds = new Set(
-      getAttendanceCodesAtDate(codeMaster.codes, codeMaster.history, date)
+      (isApiDataSource
+        ? apiAttendanceCodesQuery.data ?? []
+        : getAttendanceCodesAtDate(codeMaster.codes, codeMaster.history, date))
         .map((code) => code.id),
     );
 
@@ -57,9 +61,9 @@ export const useDeviceRecordEditing = ({
       date,
       checkIn: record?.checkIn ?? '',
       checkOut: record?.checkOut ?? '',
-      employeeName: employee?.name ?? '-',
-      department,
-      position: employee?.position ?? '-',
+      employeeName: record?.employeeName ?? employee?.name ?? '-',
+      department: record?.department ?? department,
+      position: record?.position ?? employee?.position ?? '-',
       attendanceCodeIds: [...new Set(
         record?.events
           .map((event) => event.codeId)
@@ -72,7 +76,9 @@ export const useDeviceRecordEditing = ({
     if (!editingTime) return;
 
     const validCodeMap = new Map(
-      getAttendanceCodesAtDate(codeMaster.codes, codeMaster.history, editingTime.date)
+      (isApiDataSource
+        ? apiAttendanceCodesQuery.data ?? []
+        : getAttendanceCodesAtDate(codeMaster.codes, codeMaster.history, editingTime.date))
         .map((code) => [code.id, code.label]),
     );
 

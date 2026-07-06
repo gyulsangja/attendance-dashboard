@@ -44,6 +44,16 @@ export default function ScheduleEntryDialog({
       <DialogTitle>근태 일정 일괄 입력</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
+          {entry.isLoading && (
+            <Alert severity="info">
+              부서, 직원, 근태코드 정보를 불러오는 중입니다.
+            </Alert>
+          )}
+          {entry.isError && (
+            <Alert severity="warning">
+              부서, 직원 또는 근태코드 API를 불러오지 못했습니다.
+            </Alert>
+          )}
           <FormControl fullWidth>
             <InputLabel>부서</InputLabel>
             <Select
@@ -135,7 +145,7 @@ export default function ScheduleEntryDialog({
         <Button onClick={onClose}>취소</Button>
         <Button
           variant="contained"
-          disabled={!entry.employeeIds.length || !entry.dates.length || !entry.codeId}
+          disabled={entry.isLoading || !entry.employeeIds.length || !entry.dates.length || !entry.codeId}
           onClick={save}
         >
           {entry.preview.length}건 일괄 저장

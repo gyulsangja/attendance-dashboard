@@ -19,9 +19,7 @@ export class ApiError extends Error {
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? '/backend-api';
-const isApiDebugEnabled =
-  process.env.NEXT_PUBLIC_API_DEBUG === 'true' ||
-  (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_API_DEBUG !== 'false');
+const isApiDebugEnabled = process.env.NEXT_PUBLIC_API_DEBUG === 'true';
 
 const getBody = (body: unknown) => {
   if (!body) return undefined;

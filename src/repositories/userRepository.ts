@@ -5,6 +5,7 @@ import {
 } from '@/adapters/userAdapter';
 import { systemUsers } from '@/mocks';
 import type { SystemUser } from '@/types/domain';
+import { commonCodeRepository } from './commonCodeRepository';
 import { isApiDataSource } from './config';
 
 export type UserRepository = {
@@ -25,8 +26,11 @@ const mockUserRepository: UserRepository = {
 
 const apiUserRepository: UserRepository = {
   async selectAll() {
-    const users = await userInfoApi.selectAll();
-    return users.map(adaptUserInfoDtoToSystemUser);
+    const [users, lookup] = await Promise.all([
+      userInfoApi.selectAll(),
+      commonCodeRepository.selectLookup().catch(() => undefined),
+    ]);
+    return users.map((user) => adaptUserInfoDtoToSystemUser(user, lookup));
   },
   async insert(user) {
     await userInfoApi.insert(adaptSystemUserToUserInfoDto(user));

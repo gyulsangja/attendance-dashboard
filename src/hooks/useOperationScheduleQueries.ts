@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import { operationScheduleRepository } from '@/repositories/operationScheduleRepository';
 import type { OperationSchedule } from '@/types/domain';
+import { invalidateAttendManagerQueries } from './useQueryInvalidation';
 
 export const useOperationSchedulesQuery = (startDate: string, endDate: string) =>
   useQuery({
@@ -36,6 +37,21 @@ export const useModifyOperationScheduleMutation = (startDate: string, endDate: s
       void queryClient.invalidateQueries({
         queryKey: queryKeys.operationSchedules(startDate, endDate),
       });
+    },
+  });
+};
+
+export const useDeleteOperationScheduleMutation = (startDate: string, endDate: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (schedule: OperationSchedule) =>
+      operationScheduleRepository.delete(schedule),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.operationSchedules(startDate, endDate),
+      });
+      invalidateAttendManagerQueries(queryClient);
     },
   });
 };

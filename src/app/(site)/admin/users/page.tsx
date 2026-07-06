@@ -4,7 +4,9 @@ import { useMemo, useState } from 'react';
 import { Add } from '@mui/icons-material';
 import { Alert, Button, CircularProgress } from '@mui/material';
 import UserDialog from '@/app/_components/admin/UserDialog';
+import type { UserRoleOption } from '@/app/_components/admin/UserDialog';
 import UserGrid from '@/app/_components/admin/UserGrid';
+import { normalizeUserRole } from '@/adapters/authAdapter';
 import { useCommonCodesQuery } from '@/hooks/useCommonCodeQueries';
 import {
   useDeleteUserMutation,
@@ -40,6 +42,17 @@ export default function Page() {
   const backendRoleCodes = useMemo(
     () => (commonCodesQuery.data ?? []).filter((code) => code.groupCode === 'G_USER_LEVEL'),
     [commonCodesQuery.data],
+  );
+  const backendRoleOptions = useMemo<UserRoleOption[]>(
+    () => backendRoleCodes
+      .filter((code) => code.isActive && code.detailCode)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((code) => ({
+        value: code.detailCode,
+        label: code.label,
+        role: normalizeUserRole(code.detailCode),
+      })),
+    [backendRoleCodes],
   );
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(newUser());
@@ -156,6 +169,7 @@ export default function Page() {
         form={form}
         error={error}
         saving={insertUserMutation.isPending}
+        roleOptions={isApiDataSource ? backendRoleOptions : undefined}
         onFormChange={setForm}
         onClose={() => setOpen(false)}
         onSave={save}

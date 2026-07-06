@@ -1,0 +1,77 @@
+export type AttendManagerSummaryDto = {
+  year?: number;
+  month?: number;
+  week?: number;
+  week_start_date?: string;
+  weekStartDate?: string;
+  week_end_date?: string;
+  weekEndDate?: string;
+  operation_confirmed?: boolean | string;
+  operationConfirmed?: boolean | string;
+  shift_confirmed?: boolean | string;
+  shiftConfirmed?: boolean | string;
+  attendance_schedule_count?: number | string;
+  attendanceScheduleCount?: number | string;
+  device_record_count?: number | string;
+  deviceRecordCount?: number | string;
+  can_modify?: boolean | string;
+  canModify?: boolean | string;
+  data?: AttendManagerSummaryDto;
+  summary?: AttendManagerSummaryDto;
+  operation_summary?: AttendManagerSummaryDto;
+  operationSummary?: AttendManagerSummaryDto;
+};
+
+export type AttendManagerConfirmStatusDto = {
+  is_confirmed?: boolean | string;
+  isConfirmed?: boolean | string;
+  confirmed_at?: string;
+  confirmedAt?: string;
+  confirmed_by?: string;
+  confirmedBy?: string;
+  can_modify?: boolean | string;
+  canModify?: boolean | string;
+  data?: AttendManagerConfirmStatusDto;
+  status?: AttendManagerConfirmStatusDto | string;
+  confirm_status?: AttendManagerConfirmStatusDto;
+  confirmStatus?: AttendManagerConfirmStatusDto;
+};
+
+export type AttendManagerShiftScheduleDto = {
+  shift_schedule_id?: number | string;
+  shiftScheduleId?: number | string;
+  id?: number | string;
+  idx?: number | string;
+  emp_no?: number | string;
+  empNo?: number | string;
+  emp_name?: string;
+  empName?: string;
+  dept_code?: string;
+  deptCode?: string;
+  dept_name?: string;
+  deptName?: string;
+  work_date?: string;
+  workDate?: string;
+  date?: string;
+  start_time?: string;
+  startTime?: string;
+  end_time?: string;
+  endTime?: string;
+  is_next_day?: boolean | string;
+  isNextDay?: boolean | string;
+};
+
+export type AttendManagerShiftScheduleListResponseDto = {
+  shiftlist?: AttendManagerShiftScheduleDto[];
+  shiftList?: AttendManagerShiftScheduleDto[];
+  shift_schedule_list?: AttendManagerShiftScheduleDto[];
+  shiftScheduleList?: AttendManagerShiftScheduleDto[];
+  shift_schedules?: AttendManagerShiftScheduleDto[];
+  shiftSchedules?: AttendManagerShiftScheduleDto[];
+  schedules?: AttendManagerShiftScheduleDto[];
+  items?: AttendManagerShiftScheduleDto[];
+  rows?: AttendManagerShiftScheduleDto[];
+  list?: AttendManagerShiftScheduleDto[];
+  data?: AttendManagerShiftScheduleDto[];
+  result?: AttendManagerShiftScheduleDto[];
+};

@@ -60,6 +60,12 @@ export default function ShiftEntryDialog({
             근무자 1명과 기준시간, 여러 날짜를 선택해 일정을 추가하세요. 여러 묶음을 추가한 뒤 한 번에 저장할 수 있습니다.
           </Alert>
 
+          {workers.length === 0 && (
+            <Alert severity="warning">
+              교대근무 대상자가 없습니다. 직원관리에서 교대근무 대상자를 먼저 설정하세요.
+            </Alert>
+          )}
+
           <FormControl fullWidth>
             <InputLabel>교대근무자</InputLabel>
             <Select
@@ -143,7 +149,7 @@ export default function ShiftEntryDialog({
 
           <Button
             variant="outlined"
-            disabled={!entry.workerId || entry.selectedDates.length === 0 || !entry.checkIn || !entry.checkOut}
+            disabled={workers.length === 0 || !entry.workerId || entry.selectedDates.length === 0 || !entry.checkIn || !entry.checkOut}
             onClick={entry.addDrafts}
           >
             선택 일정 추가
@@ -156,7 +162,7 @@ export default function ShiftEntryDialog({
         <Button onClick={onClose}>취소</Button>
         <Button
           variant="contained"
-          disabled={entry.drafts.length === 0}
+          disabled={workers.length === 0 || entry.drafts.length === 0}
           onClick={save}
         >
           {entry.drafts.length}건 저장

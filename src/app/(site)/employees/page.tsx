@@ -15,6 +15,7 @@ import { isApiDataSource } from '@/repositories/config';
 import {
   UNASSIGNED_TEAM_ID,
   UNASSIGNED_TEAM_NAME,
+  type OrganizationTeam,
 } from '@/store/slices/organizationSlice';
 
 export default function Page() {
@@ -27,6 +28,17 @@ export default function Page() {
       .filter((code) => code.groupCode === 'G_RANK_CODE' && code.isActive && code.detailCode)
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((code) => ({ value: code.detailCode, label: code.label })),
+    [commonCodes],
+  );
+  const departmentTeams = useMemo<OrganizationTeam[]>(
+    () => commonCodes
+      .filter((code) => code.groupCode === 'G_TEAM_CODE' && code.isActive && code.detailCode)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((code) => ({
+        id: code.detailCode,
+        name: code.label,
+        startDate: '2024-01-01',
+      })),
     [commonCodes],
   );
   const workTypeOptions = useMemo(
@@ -78,6 +90,11 @@ export default function Page() {
       {organization.isError && (
         <Alert severity="error" sx={{ mt: 2 }}>
           직원 목록을 불러오거나 저장하지 못했습니다.
+        </Alert>
+      )}
+      {isApiDataSource && commonCodesQuery.isError && (
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          공통코드 API를 불러오지 못했습니다. 부서/직급/근무유형/재직상태 선택값을 확인할 수 없습니다.
         </Alert>
       )}
 
@@ -185,9 +202,13 @@ export default function Page() {
       <EmployeeDialog
         open={organization.employeeOpen}
         employee={organization.editingEmployee}
-        teams={organization.teams.filter((team) => !team.endDate)}
+        teams={(isApiDataSource && departmentTeams.length > 0
+          ? departmentTeams
+          : organization.teams).filter((team) => !team.endDate)}
         defaultTeamId={organization.selectedTeamId === 'all'
-          ? organization.snapshotTeams[0]?.id ?? UNASSIGNED_TEAM_ID
+          ? (isApiDataSource && departmentTeams.length > 0
+            ? departmentTeams[0]?.id
+            : organization.snapshotTeams[0]?.id) ?? UNASSIGNED_TEAM_ID
           : organization.selectedTeamId}
         nextId={Math.max(0, ...organization.employees.map((employee) => employee.id)) + 1}
         positionOptions={rankOptions}

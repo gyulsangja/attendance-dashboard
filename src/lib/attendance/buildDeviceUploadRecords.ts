@@ -48,10 +48,10 @@ const normalizeIdentity = (value: string) => value
   .toLowerCase();
 
 const departmentAliases = new Map([
-  [normalizeIdentity('\uac1c\ubc1c\ubd80\uc11c'), normalizeIdentity('\uac1c\ubc1c\ud300')],
-  [normalizeIdentity('\uacbd\uc601\uad00\ub9ac'), normalizeIdentity('\uacbd\uc601\uad00\ub9ac\ud300')],
-  [normalizeIdentity('\uae30\uc220\ubd80\uc11c'), normalizeIdentity('\uae30\uc220\ud300')],
-  [normalizeIdentity('\uc601\uc5c5\ubd80\uc11c'), normalizeIdentity('\uc804\ub7b5\uc601\uc5c5\ubd80')],
+  [normalizeIdentity('개발부서'), normalizeIdentity('개발팀')],
+  [normalizeIdentity('경영관리'), normalizeIdentity('경영관리팀')],
+  [normalizeIdentity('기술부서'), normalizeIdentity('기술팀')],
+  [normalizeIdentity('영업부서'), normalizeIdentity('전략영업부')],
 ]);
 
 const normalizeDepartmentIdentity = (value: string) => {

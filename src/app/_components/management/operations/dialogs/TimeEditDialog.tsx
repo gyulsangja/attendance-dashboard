@@ -13,6 +13,8 @@ import {
   Stack,
   TextField,
 } from '@mui/material';
+import { useAttendanceCodesQuery } from '@/hooks/useAttendanceCodeQueries';
+import { isApiDataSource } from '@/repositories/config';
 import { useAppSelector } from '@/store/hooks';
 import { getAttendanceCodesAtDate } from '@/store/slices/attendanceCodeSlice';
 import { getOrganizationSnapshot } from '@/store/slices/organizationSlice';
@@ -45,12 +47,15 @@ export default function TimeEditDialog({
 }: Props) {
   const organization = useAppSelector((state) => state.organization);
   const codeMaster = useAppSelector((state) => state.attendanceCode);
+  const apiAttendanceCodesQuery = useAttendanceCodesQuery();
   const date = value?.date ?? new Date().toISOString().slice(0, 10);
-  const attendanceCodes = getAttendanceCodesAtDate(
-    codeMaster.codes,
-    codeMaster.history,
-    date,
-  );
+  const attendanceCodes = isApiDataSource
+    ? apiAttendanceCodesQuery.data ?? []
+    : getAttendanceCodesAtDate(
+      codeMaster.codes,
+      codeMaster.history,
+      date,
+    );
   const employees = getOrganizationSnapshot(
     organization.teams,
     organization.employees,
@@ -65,7 +70,11 @@ export default function TimeEditDialog({
         <Stack spacing={2} sx={{ mt: 1 }}>
           <TextField
             label="직원"
-            value={employees.find((item) => item.id === value?.employeeId)?.name ?? ''}
+            value={
+              value?.employeeName
+              ?? employees.find((item) => item.id === value?.employeeId)?.name
+              ?? ''
+            }
             disabled
           />
           <TextField label="일자" value={value?.date ?? ''} disabled />
@@ -92,7 +101,18 @@ export default function TimeEditDialog({
           <Alert severity="info">
             해당 일자에 사용 가능한 전체 근태코드를 직접 추가하거나 해제할 수 있습니다.
           </Alert>
+          {isApiDataSource && (
+            <Alert severity="warning">
+              출퇴근 기록 삭제는 백엔드의 날짜+직원 기준 삭제 API가 확정된 뒤 사용할 수 있습니다.
+            </Alert>
+          )}
           <FormGroup>
+            {isApiDataSource && apiAttendanceCodesQuery.isLoading && (
+              <Alert severity="info">근태코드를 불러오는 중입니다.</Alert>
+            )}
+            {isApiDataSource && apiAttendanceCodesQuery.isError && (
+              <Alert severity="warning">근태코드 API를 불러오지 못했습니다.</Alert>
+            )}
             {attendanceCodes.map((code) => (
               <FormControlLabel
                 key={code.id}

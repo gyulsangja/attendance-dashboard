@@ -2,6 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { attendanceApi } from '@/api/attendanceApi';
+import { adaptUploadResultToSummary } from '@/adapters/deviceUploadAdapter';
 import type {
   AttendanceRecord,
   OperationSchedule,
@@ -12,9 +13,11 @@ import { buildDeviceUploadRecords } from '@/lib/attendance/buildDeviceUploadReco
 import {
   decodeCsvFile,
   parseAttendanceCsv,
-  type AttendanceCsvError,
 } from '@/lib/csv/parseAttendanceCsv';
-import { invalidateAttendanceRecordQueries } from '@/hooks/useQueryInvalidation';
+import {
+  invalidateAttendManagerQueries,
+  invalidateAttendanceRecordQueries,
+} from '@/hooks/useQueryInvalidation';
 import { isApiDataSource } from '@/repositories/config';
 import { useAppDispatch } from '@/store/hooks';
 import { uploadDeviceRecords } from '@/store/slices/managementSlice';
@@ -32,6 +35,9 @@ type WeekDay = {
 
 type Props = {
   deviceRecords: AttendanceRecord[];
+  year: number;
+  month: number;
+  weekNumber: number;
   organization: RootState['organization'];
   policy: WorkTimePolicy;
   schedules: OperationSchedule[];
@@ -42,6 +48,9 @@ type Props = {
 
 export const useDeviceUpload = ({
   deviceRecords,
+  year,
+  month,
+  weekNumber,
   organization,
   policy,
   schedules,
@@ -56,36 +65,27 @@ export const useDeviceUpload = ({
     const isXlsx = file.name.toLowerCase().endsWith('.xlsx');
 
     if (isApiDataSource) {
-      await attendanceApi.uploadDeviceFile(file);
+      const uploadResult = await attendanceApi.uploadDeviceFile(file, { year, month, week: weekNumber });
       invalidateAttendanceRecordQueries(queryClient);
+      invalidateAttendManagerQueries(queryClient);
+      const apiSummary = adaptUploadResultToSummary(uploadResult, {
+        fileName: file.name,
+        startDate: week.startDate,
+        endDate: week.endDate,
+      });
+      if (apiSummary) return apiSummary;
 
-      if (isXlsx) {
-        return {
-          fileName: file.name,
-          uploadedAt: new Date().toLocaleString('ko-KR'),
-          startDate: week.startDate,
-          endDate: week.endDate,
-          totalRows: 0,
-          validRows: 1,
-          errorRows: 0,
-          absenceRows: 0,
-          errors: ['XLSX \ud30c\uc77c\uc740 \ubc31\uc5d4\ub4dc \uc5c5\ub85c\ub4dc\ub97c \uc644\ub8cc\ud588\uc2b5\ub2c8\ub2e4. \uc870\ud68c API \uc751\ub2f5 \uae30\uc900\uc73c\ub85c \ud654\uba74\uc5d0 \ubc18\uc601\ub429\ub2c8\ub2e4.'],
-        };
-      }
-
-      const parsed = parseAttendanceCsv(await decodeCsvFile(file));
       return {
         fileName: file.name,
         uploadedAt: new Date().toLocaleString('ko-KR'),
         startDate: week.startDate,
         endDate: week.endDate,
-        totalRows: parsed.totalRows,
-        validRows: parsed.rows.length,
-        errorRows: parsed.errors.length,
+        totalRows: 0,
+        validRows: 0,
+        errorRows: 0,
         absenceRows: 0,
         errors: [
-          '\ubc31\uc5d4\ub4dc \uc5c5\ub85c\ub4dc\ub97c \uc644\ub8cc\ud588\uc2b5\ub2c8\ub2e4. \uc870\ud68c API \uc751\ub2f5 \uae30\uc900\uc73c\ub85c \ud654\uba74\uc5d0 \ubc18\uc601\ub429\ub2c8\ub2e4.',
-          ...parsed.errors.map((error: AttendanceCsvError) => `${error.row}\ud589: ${error.message}`),
+          '백엔드 업로드를 완료했습니다. 업로드 결과 건수는 백엔드 응답 기준으로 표시됩니다.',
         ],
       };
     }
@@ -100,7 +100,7 @@ export const useDeviceUpload = ({
         validRows: 0,
         errorRows: 1,
         absenceRows: 0,
-        errors: ['XLSX \ud30c\uc77c\uc740 API \ubaa8\ub4dc\uc5d0\uc11c\ub9cc \uc5c5\ub85c\ub4dc\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \ubaa9\ub370\uc774\ud130 \ubaa8\ub4dc\uc5d0\uc11c\ub294 CSV \ud30c\uc77c\uc744 \uc0ac\uc6a9\ud574 \uc8fc\uc138\uc694.'],
+        errors: ['XLSX 파일은 API 모드에서만 업로드할 수 있습니다. 목데이터 모드에서는 CSV 파일을 사용해 주세요.'],
       };
     }
 

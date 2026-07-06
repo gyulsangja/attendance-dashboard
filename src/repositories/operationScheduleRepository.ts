@@ -1,3 +1,4 @@
+import { attendManagerApi } from '@/api/attendManagerApi';
 import { employeeApi } from '@/api/employeeApi';
 import {
   adaptEmployeeAttendDtoToOperationSchedule,
@@ -10,6 +11,7 @@ export type OperationScheduleRepository = {
   selectByPeriod: (startDate: string, endDate: string) => Promise<OperationSchedule[]>;
   insertMany: (schedules: OperationSchedule[]) => Promise<void>;
   modify: (schedule: OperationSchedule) => Promise<void>;
+  delete: (schedule: OperationSchedule) => Promise<void>;
 };
 
 const mockOperationScheduleRepository: OperationScheduleRepository = {
@@ -18,6 +20,7 @@ const mockOperationScheduleRepository: OperationScheduleRepository = {
   },
   async insertMany() {},
   async modify() {},
+  async delete() {},
 };
 
 const apiOperationScheduleRepository: OperationScheduleRepository = {
@@ -37,6 +40,9 @@ const apiOperationScheduleRepository: OperationScheduleRepository = {
   },
   async modify(schedule) {
     await employeeApi.modifyAttend(adaptOperationScheduleToEmployeeAttendDto(schedule));
+  },
+  async delete(schedule) {
+    await attendManagerApi.deleteSchedule(adaptOperationScheduleToEmployeeAttendDto(schedule));
   },
 };
 

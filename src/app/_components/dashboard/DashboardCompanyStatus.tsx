@@ -9,6 +9,7 @@ type DashboardCompanyStatusProps = {
   employeeCount: number;
   shiftWorkerCount: number;
   attendanceCodes: AttendanceCode[];
+  activeAttendanceCodeCount?: number;
 };
 
 export default function DashboardCompanyStatus({
@@ -16,7 +17,12 @@ export default function DashboardCompanyStatus({
   employeeCount,
   shiftWorkerCount,
   attendanceCodes,
+  activeAttendanceCodeCount,
 }: DashboardCompanyStatusProps) {
+  const activeCodeCount = activeAttendanceCodeCount ?? attendanceCodes.length;
+  const attendanceCodeDetail = activeAttendanceCodeCount === undefined
+    ? `${attendanceCodes.filter((code) => code.isSchedulable).length}개 일정 입력 가능`
+    : '대시보드 API 기준';
   const cards = [
     {
       label: '재직 인원',
@@ -32,8 +38,8 @@ export default function DashboardCompanyStatus({
     },
     {
       label: '활성 근태코드',
-      value: `${attendanceCodes.length}개`,
-      detail: `${attendanceCodes.filter((code) => code.isSchedulable).length}개 일정 입력 가능`,
+      value: `${activeCodeCount}개`,
+      detail: attendanceCodeDetail,
       icon: <Business />,
     },
   ];
@@ -42,7 +48,7 @@ export default function DashboardCompanyStatus({
     <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="font-bold">회사 현황</h2>
+          <h2 className="font-bold">회사현황</h2>
           <p className="mt-1 text-sm text-slate-500">
             조직과 구성원 기준의 기본 현황입니다.
           </p>

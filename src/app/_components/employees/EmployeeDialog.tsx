@@ -22,6 +22,7 @@ import {
   type OrganizationEmployee,
   type OrganizationTeam,
 } from '@/store/slices/organizationSlice';
+import { isApiDataSource } from '@/repositories/config';
 
 export type EmployeeDialogOption = {
   value: string;
@@ -42,28 +43,28 @@ type EmployeeDialogProps = {
 };
 
 const TEXT = {
-  editTitle: '\uc9c1\uc6d0 \uc815\ubcf4 \uc218\uc815',
-  addTitle: '\uc9c1\uc6d0 \ub4f1\ub85d',
-  name: '\uc774\ub984',
-  team: '\ubd80\uc11c/\ud300',
-  position: '\uc9c1\uae09',
-  workType: '\uadfc\ubb34\uc720\ud615',
-  holdStatus: '\uc7ac\uc9c1\uc0c1\ud0dc',
-  select: '\uc120\ud0dd',
-  shiftWorker: '\uad50\ub300\uadfc\ubb34 \ub300\uc0c1\uc790',
-  effectiveDate: '\ubcc0\uacbd \uc801\uc6a9\uc77c',
-  hireDate: '\uc785\uc0ac\uc77c',
-  cancel: '\ucde8\uc18c',
-  save: '\uc800\uc7a5',
+  editTitle: '직원 정보 수정',
+  addTitle: '직원 등록',
+  name: '이름',
+  team: '부서/팀',
+  position: '직급',
+  workType: '근무유형',
+  holdStatus: '재직상태',
+  select: '선택',
+  shiftWorker: '교대근무 대상자',
+  effectiveDate: '변경 적용일',
+  hireDate: '입사일',
+  cancel: '취소',
+  save: '저장',
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-const fallbackPositions = ['\uc0ac\uc6d0', '\uc8fc\uc784', '\ub300\ub9ac', '\uacfc\uc7a5', '\ucc28\uc7a5', '\ubd80\uc7a5'];
+const fallbackPositions = ['사원', '주임', '대리', '과장', '차장', '부장'];
 const fallbackHoldStatuses: EmployeeDialogOption[] = [
-  { value: 'HOLD_ACTIVE', label: '\uc7ac\uc9c1' },
-  { value: 'HOLD_LEAVE', label: '\ud734\uc9c1' },
-  { value: 'HOLD_RETIRED', label: '\ud1f4\uc0ac' },
+  { value: 'HOLD_ACTIVE', label: '재직' },
+  { value: 'HOLD_LEAVE', label: '휴직' },
+  { value: 'HOLD_RETIRED', label: '퇴사' },
 ];
 
 const toOptions = (values: string[]): EmployeeDialogOption[] =>
@@ -128,10 +129,10 @@ function EmployeeDialogContent({
 }: EmployeeDialogProps) {
   const resolvedPositionOptions = positionOptions.length > 0
     ? positionOptions
-    : toOptions(fallbackPositions);
+    : isApiDataSource ? [] : toOptions(fallbackPositions);
   const resolvedHoldStatusOptions = holdStatusOptions.length > 0
     ? holdStatusOptions
-    : fallbackHoldStatuses;
+    : isApiDataSource ? [] : fallbackHoldStatuses;
   const defaultPosition = resolvedPositionOptions[0]?.value ?? '';
   const defaultHoldStatus = resolvedHoldStatusOptions[0]?.value ?? '';
   const [form, setForm] = useState<OrganizationEmployee>(
@@ -139,6 +140,8 @@ function EmployeeDialogContent({
   );
   const [effectiveDate, setEffectiveDate] = useState(today);
   const dateValue = employee ? effectiveDate : form.startDate;
+  const getOptionLabel = (options: EmployeeDialogOption[], value: string) =>
+    options.find((option) => option.value === value)?.label ?? value;
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -154,11 +157,20 @@ function EmployeeDialogContent({
 
           <FormControl fullWidth>
             <InputLabel>{TEXT.team}</InputLabel>
-            <Select
-              label={TEXT.team}
-              value={form.teamId}
-              onChange={(event) => setForm({ ...form, teamId: event.target.value, backendDeptCode: event.target.value })}
-            >
+              <Select
+                label={TEXT.team}
+                value={form.teamId}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  const teamName = teams.find((team) => team.id === value)?.name ?? value;
+                  setForm({
+                    ...form,
+                    teamId: value,
+                    backendDeptCode: value,
+                    backendDeptName: teamName,
+                  });
+                }}
+              >
               <MenuItem value={UNASSIGNED_TEAM_ID}>{UNASSIGNED_TEAM_NAME}</MenuItem>
               {teams.map((team) => (
                 <MenuItem key={team.id} value={team.id}>{team.name}</MenuItem>
@@ -171,8 +183,16 @@ function EmployeeDialogContent({
               <InputLabel>{TEXT.position}</InputLabel>
               <Select
                 label={TEXT.position}
-                value={form.position}
-                onChange={(event) => setForm({ ...form, position: event.target.value, backendRankCode: event.target.value })}
+                value={form.backendRankCode ?? form.position}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setForm({
+                    ...form,
+                    position: getOptionLabel(resolvedPositionOptions, value),
+                    backendRankCode: value,
+                    backendRankName: getOptionLabel(resolvedPositionOptions, value),
+                  });
+                }}
               >
                 {resolvedPositionOptions.map((option) => (
                   <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
@@ -184,8 +204,16 @@ function EmployeeDialogContent({
               <InputLabel>{TEXT.workType}</InputLabel>
               <Select
                 label={TEXT.workType}
-                value={form.jobTitle}
-                onChange={(event) => setForm({ ...form, jobTitle: event.target.value, backendWorkTypeCode: event.target.value })}
+                value={form.backendWorkTypeCode ?? form.jobTitle}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setForm({
+                    ...form,
+                    jobTitle: getOptionLabel(jobTitleOptions, value),
+                    backendWorkTypeCode: value,
+                    backendWorkTypeName: getOptionLabel(jobTitleOptions, value),
+                  });
+                }}
               >
                 <MenuItem value="">{TEXT.select}</MenuItem>
                 {jobTitleOptions.map((option) => (
@@ -199,7 +227,14 @@ function EmployeeDialogContent({
               <Select
                 label={TEXT.holdStatus}
                 value={form.backendHoldStatusCode ?? defaultHoldStatus}
-                onChange={(event) => setForm({ ...form, backendHoldStatusCode: event.target.value })}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setForm({
+                    ...form,
+                    backendHoldStatusCode: value,
+                    backendHoldStatusName: getOptionLabel(resolvedHoldStatusOptions, value),
+                  });
+                }}
               >
                 {resolvedHoldStatusOptions.map((option) => (
                   <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
@@ -236,7 +271,11 @@ function EmployeeDialogContent({
         <Button onClick={onClose}>{TEXT.cancel}</Button>
         <Button
           variant="contained"
-          disabled={!form.name.trim() || !form.teamId}
+          disabled={
+            !form.name.trim()
+            || !form.teamId
+            || (isApiDataSource && (!form.backendRankCode || !form.backendHoldStatusCode))
+          }
           onClick={() => onSave(
             {
               ...form,

@@ -8,6 +8,12 @@ import DashboardOperationStatus from '@/app/_components/dashboard/DashboardOpera
 import DashboardPeriodHeader from '@/app/_components/dashboard/DashboardPeriodHeader';
 import DashboardShiftCalendar from '@/app/_components/dashboard/DashboardShiftCalendar';
 import DashboardWeeklySummary from '@/app/_components/dashboard/DashboardWeeklySummary';
+import {
+  adaptDashboardWeeklyDtoToViewModel,
+  type DashboardViewModel,
+} from '@/adapters/dashboardAdapter';
+import { useDashboardWeeklyQuery } from '@/hooks/useDashboardQueries';
+import { isApiDataSource } from '@/repositories/config';
 import { selectDashboardData } from '@/selectors/dashboardSelectors';
 import { useAppSelector } from '@/store/hooks';
 import type { RootState } from '@/store/store';
@@ -19,7 +25,7 @@ export default function Home() {
   const [year, setYear] = useState(management.year);
   const [month, setMonth] = useState(management.month);
   const [weekNumber, setWeekNumber] = useState(management.weekNumber);
-  const dashboard = useMemo(
+  const fallbackDashboard = useMemo<DashboardViewModel>(
     () => selectDashboardData({
       attendanceCode,
       management,
@@ -27,15 +33,52 @@ export default function Home() {
     } as RootState, year, month, weekNumber),
     [attendanceCode, management, month, organization, weekNumber, year],
   );
+  const apiBaseDashboard = useMemo(() => ({
+    ...fallbackDashboard,
+    confirmed: false,
+    summaryCards: [],
+    detailAttendanceCodes: [],
+    attendanceCodes: [],
+    eventCounts: {},
+    exceptionRows: [],
+    vacationRows: [],
+    weekShifts: [],
+    shiftWorkerCount: 0,
+    operationItems: [
+      { label: '근태 일정 입력', value: '미확인', done: false },
+      { label: '단말기 CSV 확인', value: '미확인', done: false },
+      { label: '교대근무 확정', value: '미확인', done: false },
+      { label: '운영관리 최종 확정', value: '미확인', done: false },
+    ],
+    companyStatus: {
+      teamCount: 0,
+      employeeCount: 0,
+      shiftWorkerCount: 0,
+      activeAttendanceCodeCount: 0,
+    },
+  }), [fallbackDashboard]);
+  const dashboardBase = isApiDataSource ? apiBaseDashboard : fallbackDashboard;
+  const dashboardQuery = useDashboardWeeklyQuery(
+    year,
+    month,
+    fallbackDashboard.selectedWeekNumber,
+  );
+  const dashboard = useMemo(
+    () => dashboardQuery.data
+      ? adaptDashboardWeeklyDtoToViewModel(dashboardQuery.data, dashboardBase)
+      : dashboardBase,
+    [dashboardBase, dashboardQuery.data],
+  );
 
   const statusOverview = (
     <div className="mt-5 grid gap-5 xl:grid-cols-2">
       <DashboardOperationStatus items={dashboard.operationItems} />
       <DashboardCompanyStatus
-        teamCount={dashboard.organizationSnapshot.teams.length}
-        employeeCount={dashboard.organizationSnapshot.employees.length}
-        shiftWorkerCount={dashboard.shiftWorkerCount}
+        teamCount={dashboard.companyStatus?.teamCount ?? dashboard.organizationSnapshot.teams.length}
+        employeeCount={dashboard.companyStatus?.employeeCount ?? dashboard.organizationSnapshot.employees.length}
+        shiftWorkerCount={dashboard.companyStatus?.shiftWorkerCount ?? dashboard.shiftWorkerCount}
         attendanceCodes={dashboard.attendanceCodes}
+        activeAttendanceCodeCount={dashboard.companyStatus?.activeAttendanceCodeCount}
       />
     </div>
   );
@@ -58,6 +101,18 @@ export default function Home() {
         }}
         onWeekChange={setWeekNumber}
       />
+
+      {dashboardQuery.isLoading && (
+        <Alert severity="info" sx={{ mt: 3 }}>
+          대시보드 데이터를 불러오는 중입니다.
+        </Alert>
+      )}
+
+      {dashboardQuery.isError && (
+        <Alert severity="warning" sx={{ mt: 3 }}>
+          대시보드 API를 불러오지 못했습니다. API 모드에서는 확인된 값만 표시합니다.
+        </Alert>
+      )}
 
       {!dashboard.confirmed && (
         <Alert severity="warning" sx={{ mt: 3 }}>
@@ -93,12 +148,14 @@ export default function Home() {
         </>
       )}
 
-      <DashboardShiftCalendar
-        startDate={dashboard.startDate}
-        endDate={dashboard.endDate}
-        days={dashboard.shiftCalendarDays}
-        shifts={dashboard.weekShifts}
-      />
+      {dashboard.confirmed && (
+        <DashboardShiftCalendar
+          startDate={dashboard.startDate}
+          endDate={dashboard.endDate}
+          days={dashboard.shiftCalendarDays}
+          shifts={dashboard.weekShifts}
+        />
+      )}
 
       {dashboard.confirmed && statusOverview}
     </main>

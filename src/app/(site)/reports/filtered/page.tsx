@@ -12,7 +12,21 @@ export default function Page() {
   return (
     <>
       <section className="mt-5 rounded-xl border border-slate-200 bg-white p-5">
-        <FilterCode selectedCodes={report.selectedCodes} onChange={report.setSelectedCodes} />
+        {report.isCodeLoading && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            근태코드를 불러오는 중입니다.
+          </Alert>
+        )}
+        {report.isCodeError && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            근태코드 API 호출에 실패했습니다.
+          </Alert>
+        )}
+        <FilterCode
+          attendanceCodes={report.attendanceCodes}
+          selectedCodes={report.selectedCodes}
+          onChange={report.setSelectedCodes}
+        />
       </section>
       <section className="mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="mb-4 flex items-center justify-between">

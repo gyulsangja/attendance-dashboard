@@ -69,6 +69,11 @@ export default function Page() {
           백엔드 출퇴근 조회 API 호출에 실패했습니다.
         </Alert>
       )}
+      {report.isApiLoading && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          월간 출퇴근기록 데이터를 불러오는 중입니다.
+        </Alert>
+      )}
 
       <AttendanceRecordsTable
         days={report.days}

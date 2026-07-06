@@ -17,7 +17,8 @@ type UserGridProps = {
   onDelete: (user: SystemUser) => void;
 };
 
-const getBackendRoleLabel = (codes: CommonCode[], code?: string) => {
+const getBackendRoleLabel = (codes: CommonCode[], code?: string, name?: string) => {
+  if (name) return name;
   if (!code) return '-';
   return codes.find((item) => item.detailCode === code)?.label ?? code;
 };
@@ -41,7 +42,7 @@ export default function UserGrid({
       renderCell: ({ row }) => (
         <Chip
           size="small"
-          label={getBackendRoleLabel(backendRoleCodes, row.backendRoleCode)}
+          label={getBackendRoleLabel(backendRoleCodes, row.backendRoleCode, row.backendRoleName)}
           variant="outlined"
         />
       ),

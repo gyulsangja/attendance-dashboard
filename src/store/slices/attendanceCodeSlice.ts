@@ -36,6 +36,8 @@ const initialState: AttendanceCodeState = {
     halfAmEnd: '18:00',
     halfPmStart: '09:00',
     halfPmEnd: '13:00',
+    lateGraceMinutes: 0,
+    earlyLeaveGraceMinutes: 0,
   },
   codes: attendanceCodes.map((code) => ({ ...code })),
   history: attendanceCodes.map((code, index) => ({

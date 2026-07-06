@@ -55,7 +55,7 @@ export const useScheduleEditing = ({
       department,
       name: organizationEmployee.name,
       type: code.label,
-      detail: `${code.label} ??`,
+      detail: `${code.label} 일정`,
     };
 
     if (isApiDataSource) {

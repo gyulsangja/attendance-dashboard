@@ -41,21 +41,21 @@ const createNextAttendanceCodeId = (codes: AttendanceCode[]) => {
   return `${prefix}${String(maxNumber + 1).padStart(2, '0')}`;
 };
 const TEXT = {
-  noAccess: '\uad8c\ud55c\uc73c\ub85c\ub294 \uc124\uc815\uc744 \uad00\ub9ac\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.',
-  endDatePrompt: '\uc0ac\uc6a9 \uc885\ub8cc\uc77c\uc744 \uc785\ub825\ud558\uc138\uc694.',
-  title: '\uc124\uc815',
-  description: '\uc9c1\uc6d0 \uc815\ubcf4 \ud56d\ubaa9, \uadfc\ud0dc\ucf54\ub4dc, \ucd9c\ud1f4\uadfc \uae30\uc900\uc2dc\uac04\uc744 \uc5c5\ubb34\ubcc4\ub85c \uad00\ub9ac\ud569\ub2c8\ub2e4.',
-  apiInfo: 'API \ubaa8\ub4dc\uc5d0\uc11c\ub294 \uc124\uc815\ud55c \ud56d\ubaa9\ub4e4\uc744 \ubc31\uc5d4\ub4dc API\uc5d0 \uc800\uc7a5\ud569\ub2c8\ub2e4. \uc800\uc7a5 \ud6c4 \ubaa9\ub85d\uc5d0 \ubc18\uc601\ub418\uc9c0 \uc54a\uc73c\uba74 \ubc31\uc5d4\ub4dc \uc800\uc7a5 \ud544\ub4dc \ud655\uc778\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.',
+  noAccess: '권한으로는 설정을 관리할 수 없습니다.',
+  endDatePrompt: '사용 종료일을 입력하세요.',
+  title: '설정',
+  description: '직원 정보 항목, 근태코드, 출퇴근 기준시간을 업무별로 관리합니다.',
+  apiInfo: 'API 모드에서는 설정한 항목들을 백엔드 API에 저장합니다. 저장 후 목록에 반영되지 않으면 백엔드 저장 필드 확인이 필요합니다.',
   codeLoadError: '근태코드 API를 불러오지 못했습니다.',
-  codeMutationError: '\uadfc\ud0dc\ucf54\ub4dc \uc800\uc7a5 \uc911 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4. \ubc31\uc5d4\ub4dc \uacf5\ud1b5\ucf54\ub4dc \uc800\uc7a5 DTO \ud655\uc778\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.',
+  codeMutationError: '근태코드 저장 중 오류가 발생했습니다. 백엔드 공통코드 저장 DTO 확인이 필요합니다.',
   policyLoadError: '시스템 설정 API를 불러오지 못했습니다.',
-  policyMutationError: '\uae30\uc900\uc2dc\uac04 \uc800\uc7a5 \uc911 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4. \ubc31\uc5d4\ub4dc \uc2dc\uc2a4\ud15c \uc124\uc815 API \uad6c\ud604 \uc5ec\ubd80 \ud655\uc778\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.',
-  employeeOptionsTab: '\uc9c1\uc6d0 \uc815\ubcf4 \ud56d\ubaa9',
-  attendanceCodeTab: '\uadfc\ud0dc\ucf54\ub4dc',
-  workTimeTab: '\uadfc\ubb34\uc2dc\uac04',
-  attendanceTitle: '\uadfc\ud0dc\ucf54\ub4dc \uad00\ub9ac',
-  attendanceDescription: '\uc9c0\uac01, \uc870\ud1f4, \uacb0\uadfc, \uc5f0\ucc28 \ub4f1 \uc6b4\uc601\uad00\ub9ac\uc640 \ub300\uc2dc\ubcf4\ub4dc\uc5d0\uc11c \uc0ac\uc6a9\ud560 \uadfc\ud0dc\ucf54\ub4dc\ub97c \uad00\ub9ac\ud569\ub2c8\ub2e4.',
-  addAttendanceCode: '\uadfc\ud0dc\ucf54\ub4dc \ucd94\uac00',
+  policyMutationError: '기준시간 저장 중 오류가 발생했습니다. 백엔드 시스템 설정 API 구현 여부 확인이 필요합니다.',
+  employeeOptionsTab: '직원 정보 항목',
+  attendanceCodeTab: '근태코드',
+  workTimeTab: '근무시간',
+  attendanceTitle: '근태코드 관리',
+  attendanceDescription: '지각, 조퇴, 결근, 연차 등 운영관리와 대시보드에서 사용할 근태코드를 관리합니다.',
+  addAttendanceCode: '근태코드 추가',
 };
 
 export default function Page() {

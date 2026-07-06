@@ -27,6 +27,7 @@ export type SystemUser = {
   role: UserRole;
   empNo?: string;
   backendRoleCode?: string;
+  backendRoleName?: string;
 };
 
 export type AttendanceCode = {
@@ -46,6 +47,8 @@ export type WorkTimePolicy = {
   halfAmEnd: string;
   halfPmStart: string;
   halfPmEnd: string;
+  lateGraceMinutes: number;
+  earlyLeaveGraceMinutes: number;
 };
 
 export type ReportEmployee = {
@@ -53,6 +56,7 @@ export type ReportEmployee = {
   name: string;
   department: string;
   position: string;
+  shiftWorker?: boolean;
 };
 
 export type AttendanceEvent = {
@@ -71,6 +75,9 @@ export type AttendanceRecord = {
   checkOut?: string;
   events: AttendanceEvent[];
   memo?: string;
+  isHoliday?: boolean;
+  holidayName?: string;
+  isShiftWorker?: boolean;
 };
 
 export type DeviceUploadSummary = {
@@ -127,9 +134,13 @@ export type OrganizationEmployee = {
   startDate: string;
   endDate?: string;
   backendDeptCode?: string;
+  backendDeptName?: string;
   backendRankCode?: string;
+  backendRankName?: string;
   backendWorkTypeCode?: string;
+  backendWorkTypeName?: string;
   backendHoldStatusCode?: string;
+  backendHoldStatusName?: string;
 };
 
 export type OrganizationHistory = {

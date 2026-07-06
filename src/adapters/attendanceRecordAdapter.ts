@@ -14,7 +14,7 @@ const isNumericValue = (value: unknown) =>
   value !== undefined && value !== null && Number.isFinite(Number(value));
 
 const getEmployeeKey = (dto: AttendanceManagerDto) =>
-  String(dto.attend_card_no ?? dto.attendCardNo ?? dto.emp_no ?? dto.empNo ?? dto.emo_no ?? '');
+  String(dto.emp_no ?? dto.empNo ?? dto.emo_no ?? dto.attend_card_no ?? dto.attendCardNo ?? '');
 
 const getRecordId = (dto: AttendanceManagerDto) =>
   Number(dto.id ?? dto.idx)
@@ -74,6 +74,8 @@ export const adaptAttendanceRecordToManagerDto = (
   attend_code: record.events[0]?.codeId ?? '',
   detail_code: record.events[0]?.codeId ?? '',
   attend_reason: record.events.map((event) => event.detail).filter(Boolean).join(', '),
+  attend_codes: record.events.map((event) => event.codeId),
+  attendance_codes: record.events.map((event) => event.codeId),
   memo: record.memo,
   etc: record.events.map((event) => event.codeId).join(','),
 });

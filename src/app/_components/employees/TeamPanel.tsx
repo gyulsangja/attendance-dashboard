@@ -20,10 +20,10 @@ type TeamPanelProps = {
 };
 
 const TEXT = {
-  organization: '\uc870\uc9c1',
-  addTeam: '\ud300 \ucd94\uac00',
-  allMembers: '\uc804\uccb4 \uad6c\uc131\uc6d0',
-  memberSuffix: '\uba85',
+  organization: '조직',
+  addTeam: '팀 추가',
+  allMembers: '전체 구성원',
+  memberSuffix: '명',
 };
 
 const memberCountLabel = (count: number) => `${count}${TEXT.memberSuffix}`;

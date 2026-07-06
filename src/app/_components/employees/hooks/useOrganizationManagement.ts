@@ -55,7 +55,7 @@ export function useOrganizationManagement() {
       if (teamMap.has(employee.teamId)) return;
       teamMap.set(employee.teamId, {
         id: employee.teamId,
-        name: employee.teamId,
+        name: employee.backendDeptName ?? employee.teamId,
         startDate: employee.startDate,
       });
     });

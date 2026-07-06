@@ -28,6 +28,9 @@ export const useManagementOperations = () => {
   });
   const deviceUpload = useDeviceUpload({
     deviceRecords: state.deviceRecords,
+    year: state.year,
+    month: state.month,
+    weekNumber: state.weekNumber,
     organization,
     policy: codeMaster.workTimePolicy,
     schedules: state.displayedWeekSchedules,
@@ -37,6 +40,9 @@ export const useManagementOperations = () => {
   });
   const shiftWeekActions = useShiftWeekActions({
     shiftWeekConfirmed: state.shiftWeekConfirmed,
+    year: state.year,
+    month: state.month,
+    weekNumber: state.weekNumber,
     week: state.week,
   });
   const actions = useManagementOperationActions({
@@ -44,6 +50,11 @@ export const useManagementOperations = () => {
     deviceUpload,
     scheduleEditing,
     shiftWeekActions,
+    confirmed: state.confirmed,
+    schedules: state.displayedWeekSchedules,
+    year: state.year,
+    month: state.month,
+    weekNumber: state.weekNumber,
     week: state.week,
   });
 

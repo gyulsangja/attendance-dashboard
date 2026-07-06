@@ -78,6 +78,8 @@ export const selectDashboardData = (
   const pendingShifts = weekShifts.filter(
     (shift) => shift.status === SHIFT_STATUS.PENDING,
   ).length;
+  const shiftWeekKey = buildOperationWeekKey(year, month, selectedWeekNumber);
+  const shiftConfirmed = (state.management.confirmedShiftWeekKeys ?? []).includes(shiftWeekKey);
   const exceptionalCodeIds = new Set(
     attendanceCodes
       .filter((code) => code.isExceptional)
@@ -124,18 +126,18 @@ export const selectDashboardData = (
       done: weekSchedules.length > 0,
     },
     {
-      label: '단말기 출퇴근 데이터',
+      label: '단말기 CSV 확인',
       value: terminalRecords.length > 0 ? `${terminalRecords.length}건 확인` : '업로드 필요',
       done: terminalRecords.length > 0,
     },
     {
       label: '교대근무 확정',
-      value: pendingShifts > 0 ? `${pendingShifts}건 승인대기` : '확정 완료',
-      done: pendingShifts === 0,
+      value: shiftConfirmed ? '확정 완료' : pendingShifts > 0 ? `${pendingShifts}건 승인 대기` : '확정 전',
+      done: shiftConfirmed,
     },
     {
-      label: '현황통계 반영',
-      value: confirmed ? '반영 완료' : '확정 전',
+      label: '운영관리 최종 확정',
+      value: confirmed ? '확정 완료' : '확정 전',
       done: confirmed,
     },
   ];

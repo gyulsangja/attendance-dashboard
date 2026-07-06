@@ -1,6 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useAttendanceCodesQuery } from '@/hooks/useAttendanceCodeQueries';
+import { useOrganizationEmployeesQuery } from '@/hooks/useEmployeeQueries';
+import {
+  selectOperationWeekDays,
+  selectSelectedOperationWeek,
+} from '@/selectors/managementSelectors';
+import { isApiDataSource } from '@/repositories/config';
 import { useAppSelector } from '@/store/hooks';
 import { getAttendanceCodesAtDate } from '@/store/slices/attendanceCodeSlice';
 import {
@@ -24,43 +31,68 @@ export type ScheduleEntryEmployee = {
 export function useScheduleEntryDrafts({ existing }: UseScheduleEntryDraftsParams) {
   const codeMaster = useAppSelector((state) => state.attendanceCode);
   const organization = useAppSelector((state) => state.organization);
-  const [department, setDepartment] = useState('개발팀');
+  const week = useAppSelector(selectSelectedOperationWeek);
+  const weekDays = useAppSelector(selectOperationWeekDays);
+  const apiEmployeesQuery = useOrganizationEmployeesQuery();
+  const apiAttendanceCodesQuery = useAttendanceCodesQuery();
+  const [department, setDepartment] = useState('');
   const [employeeIds, setEmployeeIds] = useState<string[]>([]);
   const [codeId, setCodeId] = useState('');
-  const [dates, setDates] = useState<string[]>(['2026-06-08']);
-  const [dateDraft, setDateDraft] = useState('2026-06-09');
+  const [dates, setDates] = useState<string[]>(() => [weekDays[0]?.date ?? week.startDate]);
+  const [dateDraft, setDateDraft] = useState(() => weekDays[1]?.date ?? week.startDate);
   const referenceDate = dates[0] ?? dateDraft;
+  const sourceCodes = isApiDataSource ? apiAttendanceCodesQuery.data ?? [] : codeMaster.codes;
+  const sourceHistory = isApiDataSource ? [] : codeMaster.history;
 
   const attendanceCodes = getAttendanceCodesAtDate(
-    codeMaster.codes,
-    codeMaster.history,
+    sourceCodes,
+    sourceHistory,
     referenceDate,
   ).filter((code) => code.isSchedulable);
 
-  const organizationSnapshot = getOrganizationSnapshot(
-    organization.teams,
+  const reportEmployees = useMemo(() => {
+    if (isApiDataSource) {
+      return (apiEmployeesQuery.data ?? []).map<ScheduleEntryEmployee>((employee) => ({
+        id: employee.id,
+        name: employee.name,
+        position: employee.backendRankName ?? employee.position,
+        department: employee.backendDeptName ?? employee.teamId,
+      }));
+    }
+
+    const organizationSnapshot = getOrganizationSnapshot(
+      organization.teams,
+      organization.employees,
+      organization.history,
+      referenceDate,
+    );
+
+    return organizationSnapshot.employees.map<ScheduleEntryEmployee>((employee) => ({
+      id: employee.id,
+      name: employee.name,
+      position: employee.position,
+      department: employee.teamId === UNASSIGNED_TEAM_ID
+        ? UNASSIGNED_TEAM_NAME
+        : organizationSnapshot.teams.find((team) => team.id === employee.teamId)?.name ?? '-',
+    }));
+  }, [
+    apiEmployeesQuery.data,
     organization.employees,
     organization.history,
+    organization.teams,
     referenceDate,
-  );
-  const reportEmployees = organizationSnapshot.employees.map<ScheduleEntryEmployee>((employee) => ({
-    id: employee.id,
-    name: employee.name,
-    position: employee.position,
-    department: employee.teamId === UNASSIGNED_TEAM_ID
-      ? UNASSIGNED_TEAM_NAME
-      : organizationSnapshot.teams.find((team) => team.id === employee.teamId)?.name ?? '-',
-  }));
+  ]);
 
   const departments = [...new Set(reportEmployees.map((item) => item.department))];
-  const departmentEmployees = reportEmployees.filter((item) => item.department === department);
+  const selectedDepartment = department && departments.includes(department)
+    ? department
+    : departments[0] ?? '';
+  const departmentEmployees = reportEmployees.filter((item) => item.department === selectedDepartment);
   const selectedEmployees = reportEmployees.filter((item) =>
-    employeeIds.includes(String(item.id)),
-  );
+    employeeIds.includes(String(item.id)));
   const code = attendanceCodes.find((item) => item.id === codeId);
   const preview = selectedEmployees.flatMap((employee) =>
-    dates.map((date) => ({ employee, date })),
-  );
+    dates.map((date) => ({ employee, date })));
 
   const selectDepartmentEmployees = () => {
     setEmployeeIds((current) => [
@@ -80,8 +112,7 @@ export function useScheduleEntryDrafts({ existing }: UseScheduleEntryDraftsParam
 
   const addDate = () => {
     setDates((current) =>
-      current.includes(dateDraft) ? current : [...current, dateDraft].sort()
-    );
+      current.includes(dateDraft) ? current : [...current, dateDraft].sort());
   };
 
   const removeDate = (date: string) => {
@@ -117,7 +148,7 @@ export function useScheduleEntryDrafts({ existing }: UseScheduleEntryDraftsParam
   };
 
   return {
-    department,
+    department: selectedDepartment,
     employeeIds,
     codeId,
     dates,
@@ -127,6 +158,8 @@ export function useScheduleEntryDrafts({ existing }: UseScheduleEntryDraftsParam
     departmentEmployees,
     code,
     preview,
+    isLoading: isApiDataSource && (apiEmployeesQuery.isLoading || apiAttendanceCodesQuery.isLoading),
+    isError: isApiDataSource && (apiEmployeesQuery.isError || apiAttendanceCodesQuery.isError),
     setDepartment,
     setCodeId,
     setDateDraft,

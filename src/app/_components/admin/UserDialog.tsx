@@ -17,11 +17,18 @@ import {
 import { userRoles, type UserRole } from '@/mocks';
 import type { SystemUser } from '@/types/domain';
 
+export type UserRoleOption = {
+  value: string;
+  label: string;
+  role: UserRole;
+};
+
 type UserDialogProps = {
   open: boolean;
   form: Omit<SystemUser, 'id'>;
   error: string;
   saving?: boolean;
+  roleOptions?: UserRoleOption[];
   onFormChange: (form: Omit<SystemUser, 'id'>) => void;
   onClose: () => void;
   onSave: () => void;
@@ -32,10 +39,20 @@ export default function UserDialog({
   form,
   error,
   saving = false,
+  roleOptions = [],
   onFormChange,
   onClose,
   onSave,
 }: UserDialogProps) {
+  const resolvedRoleOptions = roleOptions.length > 0
+    ? roleOptions
+    : userRoles.map((role) => ({
+      value: role.id,
+      label: role.label,
+      role: role.id,
+    }));
+  const selectedRoleValue = form.backendRoleCode ?? form.role;
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>회원 추가</DialogTitle>
@@ -65,11 +82,20 @@ export default function UserDialog({
             <InputLabel>권한</InputLabel>
             <Select
               label="권한"
-              value={form.role}
-              onChange={(event) => onFormChange({ ...form, role: event.target.value as UserRole })}
+              value={selectedRoleValue}
+              onChange={(event) => {
+                const value = event.target.value;
+                const option = resolvedRoleOptions.find((item) => item.value === value);
+                onFormChange({
+                  ...form,
+                  role: option?.role ?? value as UserRole,
+                  backendRoleCode: option?.value,
+                  backendRoleName: option?.label,
+                });
+              }}
             >
-              {userRoles.map((role) => (
-                <MenuItem key={role.id} value={role.id}>{role.label}</MenuItem>
+              {resolvedRoleOptions.map((role) => (
+                <MenuItem key={role.value} value={role.value}>{role.label}</MenuItem>
               ))}
             </Select>
           </FormControl>

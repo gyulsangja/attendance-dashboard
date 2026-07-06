@@ -23,6 +23,8 @@ export default function OperationManagementSection({
   tab,
 }: Props) {
   const {
+    attendManagerApiError,
+    attendManagerApiLoading,
     confirmed,
     deviceRecords,
     deviceRecordsApiError,
@@ -58,6 +60,26 @@ export default function OperationManagementSection({
       </div>
 
       <OperationProgress steps={steps} active={tab} onChange={setTab} />
+      {attendManagerApiLoading && (
+        <Alert severity="info" sx={{ mt: 2 }}>
+          운영관리 데이터를 불러오는 중입니다.
+        </Alert>
+      )}
+      {attendManagerApiError && (
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          운영관리 일부 API를 불러오지 못했습니다. API 모드에서는 확인된 데이터만 표시합니다.
+        </Alert>
+      )}
+      {actions.apiMutating && (
+        <Alert severity="info" sx={{ mt: 2 }}>
+          운영관리 API 요청을 처리 중입니다.
+        </Alert>
+      )}
+      {actions.apiMutationError && (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {actions.apiMutationError}
+        </Alert>
+      )}
 
       <Paper
         elevation={0}

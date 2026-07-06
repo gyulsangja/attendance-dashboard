@@ -30,3 +30,15 @@ export const invalidateUserQueries = (queryClient: QueryClient) => {
 export const invalidateWorkTimePolicyQueries = (queryClient: QueryClient) => {
   void queryClient.invalidateQueries({ queryKey: queryKeys.workTimePolicy });
 };
+
+export const invalidateAttendManagerQueries = (queryClient: QueryClient) => {
+  void queryClient.invalidateQueries({ queryKey: ['attend-manager-summary'] });
+  void queryClient.invalidateQueries({ queryKey: ['attend-manager-operation-confirm-status'] });
+  void queryClient.invalidateQueries({ queryKey: ['attend-manager-shift-confirm-status'] });
+  void queryClient.invalidateQueries({ queryKey: ['attend-manager-shift-month'] });
+  void queryClient.invalidateQueries({ queryKey: ['dashboard-weekly'] });
+  void queryClient.invalidateQueries({ queryKey: ['weekly-report'] });
+  void queryClient.invalidateQueries({ queryKey: ['statistics-attendance'] });
+  void queryClient.invalidateQueries({ queryKey: ['statistics-employee-attendance'] });
+  void queryClient.invalidateQueries({ queryKey: ['statistics-attendance-records-monthly'] });
+};

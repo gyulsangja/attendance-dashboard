@@ -59,6 +59,11 @@ export function useShiftEntryDrafts({
   const [checkIn, setCheckIn] = useState(SHIFT_PRESETS[0].checkIn);
   const [checkOut, setCheckOut] = useState(SHIFT_PRESETS[0].checkOut);
   const [drafts, setDrafts] = useState<ShiftSchedule[]>([]);
+  const selectedWorkerId = workers.some((worker) => String(worker.employeeId) === workerId)
+    ? workerId
+    : workers[0]
+      ? String(workers[0].employeeId)
+      : '';
 
   const applyShiftType = (value: string) => {
     const preset = SHIFT_PRESETS.find((item) => item.value === value);
@@ -78,7 +83,7 @@ export function useShiftEntryDrafts({
   };
 
   const addDrafts = () => {
-    const worker = workers.find((item) => String(item.employeeId) === workerId);
+    const worker = workers.find((item) => String(item.employeeId) === selectedWorkerId);
     if (!worker || selectedDates.length === 0) return;
 
     const maxId = Math.max(
@@ -124,7 +129,7 @@ export function useShiftEntryDrafts({
 
   return {
     weekDays,
-    workerId,
+    workerId: selectedWorkerId,
     selectedDates,
     shiftType,
     checkIn,

@@ -39,6 +39,10 @@ export type AttendanceManagerDto = {
   attendCodeName?: string;
   detail_code?: string;
   detailCode?: string;
+  attend_codes?: string[];
+  attendCodes?: string[];
+  attendance_codes?: string[];
+  attendanceCodes?: string[];
   attend_reason?: string;
   attendReason?: string;
   etc?: string;
@@ -68,4 +72,38 @@ export type AttendanceManagerListResponseDto = {
   device_time_count?: number | string;
   status?: string;
   message?: string;
+};
+
+export type AttendanceUploadFailedRowDto = {
+  row?: number | string;
+  row_no?: number | string;
+  rowNo?: number | string;
+  emp_no?: number | string;
+  empNo?: number | string;
+  emp_name?: string;
+  empName?: string;
+  reason?: string;
+  message?: string;
+};
+
+export type AttendanceUploadResultDto = {
+  upload_id?: number | string;
+  uploadId?: number | string;
+  total_count?: number | string;
+  totalCount?: number | string;
+  success_count?: number | string;
+  successCount?: number | string;
+  overwrite_count?: number | string;
+  overwriteCount?: number | string;
+  failed_count?: number | string;
+  failedCount?: number | string;
+  failed_rows?: AttendanceUploadFailedRowDto[];
+  failedRows?: AttendanceUploadFailedRowDto[];
+  errors?: string[];
+  message?: string;
+  status?: string;
+  data?: AttendanceUploadResultDto;
+  result?: AttendanceUploadResultDto;
+  upload_result?: AttendanceUploadResultDto;
+  uploadResult?: AttendanceUploadResultDto;
 };

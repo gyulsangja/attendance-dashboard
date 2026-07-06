@@ -1,0 +1,72 @@
+export type StatisticsPeriodType = 'YEAR' | 'MONTH' | 'WEEK';
+
+export type StatisticsAttendanceRecordDto = {
+  id?: string | number;
+  emp_no?: string | number;
+  empNo?: string | number;
+  emp_name?: string;
+  empName?: string;
+  dept_code?: string;
+  deptCode?: string;
+  dept_name?: string;
+  deptName?: string;
+  rank_code?: string;
+  rankCode?: string;
+  rank_name?: string;
+  rankName?: string;
+  work_date?: string;
+  workDate?: string;
+  attend_date?: string;
+  attendDate?: string;
+  check_in?: string;
+  checkIn?: string;
+  check_out?: string;
+  checkOut?: string;
+  attendance_code?: string;
+  attendanceCode?: string;
+  detail_code?: string;
+  detailCode?: string;
+  attendance_code_name?: string;
+  attendanceCodeName?: string;
+  attend_reason?: string;
+  attendReason?: string;
+  detail?: string;
+  memo?: string;
+  reason?: string;
+  is_holiday?: boolean | string;
+  isHoliday?: boolean | string;
+  holiday_name?: string;
+  holidayName?: string;
+  is_shift_worker?: boolean | string;
+  isShiftWorker?: boolean | string;
+};
+
+export type StatisticsAttendanceResponseDto = {
+  records?: StatisticsAttendanceRecordDto[];
+  items?: StatisticsAttendanceRecordDto[];
+  rows?: StatisticsAttendanceRecordDto[];
+  list?: StatisticsAttendanceRecordDto[];
+  data?: StatisticsAttendanceRecordDto[];
+};
+
+export type StatisticsEmployeeAttendanceResponseDto = {
+  employee?: {
+    emp_no?: string | number;
+    empNo?: string | number;
+    emp_name?: string;
+    empName?: string;
+    dept_code?: string;
+    deptCode?: string;
+    dept_name?: string;
+    deptName?: string;
+    rank_code?: string;
+    rankCode?: string;
+    rank_name?: string;
+    rankName?: string;
+  };
+  records?: StatisticsAttendanceRecordDto[];
+  items?: StatisticsAttendanceRecordDto[];
+  rows?: StatisticsAttendanceRecordDto[];
+  list?: StatisticsAttendanceRecordDto[];
+  data?: StatisticsAttendanceRecordDto[];
+};

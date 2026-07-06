@@ -18,6 +18,10 @@ export type UserInfoDto = {
   authCd?: UserRole | string;
   role_code?: UserRole | string;
   roleCode?: UserRole | string;
+  role_name?: string;
+  roleName?: string;
+  auth_name?: string;
+  authName?: string;
   acc_stat_code?: string;
   acct_stat_code?: string;
   use_yn?: string;

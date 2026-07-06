@@ -11,6 +11,14 @@ export type SystemSettingDto = {
   half_pm_start?: string;
   halfPmEnd?: string;
   half_pm_end?: string;
+  lateGraceMinutes?: number | string;
+  late_grace_minutes?: number | string;
+  lateThresholdMinutes?: number | string;
+  late_threshold_minutes?: number | string;
+  earlyLeaveGraceMinutes?: number | string;
+  early_leave_grace_minutes?: number | string;
+  earlyLeaveThresholdMinutes?: number | string;
+  early_leave_threshold_minutes?: number | string;
   setting?: SystemSettingDto;
   settinginfo?: SystemSettingDto;
   systemsetting?: SystemSettingDto;

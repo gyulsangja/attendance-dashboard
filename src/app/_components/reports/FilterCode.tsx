@@ -1,16 +1,15 @@
 'use client';
 
 import { ToggleButton, ToggleButtonGroup } from '@mui/material';
-import { selectReportAttendanceCodes } from '@/selectors/reportSelectors';
-import { useAppSelector } from '@/store/hooks';
+import type { AttendanceCode } from '@/types/domain';
 
 type Props = {
+  attendanceCodes: AttendanceCode[];
   selectedCodes: string[];
   onChange: (codes: string[]) => void;
 };
 
-export default function FilterCode({ selectedCodes, onChange }: Props) {
-  const attendanceCodes = useAppSelector(selectReportAttendanceCodes);
+export default function FilterCode({ attendanceCodes, selectedCodes, onChange }: Props) {
   const activeCodes = attendanceCodes.filter((code) => code.isActive);
   const allCodeIds = activeCodes.map((code) => code.id);
   const allSelected = selectedCodes.length === allCodeIds.length;

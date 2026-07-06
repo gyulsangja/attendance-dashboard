@@ -2,6 +2,7 @@ import { apiClient } from './client';
 import type {
   AttendanceManagerDto,
   AttendanceManagerListResponseDto,
+  AttendanceUploadResultDto,
 } from './dto/attendance.dto';
 
 const getAttendanceRows = (
@@ -47,11 +48,19 @@ const getSelectPath = (periodKey: string) => {
 };
 
 export const attendanceApi = {
-  uploadDeviceFile(file: File) {
+  uploadDeviceFile(
+    file: File,
+    period?: { year: number; month: number; week: number },
+  ) {
     const formData = new FormData();
     formData.append('file', file);
+    if (period) {
+      formData.append('year', String(period.year));
+      formData.append('month', String(period.month));
+      formData.append('week', String(period.week));
+    }
 
-    return apiClient<string>('/api/attend/manager/upload', {
+    return apiClient<string | AttendanceUploadResultDto>('/api/attend/manager/upload', {
       method: 'POST',
       body: formData,
     });

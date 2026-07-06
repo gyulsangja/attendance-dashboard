@@ -3,13 +3,6 @@
 import { Chip, Box } from '@mui/material';
 import type { GridColDef } from '@mui/x-data-grid';
 import { getKoreanPublicHoliday } from '@/lib/date';
-import { useAppSelector } from '@/store/hooks';
-import { getAttendanceCodesAtDate } from '@/store/slices/attendanceCodeSlice';
-import {
-  getOrganizationSnapshot,
-  UNASSIGNED_TEAM_ID,
-  UNASSIGNED_TEAM_NAME,
-} from '@/store/slices/organizationSlice';
 import type { AttendanceRecord, OperationSchedule } from '@/types/domain';
 
 export type WeeklyAttendanceEmployeeRow = {
@@ -43,22 +36,30 @@ export function useWeeklyAttendanceGrid({
   onEdit,
   readOnly = false,
 }: UseWeeklyAttendanceGridParams) {
-  const organization = useAppSelector((state) => state.organization);
-  const codeMaster = useAppSelector((state) => state.attendanceCode);
-  const organizationSnapshot = getOrganizationSnapshot(
-    organization.teams,
-    organization.employees,
-    organization.history,
-    days[0]?.date ?? '2026-06-01',
-  );
-  const weekEmployees = organizationSnapshot.employees.map((employee) => ({
-    id: employee.id,
-    name: employee.name,
-    shiftWorker: employee.shiftWorker,
-    department: employee.teamId === UNASSIGNED_TEAM_ID
-      ? UNASSIGNED_TEAM_NAME
-      : organizationSnapshot.teams.find((team) => team.id === employee.teamId)?.name ?? '-',
-  }));
+  const employeeMap = new Map<number, WeeklyAttendanceEmployeeRow>();
+
+  records.forEach((record) => {
+    if (employeeMap.has(record.employeeId)) return;
+    employeeMap.set(record.employeeId, {
+      id: record.employeeId,
+      name: record.employeeName,
+      shiftWorker: Boolean(record.isShiftWorker),
+      department: record.department,
+    });
+  });
+
+  schedules.forEach((schedule) => {
+    if (employeeMap.has(schedule.employeeId)) return;
+    employeeMap.set(schedule.employeeId, {
+      id: schedule.employeeId,
+      name: schedule.name,
+      shiftWorker: false,
+      department: schedule.department,
+    });
+  });
+
+  const weekEmployees = [...employeeMap.values()].sort((a, b) =>
+    a.department.localeCompare(b.department, 'ko') || a.name.localeCompare(b.name, 'ko'));
   const departments = [...new Set(weekEmployees.map((employee) => employee.department))];
   const rows = weekEmployees.filter(
     (employee) => department === 'all' || employee.department === department,
@@ -99,14 +100,8 @@ export function useWeeklyAttendanceGrid({
         const items = schedules.filter(
           (item) => item.employeeId === row.id && item.date === day.date,
         );
-        const codesAtDate = getAttendanceCodesAtDate(
-          codeMaster.codes,
-          codeMaster.history,
-          day.date,
-        );
         const recordLabels = record?.events.map(
-          (event) => codesAtDate.find((code) => code.id === event.codeId)?.label
-            ?? event.codeId,
+          (event) => event.detail || event.codeId,
         ) ?? [];
         const publicHoliday = row.shiftWorker ? null : getKoreanPublicHoliday(day.date);
         const attendanceLabels = [...new Set([

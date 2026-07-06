@@ -13,6 +13,9 @@ import {
   Stack,
   TextField,
 } from '@mui/material';
+import { useAttendanceCodesQuery } from '@/hooks/useAttendanceCodeQueries';
+import { useOrganizationEmployeesQuery } from '@/hooks/useEmployeeQueries';
+import { isApiDataSource } from '@/repositories/config';
 import type { OperationSchedule } from '@/types/domain';
 import { useAppSelector } from '@/store/hooks';
 import { getAttendanceCodesAtDate } from '@/store/slices/attendanceCodeSlice';
@@ -31,24 +34,34 @@ type Props = {
 export default function ScheduleEditDialog({ value, onChange, onSave }: Props) {
   const codeMaster = useAppSelector((state) => state.attendanceCode);
   const organization = useAppSelector((state) => state.organization);
+  const apiAttendanceCodesQuery = useAttendanceCodesQuery();
+  const apiEmployeesQuery = useOrganizationEmployeesQuery();
   const date = value?.date ?? new Date().toISOString().slice(0, 10);
-  const attendanceCodes = getAttendanceCodesAtDate(
-    codeMaster.codes,
-    codeMaster.history,
-    date,
-  ).filter((code) => code.isSchedulable);
+  const attendanceCodes = (isApiDataSource
+    ? apiAttendanceCodesQuery.data ?? []
+    : getAttendanceCodesAtDate(
+      codeMaster.codes,
+      codeMaster.history,
+      date,
+    )).filter((code) => code.isSchedulable);
   const organizationSnapshot = getOrganizationSnapshot(
     organization.teams,
     organization.employees,
     organization.history,
     date,
   );
-  const reportEmployees = organizationSnapshot.employees.map((employee) => ({
-    ...employee,
-    department: employee.teamId === UNASSIGNED_TEAM_ID
-      ? UNASSIGNED_TEAM_NAME
-      : organizationSnapshot.teams.find((team) => team.id === employee.teamId)?.name ?? '-',
-  }));
+  const reportEmployees = isApiDataSource
+    ? (apiEmployeesQuery.data ?? []).map((employee) => ({
+      id: employee.id,
+      name: employee.name,
+      department: employee.backendDeptName ?? employee.backendDeptCode ?? '-',
+    }))
+    : organizationSnapshot.employees.map((employee) => ({
+      ...employee,
+      department: employee.teamId === UNASSIGNED_TEAM_ID
+        ? UNASSIGNED_TEAM_NAME
+        : organizationSnapshot.teams.find((team) => team.id === employee.teamId)?.name ?? '-',
+    }));
 
   return (
     <Dialog open={Boolean(value)} onClose={() => onChange(null)} fullWidth maxWidth="sm">
@@ -63,6 +76,8 @@ export default function ScheduleEditDialog({ value, onChange, onSave }: Props) {
               onChange={(event) => value && onChange({
                 ...value,
                 employeeId: Number(event.target.value),
+                name: reportEmployees.find((employee) => employee.id === Number(event.target.value))?.name ?? value.name,
+                department: reportEmployees.find((employee) => employee.id === Number(event.target.value))?.department ?? value.department,
               })}
             >
               {reportEmployees.map((employee) => (
@@ -80,6 +95,7 @@ export default function ScheduleEditDialog({ value, onChange, onSave }: Props) {
               onChange={(event) => value && onChange({
                 ...value,
                 codeId: event.target.value,
+                type: attendanceCodes.find((code) => code.id === event.target.value)?.label ?? value.type,
               })}
             >
               {attendanceCodes.map((code) => (

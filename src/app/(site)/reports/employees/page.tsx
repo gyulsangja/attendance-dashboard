@@ -15,7 +15,9 @@ import {
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { koKR } from '@mui/x-data-grid/locales';
-import { useAttendanceRecordsQuery } from '@/hooks/useAttendanceRecordQueries';
+import { useAttendanceCodesQuery } from '@/hooks/useAttendanceCodeQueries';
+import { useOrganizationEmployeesQuery } from '@/hooks/useEmployeeQueries';
+import { useStatisticsEmployeeAttendanceQuery } from '@/hooks/useStatisticsQueries';
 import { isApiDataSource } from '@/repositories/config';
 import {
   selectReportAttendanceCodes,
@@ -24,28 +26,8 @@ import {
   selectReportRecords,
 } from '@/selectors/reportSelectors';
 import { useAppSelector } from '@/store/hooks';
-import type { ReportEmployee } from '@/types/domain';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
-
-const buildApiEmployees = (records: ReturnType<typeof useAttendanceRecordsQuery>['data']): ReportEmployee[] => {
-  const employeeMap = new Map<number, ReportEmployee>();
-
-  (records ?? []).forEach((record) => {
-    if (!employeeMap.has(record.employeeId)) {
-      employeeMap.set(record.employeeId, {
-        id: record.employeeId,
-        name: record.employeeName,
-        department: record.department,
-        position: record.position,
-      });
-    }
-  });
-
-  return [...employeeMap.values()].sort((a, b) => (
-    a.department.localeCompare(b.department, 'ko') || a.name.localeCompare(b.name, 'ko')
-  ));
-};
 
 type Row = {
   id: string;
@@ -56,20 +38,29 @@ type Row = {
 };
 
 export default function Page() {
-  const { startDate, endDate } = useAppSelector(selectReportPeriod);
+  const { year, month, week, startDate, endDate } = useAppSelector(selectReportPeriod);
   const storeAttendanceRecords = useAppSelector(selectReportRecords);
-  const attendanceCodes = useAppSelector(selectReportAttendanceCodes);
+  const storeAttendanceCodes = useAppSelector(selectReportAttendanceCodes);
   const storeEmployees = useAppSelector(selectReportEmployees);
-  const apiRecordsQuery = useAttendanceRecordsQuery(startDate.slice(0, 7));
-  const attendanceRecords = useMemo(() => (
-    isApiDataSource ? apiRecordsQuery.data ?? [] : storeAttendanceRecords
-  ), [apiRecordsQuery.data, storeAttendanceRecords]);
+  const apiEmployeesQuery = useOrganizationEmployeesQuery();
+  const apiAttendanceCodesQuery = useAttendanceCodesQuery();
+  const attendanceCodes = useMemo(
+    () => (isApiDataSource ? apiAttendanceCodesQuery.data ?? [] : storeAttendanceCodes),
+    [apiAttendanceCodesQuery.data, storeAttendanceCodes],
+  );
   const employees = useMemo(() => (
-    isApiDataSource ? buildApiEmployees(apiRecordsQuery.data) : storeEmployees
-  ), [apiRecordsQuery.data, storeEmployees]);
+    isApiDataSource
+      ? (apiEmployeesQuery.data ?? []).map((employee) => ({
+        id: employee.id,
+        name: employee.name,
+        department: employee.backendDeptName ?? employee.backendDeptCode ?? '-',
+        position: employee.backendRankName ?? employee.backendRankCode ?? employee.position,
+      }))
+      : storeEmployees
+  ), [apiEmployeesQuery.data, storeEmployees]);
   const [selected, setSelected] = useState<number | null>(null);
   const [search, setSearch] = useState('');
-  const [openTeams, setOpenTeams] = useState<string[]>(['개발팀']);
+  const [openTeams, setOpenTeams] = useState<string[]>([]);
   const teams = useMemo(() => Array.from(
     new Set(employees.map((employee) => employee.department)),
     (name) => ({
@@ -81,6 +72,16 @@ export default function Page() {
     ? selected
     : employees[0]?.id ?? null;
   const employee = employees.find((item) => item.id === effectiveSelected);
+  const periodType = week !== 'all' ? 'WEEK' : month !== 'all' ? 'MONTH' : 'YEAR';
+  const apiRecordsQuery = useStatisticsEmployeeAttendanceQuery(effectiveSelected, {
+    periodType,
+    year,
+    month: month === 'all' ? undefined : month,
+    week: week === 'all' ? undefined : week,
+  });
+  const attendanceRecords = useMemo(() => (
+    isApiDataSource ? apiRecordsQuery.data?.records ?? [] : storeAttendanceRecords
+  ), [apiRecordsQuery.data, storeAttendanceRecords]);
   const rows = useMemo<Row[]>(() => attendanceRecords
     .filter((record) => record.employeeId === effectiveSelected)
     .flatMap((record) => record.events.map((event, index) => ({
@@ -102,7 +103,11 @@ export default function Page() {
       : [...current, name]
   );
   const isApiEmpty = isApiDataSource && apiRecordsQuery.isSuccess && attendanceRecords.length === 0;
-  const isApiError = isApiDataSource && apiRecordsQuery.isError;
+  const isApiError = isApiDataSource && (
+    apiRecordsQuery.isError ||
+    apiEmployeesQuery.isError ||
+    apiAttendanceCodesQuery.isError
+  );
 
   return (
     <div className="mt-5 flex min-h-[540px] gap-5">
@@ -162,6 +167,11 @@ export default function Page() {
         {isApiError && (
           <Alert severity="warning" sx={{ mb: 2 }}>
             백엔드 출퇴근 조회 API 호출에 실패했습니다.
+          </Alert>
+        )}
+        {isApiDataSource && (apiEmployeesQuery.isLoading || apiAttendanceCodesQuery.isLoading) && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            직원/근태코드 데이터를 불러오는 중입니다.
           </Alert>
         )}
         <div className="mb-5 flex items-center gap-3">

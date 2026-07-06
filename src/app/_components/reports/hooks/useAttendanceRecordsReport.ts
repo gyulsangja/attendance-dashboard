@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useAttendanceRecordsQuery } from '@/hooks/useAttendanceRecordQueries';
-import { buildAttendanceMonthKey } from '@/lib/attendance/attendancePeriodKey';
+import { useAttendanceCodesQuery } from '@/hooks/useAttendanceCodeQueries';
+import { useStatisticsMonthlyAttendanceRecordsQuery } from '@/hooks/useStatisticsQueries';
 import { getKoreanPublicHoliday } from '@/lib/date';
 import { isApiDataSource } from '@/repositories/config';
 import {
@@ -51,14 +51,32 @@ export function useAttendanceRecordsReport() {
   const { year, month, startDate } = useAppSelector(selectReportPeriod);
   const storeAttendanceRecords = useAppSelector(selectReportRecords);
   const organizationSnapshot = useAppSelector(selectReportOrganizationSnapshot);
-  const attendanceCodes = useAppSelector(selectReportAttendanceCodes);
+  const storeAttendanceCodes = useAppSelector(selectReportAttendanceCodes);
   const displayMonth = month === 'all' ? Number(startDate.slice(5, 7)) : month;
-  const apiRecordsQuery = useAttendanceRecordsQuery(
-    buildAttendanceMonthKey(year, displayMonth),
+  const apiRecordsQuery = useStatisticsMonthlyAttendanceRecordsQuery(year, displayMonth);
+  const apiAttendanceCodesQuery = useAttendanceCodesQuery();
+  const attendanceCodes = useMemo(
+    () => (isApiDataSource ? apiAttendanceCodesQuery.data ?? [] : storeAttendanceCodes),
+    [apiAttendanceCodesQuery.data, storeAttendanceCodes],
   );
-  const attendanceRecords = isApiDataSource
-    ? apiRecordsQuery.data ?? []
-    : storeAttendanceRecords;
+  const attendanceRecords = useMemo(() => (
+    isApiDataSource ? apiRecordsQuery.data?.records ?? [] : storeAttendanceRecords
+  ), [apiRecordsQuery.data, storeAttendanceRecords]);
+  const apiHolidayByDate = useMemo(() => {
+    const holidays = new Map<string, NonNullable<AttendanceRecordDay['holiday']>>();
+
+    attendanceRecords.forEach((record) => {
+      if (record.isHoliday && record.holidayName) {
+        holidays.set(record.date, {
+          date: record.date,
+          name: record.holidayName,
+          type: 'TEMPORARY',
+        });
+      }
+    });
+
+    return holidays;
+  }, [attendanceRecords]);
 
   const handleYearChange = (value: number) => {
     dispatch(setYear(value));
@@ -74,22 +92,28 @@ export function useAttendanceRecordsReport() {
         day,
         date,
         weekday: new Date(`${date}T00:00:00`).getDay(),
-        holiday: getKoreanPublicHoliday(date),
+        holiday: apiHolidayByDate.get(date) ?? getKoreanPublicHoliday(date),
       } satisfies AttendanceRecordDay;
     },
-  ), [year, displayMonth]);
+  ), [apiHolidayByDate, year, displayMonth]);
 
-  const employees = useMemo(() =>
-    organizationSnapshot.employees.map<AttendanceReportEmployee>((employee) => ({
+  const employees = useMemo(() => {
+    const sourceEmployees = isApiDataSource
+      ? apiRecordsQuery.data?.employees ?? []
+      : organizationSnapshot.employees;
+
+    return sourceEmployees.map<AttendanceReportEmployee>((employee) => ({
       id: employee.id,
       name: employee.name,
-      department: employee.teamId === UNASSIGNED_TEAM_ID
-        ? UNASSIGNED_TEAM_NAME
-        : organizationSnapshot.teams.find((team) => team.id === employee.teamId)?.name ?? '-',
+      department: 'teamId' in employee
+        ? employee.teamId === UNASSIGNED_TEAM_ID
+          ? UNASSIGNED_TEAM_NAME
+          : organizationSnapshot.teams.find((team) => team.id === employee.teamId)?.name ?? '-'
+        : employee.department,
       position: employee.position,
-      shiftWorker: employee.shiftWorker,
-    })),
-  [organizationSnapshot]);
+      shiftWorker: 'shiftWorker' in employee ? Boolean(employee.shiftWorker) : false,
+    }));
+  }, [apiRecordsQuery.data, organizationSnapshot]);
 
   const getCell = (
     employee: AttendanceReportEmployee,
@@ -105,6 +129,9 @@ export function useAttendanceRecordsReport() {
       (event) => attendanceCodes.find((code) => code.id === event.codeId)?.label ?? event.codeId,
     );
 
+    const checkInText = record.checkIn ? `출근 ${record.checkIn}` : '출근 미기록';
+    const checkOutText = record.checkOut ? `퇴근 ${record.checkOut}` : '퇴근 미기록';
+
     if (hasAnyCode(record, ['ABSENT', 'ATT04'])) return { top: '결근', status: 'warning' };
     if (hasAnyCode(record, ['ANNUAL', 'SICK', 'ATT05'])) {
       return { top: labels.join(', '), status: 'leave' };
@@ -114,27 +141,27 @@ export function useAttendanceRecordsReport() {
         top: record.checkIn
           ? `${hasAnyCode(record, ['LATE', 'ATT02']) ? '지각' : '출근'} ${record.checkIn}`
           : '출근 미기록',
-        bottom: record.checkOut ? `반차퇴근 ${record.checkOut}` : '퇴근 미기록',
+        bottom: checkOutText,
         status: 'leave',
       };
     }
     if (hasAnyCode(record, ['HALF_AM'])) {
       return {
         top: record.checkIn ? `반차출근 ${record.checkIn}` : '출근 미기록',
-        bottom: record.checkOut ? `퇴근 ${record.checkOut}` : '퇴근 미기록',
+        bottom: checkOutText,
         status: 'leave',
       };
     }
     if (hasAnyCode(record, ['REMOTE_WORK'])) {
       return {
         top: record.checkIn ? `재택 ${record.checkIn}` : '출근 미기록',
-        bottom: record.checkOut ? `퇴근 ${record.checkOut}` : '퇴근 미기록',
+        bottom: checkOutText,
         status: 'normal',
       };
     }
     if (hasAnyCode(record, ['EARLY_LEAVE', 'ATT03'])) {
       return {
-        top: record.checkIn ? `출근 ${record.checkIn}` : '출근 미기록',
+        top: checkInText,
         bottom: record.checkOut ? `조퇴 ${record.checkOut}` : '퇴근 미기록',
         status: 'warning',
       };
@@ -142,7 +169,7 @@ export function useAttendanceRecordsReport() {
     if (hasAnyCode(record, ['LATE', 'ATT02'])) {
       return {
         top: record.checkIn ? `지각 ${record.checkIn}` : '출근 미기록',
-        bottom: record.checkOut ? `퇴근 ${record.checkOut}` : '퇴근 미기록',
+        bottom: checkOutText,
         status: 'late',
       };
     }
@@ -156,8 +183,8 @@ export function useAttendanceRecordsReport() {
       };
     }
     return {
-      top: record.checkIn ? `출근 ${record.checkIn}` : '출근 미기록',
-      bottom: record.checkOut ? `퇴근 ${record.checkOut}` : '퇴근 미기록',
+      top: checkInText,
+      bottom: checkOutText,
       status: 'normal',
     };
   };
@@ -168,9 +195,9 @@ export function useAttendanceRecordsReport() {
     days,
     employees,
     getCell,
-    isApiLoading: isApiDataSource && apiRecordsQuery.isLoading,
-    isApiEmpty: isApiDataSource && apiRecordsQuery.isSuccess && (apiRecordsQuery.data?.length ?? 0) === 0,
-    isApiError: isApiDataSource && apiRecordsQuery.isError,
+    isApiLoading: isApiDataSource && (apiRecordsQuery.isLoading || apiAttendanceCodesQuery.isLoading),
+    isApiEmpty: isApiDataSource && apiRecordsQuery.isSuccess && (apiRecordsQuery.data?.records.length ?? 0) === 0,
+    isApiError: isApiDataSource && (apiRecordsQuery.isError || apiAttendanceCodesQuery.isError),
     setMonth: (value: number) => dispatch(setMonth(value)),
     handleYearChange,
   };

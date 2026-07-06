@@ -21,16 +21,16 @@ type Props = {
 };
 
 const TEXT = {
-  editTitle: '\uadfc\ud0dc\ucf54\ub4dc \uc218\uc815',
-  addTitle: '\uadfc\ud0dc\ucf54\ub4dc \ucd94\uac00',
-  label: '\uadfc\ud0dc\ucf54\ub4dc\uba85',
-  labelPlaceholder: '\uc608: \ubcd1\uac00',
-  schedulable: '\uc6b4\uc601\uad00\ub9ac\uc5d0\uc11c \uc77c\uc815 \uc785\ub825 \uac00\ub2a5',
-  exceptional: '\ub300\uc2dc\ubcf4\ub4dc\uc5d0 \ud2b9\uc774\uadfc\ud0dc\ub85c \ud45c\uc2dc',
-  effectiveDate: '\ubcc0\uacbd \uc801\uc6a9\uc77c',
-  startDate: '\uc0ac\uc6a9 \uc2dc\uc791\uc77c',
-  cancel: '\ucde8\uc18c',
-  save: '\uc800\uc7a5',
+  editTitle: '근태코드 수정',
+  addTitle: '근태코드 추가',
+  label: '근태코드명',
+  labelPlaceholder: '예: 병가',
+  schedulable: '운영관리에서 일정 입력 가능',
+  exceptional: '대시보드에 특이근태로 표시',
+  effectiveDate: '변경 적용일',
+  startDate: '사용 시작일',
+  cancel: '취소',
+  save: '저장',
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
