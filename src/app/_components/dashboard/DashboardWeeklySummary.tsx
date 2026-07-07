@@ -30,11 +30,11 @@ export default function DashboardWeeklySummary({
         <div>
           <h2 className="text-lg font-bold">주간 근태 요약</h2>
           <p className="mt-1 text-sm text-slate-500">
-            {startDate} ~ {endDate} 확정 출퇴근 기록과 근태코드 발생 기준입니다.
+            {startDate} ~ {endDate} 출퇴근 기록과 근태코드 발생 건수입니다.
           </p>
         </div>
         <Button component={Link} href="/reports" size="small">
-          현황통계 상세 보기
+          상세보기
         </Button>
       </div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">

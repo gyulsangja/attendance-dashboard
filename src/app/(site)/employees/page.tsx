@@ -5,23 +5,51 @@ import { Add, Groups, History, Person, Schedule } from '@mui/icons-material';
 import { Alert, Button, CircularProgress, Paper, Tab, Tabs, TextField } from '@mui/material';
 import { useAccess } from '@/app/_components/auth/AccessProvider';
 import EmployeeDialog from '@/app/_components/employees/EmployeeDialog';
-import { useCommonCodesQuery } from '@/hooks/useCommonCodeQueries';
+import {
+  useCommonCodesQuery,
+  useDeleteCommonCodeMutation,
+  useInsertCommonCodeMutation,
+  useModifyCommonCodeMutation,
+} from '@/hooks/useCommonCodeQueries';
 import EmployeeGrid from '@/app/_components/employees/EmployeeGrid';
 import { useOrganizationManagement } from '@/app/_components/employees/hooks/useOrganizationManagement';
 import OrganizationHistoryGrid from '@/app/_components/employees/OrganizationHistoryGrid';
 import TeamDialog from '@/app/_components/employees/TeamDialog';
 import TeamPanel from '@/app/_components/employees/TeamPanel';
 import { isApiDataSource } from '@/repositories/config';
+import type { CommonCode } from '@/adapters/commonCodeAdapter';
 import {
   UNASSIGNED_TEAM_ID,
   UNASSIGNED_TEAM_NAME,
   type OrganizationTeam,
 } from '@/store/slices/organizationSlice';
 
+
+const DEPARTMENT_GROUP_CODE = 'G_TEAM_CODE';
+
+const createNextDepartmentCode = (codes: CommonCode[]) => {
+  const departmentCodes = codes.filter((code) => code.groupCode === DEPARTMENT_GROUP_CODE);
+  const maxNumber = departmentCodes.reduce((max, code) => {
+    const match = code.detailCode.match(/^DEP(\d+)$/);
+    if (!match) return max;
+    return Math.max(max, Number(match[1]));
+  }, 0);
+
+  return `DEP${String(maxNumber + 1).padStart(3, '0')}`;
+};
+
+const getNextDepartmentSortOrder = (codes: CommonCode[]) => {
+  const departmentCodes = codes.filter((code) => code.groupCode === DEPARTMENT_GROUP_CODE);
+  return departmentCodes.reduce((max, code) => Math.max(max, code.sortOrder), 0) + 1;
+};
+
 export default function Page() {
   const access = useAccess();
   const organization = useOrganizationManagement();
   const commonCodesQuery = useCommonCodesQuery();
+  const insertCommonCodeMutation = useInsertCommonCodeMutation();
+  const modifyCommonCodeMutation = useModifyCommonCodeMutation();
+  const deleteCommonCodeMutation = useDeleteCommonCodeMutation();
   const commonCodes = useMemo(() => commonCodesQuery.data ?? [], [commonCodesQuery.data]);
   const rankOptions = useMemo(
     () => commonCodes
@@ -32,7 +60,7 @@ export default function Page() {
   );
   const departmentTeams = useMemo<OrganizationTeam[]>(
     () => commonCodes
-      .filter((code) => code.groupCode === 'G_TEAM_CODE' && code.isActive && code.detailCode)
+      .filter((code) => code.groupCode === DEPARTMENT_GROUP_CODE && code.isActive && code.detailCode)
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((code) => ({
         id: code.detailCode,
@@ -55,6 +83,59 @@ export default function Page() {
       .map((code) => ({ value: code.detailCode, label: code.label })),
     [commonCodes],
   );
+
+
+  const effectiveTeams = isApiDataSource && departmentTeams.length > 0
+    ? departmentTeams
+    : organization.snapshotTeams;
+  const selectedTeam = effectiveTeams.find((team) => team.id === organization.selectedTeamId);
+  const teamMutationLoading = insertCommonCodeMutation.isPending
+    || modifyCommonCodeMutation.isPending
+    || deleteCommonCodeMutation.isPending;
+  const teamMutationError = insertCommonCodeMutation.isError
+    || modifyCommonCodeMutation.isError
+    || deleteCommonCodeMutation.isError;
+
+  const saveTeam = () => {
+    if (!isApiDataSource) {
+      organization.saveTeam();
+      return;
+    }
+
+    const name = organization.teamName.trim();
+    if (!name) return;
+
+    const editingCode = organization.editingTeam
+      ? commonCodes.find(
+        (code) => code.groupCode === DEPARTMENT_GROUP_CODE
+          && code.detailCode === organization.editingTeam?.id,
+      )
+      : null;
+    const nextCode: CommonCode = {
+      groupCode: DEPARTMENT_GROUP_CODE,
+      detailCode: organization.editingTeam?.id ?? createNextDepartmentCode(commonCodes),
+      label: name,
+      sortOrder: editingCode?.sortOrder ?? getNextDepartmentSortOrder(commonCodes),
+      isActive: true,
+      refVal1: editingCode?.refVal1 ?? '',
+      refVal2: editingCode?.refVal2 ?? '',
+      etc: editingCode?.etc ?? '',
+    };
+    const mutation = organization.editingTeam ? modifyCommonCodeMutation : insertCommonCodeMutation;
+    mutation.mutate(nextCode, { onSuccess: organization.closeTeamDialog });
+  };
+
+  const removeTeam = () => {
+    if (!isApiDataSource) {
+      organization.removeTeam();
+      return;
+    }
+
+    if (!organization.editingTeam) return;
+    deleteCommonCodeMutation.mutate(organization.editingTeam.id, {
+      onSuccess: organization.closeTeamDialog,
+    });
+  };
 
   if (!access.canManageOrganization) {
     return (
@@ -83,7 +164,7 @@ export default function Page() {
 
       {isApiDataSource && (
         <Alert severity="info" sx={{ mt: 3 }}>
-          직원 목록과 직원 등록/수정/삭제는 백엔드 API 기준으로 처리합니다. 팀 추가/수정은 백엔드 API가 확정되기 전까지 제한합니다.
+          직원 목록과 직원 등록/수정/삭제, 팀 추가/수정/삭제는 백엔드 API 기준으로 처리합니다.
         </Alert>
       )}
 
@@ -95,6 +176,11 @@ export default function Page() {
       {isApiDataSource && commonCodesQuery.isError && (
         <Alert severity="warning" sx={{ mt: 2 }}>
           공통코드 API를 불러오지 못했습니다. 부서/직급/근무유형/재직상태 선택값을 확인할 수 없습니다.
+        </Alert>
+      )}
+      {isApiDataSource && teamMutationError && (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          팀 정보를 저장하지 못했습니다. 공통코드 API 저장 구조를 확인해 주세요.
         </Alert>
       )}
 
@@ -114,6 +200,10 @@ export default function Page() {
       </div>
 
       {organization.isLoading ? (
+        <div className="flex min-h-[460px] items-center justify-center">
+          <CircularProgress size={32} />
+        </div>
+      ) : teamMutationLoading ? (
         <div className="flex min-h-[460px] items-center justify-center">
           <CircularProgress size={32} />
         </div>
@@ -139,13 +229,13 @@ export default function Page() {
 
           <div className="mt-5 flex min-h-[590px] gap-5">
             <TeamPanel
-              teams={organization.snapshotTeams}
+              teams={effectiveTeams}
               employees={organization.snapshotEmployees}
               selectedTeamId={organization.selectedTeamId}
               onSelect={organization.setSelectedTeamId}
               onAdd={() => organization.openTeamDialog(null)}
               onEdit={organization.openTeamDialog}
-              editDisabled={isApiDataSource}
+              editDisabled={false}
             />
 
             <section className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -154,7 +244,7 @@ export default function Page() {
                   <h2 className="text-lg font-bold">
                     {organization.selectedTeamId === UNASSIGNED_TEAM_ID
                       ? UNASSIGNED_TEAM_NAME
-                      : organization.selectedTeam?.name ?? '전체 구성원'}
+                      : selectedTeam?.name ?? '전체 구성원'}
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
                     총 {organization.visibleEmployees.length}명의 구성원이 조회됩니다.
@@ -172,7 +262,7 @@ export default function Page() {
               <div className="h-[490px]">
                 <EmployeeGrid
                   employees={organization.visibleEmployees}
-                  teams={organization.snapshotTeams}
+                  teams={effectiveTeams}
                   onEdit={organization.openEditEmployee}
                   editDisabled={false}
                   onDelete={(employee) => {
@@ -202,13 +292,9 @@ export default function Page() {
       <EmployeeDialog
         open={organization.employeeOpen}
         employee={organization.editingEmployee}
-        teams={(isApiDataSource && departmentTeams.length > 0
-          ? departmentTeams
-          : organization.teams).filter((team) => !team.endDate)}
+        teams={(isApiDataSource ? effectiveTeams : organization.teams).filter((team) => !team.endDate)}
         defaultTeamId={organization.selectedTeamId === 'all'
-          ? (isApiDataSource && departmentTeams.length > 0
-            ? departmentTeams[0]?.id
-            : organization.snapshotTeams[0]?.id) ?? UNASSIGNED_TEAM_ID
+          ? effectiveTeams[0]?.id ?? UNASSIGNED_TEAM_ID
           : organization.selectedTeamId}
         nextId={Math.max(0, ...organization.employees.map((employee) => employee.id)) + 1}
         positionOptions={rankOptions}
@@ -227,8 +313,8 @@ export default function Page() {
         onNameChange={organization.setTeamName}
         onDateChange={organization.setTeamEffectiveDate}
         onClose={organization.closeTeamDialog}
-        onSave={organization.saveTeam}
-        onDelete={organization.removeTeam}
+        onSave={saveTeam}
+        onDelete={removeTeam}
       />
     </main>
   );

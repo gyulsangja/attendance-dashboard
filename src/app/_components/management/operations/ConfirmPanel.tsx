@@ -34,7 +34,7 @@ export default function ConfirmPanel({
     <div className="mx-auto max-w-2xl py-6">
       <h2 className="text-xl font-bold">주간 운영관리 확정</h2>
       <p className="mt-2 text-slate-500">
-        근태 일정, 단말기 데이터, 교대근무 검토가 완료되면 현황통계에 반영합니다.
+        근태 일정, 단말기 데이터, 교대근무 검토가 완료되면 상세보기에 반영합니다.
       </p>
       <div className="mt-6 space-y-3 rounded-xl bg-slate-50 p-5">
         {steps.slice(0, 3).map((step) => (
@@ -59,7 +59,7 @@ export default function ConfirmPanel({
           onClick={onToggle}
           sx={{ bgcolor: confirmed ? '#475569' : '#0f172a' }}
         >
-          {confirmed ? '확정 해제 후 수정' : '운영관리 확정 및 현황통계 반영'}
+          {confirmed ? '확정 해제 후 수정' : '운영관리 확정 및 상세보기 반영'}
         </Button>
         {confirmed && (
           <Button

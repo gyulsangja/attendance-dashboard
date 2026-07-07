@@ -79,7 +79,7 @@ export function useOrganizationManagement() {
       const currentTeamName = employee.teamId === UNASSIGNED_TEAM_ID
         ? UNASSIGNED_TEAM_NAME
         : snapshotTeams.find((team) => team.id === employee.teamId)?.name ?? '';
-      const matchesSearch = !keyword || [employee.name, employee.position, employee.jobTitle, currentTeamName]
+      const matchesSearch = !keyword || [employee.name, employee.email ?? '', employee.phoneNo ?? '', employee.position, employee.jobTitle, currentTeamName]
         .some((value) => value.toLowerCase().includes(keyword));
       return matchesTeam && matchesSearch;
     }),

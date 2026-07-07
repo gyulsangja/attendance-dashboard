@@ -51,6 +51,16 @@ export type WorkTimePolicy = {
   earlyLeaveGraceMinutes: number;
 };
 
+export type HolidayType = 'PUBLIC' | 'SUBSTITUTE' | 'TEMPORARY' | 'ELECTION' | 'COMPANY';
+
+export type Holiday = {
+  id: string;
+  date: string;
+  name: string;
+  type: HolidayType;
+  isActive: boolean;
+};
+
 export type ReportEmployee = {
   id: number;
   name: string;
@@ -127,6 +137,8 @@ export type OrganizationTeam = {
 export type OrganizationEmployee = {
   id: number;
   name: string;
+  email?: string;
+  phoneNo?: string;
   teamId: string;
   position: string;
   jobTitle: string;

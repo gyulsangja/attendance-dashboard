@@ -92,7 +92,7 @@ export function useAttendanceRecordsReport() {
         day,
         date,
         weekday: new Date(`${date}T00:00:00`).getDay(),
-        holiday: apiHolidayByDate.get(date) ?? getKoreanPublicHoliday(date),
+        holiday: apiHolidayByDate.get(date) ?? (isApiDataSource ? null : getKoreanPublicHoliday(date)),
       } satisfies AttendanceRecordDay;
     },
   ), [apiHolidayByDate, year, displayMonth]);

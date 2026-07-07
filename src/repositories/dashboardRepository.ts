@@ -4,17 +4,40 @@ import { isApiDataSource } from './config';
 
 export type DashboardRepository = {
   getWeekly: (params: DashboardWeeklyParams) => Promise<DashboardWeeklyDto | null>;
+  getWeeklySummary: (params: DashboardWeeklyParams) => Promise<DashboardWeeklyDto | null>;
+  getWeeklyAttendanceCodeCounts: (params: DashboardWeeklyParams) => Promise<DashboardWeeklyDto | null>;
+  getWeeklyExceptionalRecords: (params: DashboardWeeklyParams) => Promise<DashboardWeeklyDto | null>;
+  getWeeklyPlans: (params: DashboardWeeklyParams) => Promise<DashboardWeeklyDto | null>;
+  getWeeklyShiftSchedules: (params: DashboardWeeklyParams) => Promise<DashboardWeeklyDto | null>;
 };
 
 const mockDashboardRepository: DashboardRepository = {
-  async getWeekly() {
-    return null;
-  },
+  async getWeekly() { return null; },
+  async getWeeklySummary() { return null; },
+  async getWeeklyAttendanceCodeCounts() { return null; },
+  async getWeeklyExceptionalRecords() { return null; },
+  async getWeeklyPlans() { return null; },
+  async getWeeklyShiftSchedules() { return null; },
 };
 
 const apiDashboardRepository: DashboardRepository = {
   getWeekly(params) {
     return dashboardApi.getWeekly(params);
+  },
+  getWeeklySummary(params) {
+    return dashboardApi.getWeeklySummary(params);
+  },
+  getWeeklyAttendanceCodeCounts(params) {
+    return dashboardApi.getWeeklyAttendanceCodeCounts(params);
+  },
+  getWeeklyExceptionalRecords(params) {
+    return dashboardApi.getWeeklyExceptionalRecords(params);
+  },
+  getWeeklyPlans(params) {
+    return dashboardApi.getWeeklyPlans(params);
+  },
+  getWeeklyShiftSchedules(params) {
+    return dashboardApi.getWeeklyShiftSchedules(params);
   },
 };
 

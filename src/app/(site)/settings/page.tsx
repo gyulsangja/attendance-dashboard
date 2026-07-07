@@ -7,6 +7,7 @@ import { useAccess } from '@/app/_components/auth/AccessProvider';
 import AttendanceCodeDialog from '@/app/_components/settings/AttendanceCodeDialog';
 import AttendanceCodeSettingsGrid from '@/app/_components/settings/AttendanceCodeSettingsGrid';
 import EmployeeInfoOptionPanel from '@/app/_components/settings/EmployeeInfoOptionPanel';
+import HolidaySettingsPanel from '@/app/_components/settings/HolidaySettingsPanel';
 import WorkTimePolicyPanel from '@/app/_components/settings/WorkTimePolicyPanel';
 import {
   useAttendanceCodesQuery,
@@ -44,7 +45,7 @@ const TEXT = {
   noAccess: '권한으로는 설정을 관리할 수 없습니다.',
   endDatePrompt: '사용 종료일을 입력하세요.',
   title: '설정',
-  description: '직원 정보 항목, 근태코드, 출퇴근 기준시간을 업무별로 관리합니다.',
+  description: '직원 정보 항목, 근태코드, 출퇴근 기준시간, 공휴일을 업무별로 관리합니다.',
   apiInfo: 'API 모드에서는 설정한 항목들을 백엔드 API에 저장합니다. 저장 후 목록에 반영되지 않으면 백엔드 저장 필드 확인이 필요합니다.',
   codeLoadError: '근태코드 API를 불러오지 못했습니다.',
   codeMutationError: '근태코드 저장 중 오류가 발생했습니다. 백엔드 공통코드 저장 DTO 확인이 필요합니다.',
@@ -53,6 +54,7 @@ const TEXT = {
   employeeOptionsTab: '직원 정보 항목',
   attendanceCodeTab: '근태코드',
   workTimeTab: '근무시간',
+  holidayTab: '공휴일',
   attendanceTitle: '근태코드 관리',
   attendanceDescription: '지각, 조퇴, 결근, 연차 등 운영관리와 대시보드에서 사용할 근태코드를 관리합니다.',
   addAttendanceCode: '근태코드 추가',
@@ -177,6 +179,7 @@ export default function Page() {
           <Tab label={TEXT.employeeOptionsTab} />
           <Tab label={TEXT.attendanceCodeTab} />
           <Tab label={TEXT.workTimeTab} />
+          <Tab label={TEXT.holidayTab} />
         </Tabs>
       </Paper>
 
@@ -220,6 +223,8 @@ export default function Page() {
           onSave={savePolicy}
         />
       )}
+
+      {settingsTab === 3 && <HolidaySettingsPanel />}
 
       <AttendanceCodeDialog
         key={dialogOpen ? editingCode?.id ?? 'new-code' : 'closed-code'}

@@ -17,7 +17,7 @@ export const menus = [
   },
   {
     id: 2,
-    title: "현황통계",
+    title: "상세보기",
     href: "/reports",
     icon: AlignHorizontalLeftRounded,
   },

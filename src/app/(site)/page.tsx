@@ -2,9 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Alert } from '@mui/material';
-import DashboardCompanyStatus from '@/app/_components/dashboard/DashboardCompanyStatus';
 import DashboardEventGrid from '@/app/_components/dashboard/DashboardEventGrid';
-import DashboardOperationStatus from '@/app/_components/dashboard/DashboardOperationStatus';
 import DashboardPeriodHeader from '@/app/_components/dashboard/DashboardPeriodHeader';
 import DashboardShiftCalendar from '@/app/_components/dashboard/DashboardShiftCalendar';
 import DashboardWeeklySummary from '@/app/_components/dashboard/DashboardWeeklySummary';
@@ -12,11 +10,39 @@ import {
   adaptDashboardWeeklyDtoToViewModel,
   type DashboardViewModel,
 } from '@/adapters/dashboardAdapter';
-import { useDashboardWeeklyQuery } from '@/hooks/useDashboardQueries';
+import type { DashboardWeeklyDto } from '@/api/dto/dashboard.dto';
+import {
+  useDashboardWeeklyAttendanceCodeCountsQuery,
+  useDashboardWeeklyExceptionalRecordsQuery,
+  useDashboardWeeklyPlansQuery,
+  useDashboardWeeklyShiftSchedulesQuery,
+  useDashboardWeeklySummaryQuery,
+} from '@/hooks/useDashboardQueries';
 import { isApiDataSource } from '@/repositories/config';
 import { selectDashboardData } from '@/selectors/dashboardSelectors';
 import { useAppSelector } from '@/store/hooks';
 import type { RootState } from '@/store/store';
+
+const mergeDashboardBlocks = (
+  summary?: DashboardWeeklyDto | null,
+  codeCounts?: DashboardWeeklyDto | null,
+  exceptions?: DashboardWeeklyDto | null,
+  plans?: DashboardWeeklyDto | null,
+  shifts?: DashboardWeeklyDto | null,
+): DashboardWeeklyDto => ({
+  week_start_date: summary?.week_start_date ?? summary?.weekStartDate,
+  weekStartDate: summary?.weekStartDate,
+  week_end_date: summary?.week_end_date ?? summary?.weekEndDate,
+  weekEndDate: summary?.weekEndDate,
+  operation_confirmed: true,
+  summary_cards: summary?.summary_cards ?? summary?.summaryCards ?? [],
+  attendance_code_counts: codeCounts?.attendance_code_counts ?? codeCounts?.attendanceCodeCounts ?? [],
+  exceptional_attendance_records: exceptions?.exceptional_attendance_records
+    ?? exceptions?.exceptionalAttendanceRecords
+    ?? [],
+  weekly_attendance_plans: plans?.weekly_attendance_plans ?? plans?.weeklyAttendancePlans ?? [],
+  shift_weekly_schedules: shifts?.shift_weekly_schedules ?? shifts?.shiftWeeklySchedules ?? [],
+});
 
 export default function Home() {
   const management = useAppSelector((state) => state.management);
@@ -33,9 +59,9 @@ export default function Home() {
     } as RootState, year, month, weekNumber),
     [attendanceCode, management, month, organization, weekNumber, year],
   );
-  const apiBaseDashboard = useMemo(() => ({
+  const apiBaseDashboard = useMemo<DashboardViewModel>(() => ({
     ...fallbackDashboard,
-    confirmed: false,
+    confirmed: true,
     summaryCards: [],
     detailAttendanceCodes: [],
     attendanceCodes: [],
@@ -44,12 +70,7 @@ export default function Home() {
     vacationRows: [],
     weekShifts: [],
     shiftWorkerCount: 0,
-    operationItems: [
-      { label: '근태 일정 입력', value: '미확인', done: false },
-      { label: '단말기 CSV 확인', value: '미확인', done: false },
-      { label: '교대근무 확정', value: '미확인', done: false },
-      { label: '운영관리 최종 확정', value: '미확인', done: false },
-    ],
+    operationItems: [],
     companyStatus: {
       teamCount: 0,
       employeeCount: 0,
@@ -58,29 +79,41 @@ export default function Home() {
     },
   }), [fallbackDashboard]);
   const dashboardBase = isApiDataSource ? apiBaseDashboard : fallbackDashboard;
-  const dashboardQuery = useDashboardWeeklyQuery(
-    year,
-    month,
-    fallbackDashboard.selectedWeekNumber,
+  const selectedWeekNumber = fallbackDashboard.selectedWeekNumber;
+  const summaryQuery = useDashboardWeeklySummaryQuery(year, month, selectedWeekNumber);
+  const codeCountsQuery = useDashboardWeeklyAttendanceCodeCountsQuery(year, month, selectedWeekNumber);
+  const exceptionsQuery = useDashboardWeeklyExceptionalRecordsQuery(year, month, selectedWeekNumber);
+  const plansQuery = useDashboardWeeklyPlansQuery(year, month, selectedWeekNumber);
+  const shiftsQuery = useDashboardWeeklyShiftSchedulesQuery(year, month, selectedWeekNumber);
+  const dashboardDto = useMemo(
+    () => mergeDashboardBlocks(
+      summaryQuery.data,
+      codeCountsQuery.data,
+      exceptionsQuery.data,
+      plansQuery.data,
+      shiftsQuery.data,
+    ),
+    [codeCountsQuery.data, exceptionsQuery.data, plansQuery.data, shiftsQuery.data, summaryQuery.data],
   );
   const dashboard = useMemo(
-    () => dashboardQuery.data
-      ? adaptDashboardWeeklyDtoToViewModel(dashboardQuery.data, dashboardBase)
-      : dashboardBase,
-    [dashboardBase, dashboardQuery.data],
+    () => (isApiDataSource
+      ? adaptDashboardWeeklyDtoToViewModel(dashboardDto, dashboardBase)
+      : dashboardBase),
+    [dashboardBase, dashboardDto],
   );
-
-  const statusOverview = (
-    <div className="mt-5 grid gap-5 xl:grid-cols-2">
-      <DashboardOperationStatus items={dashboard.operationItems} />
-      <DashboardCompanyStatus
-        teamCount={dashboard.companyStatus?.teamCount ?? dashboard.organizationSnapshot.teams.length}
-        employeeCount={dashboard.companyStatus?.employeeCount ?? dashboard.organizationSnapshot.employees.length}
-        shiftWorkerCount={dashboard.companyStatus?.shiftWorkerCount ?? dashboard.shiftWorkerCount}
-        attendanceCodes={dashboard.attendanceCodes}
-        activeAttendanceCodeCount={dashboard.companyStatus?.activeAttendanceCodeCount}
-      />
-    </div>
+  const isDashboardLoading = isApiDataSource && (
+    summaryQuery.isLoading
+    || codeCountsQuery.isLoading
+    || exceptionsQuery.isLoading
+    || plansQuery.isLoading
+    || shiftsQuery.isLoading
+  );
+  const isDashboardError = isApiDataSource && (
+    summaryQuery.isError
+    || codeCountsQuery.isError
+    || exceptionsQuery.isError
+    || plansQuery.isError
+    || shiftsQuery.isError
   );
 
   return (
@@ -90,7 +123,6 @@ export default function Home() {
         month={month}
         weekNumber={dashboard.selectedWeekNumber}
         weeks={dashboard.weeks}
-        confirmed={dashboard.confirmed}
         onYearChange={(value) => {
           setYear(value);
           setWeekNumber(1);
@@ -102,62 +134,46 @@ export default function Home() {
         onWeekChange={setWeekNumber}
       />
 
-      {dashboardQuery.isLoading && (
+      {isDashboardLoading && (
         <Alert severity="info" sx={{ mt: 3 }}>
           대시보드 데이터를 불러오는 중입니다.
         </Alert>
       )}
 
-      {dashboardQuery.isError && (
+      {isDashboardError && (
         <Alert severity="warning" sx={{ mt: 3 }}>
-          대시보드 API를 불러오지 못했습니다. API 모드에서는 확인된 값만 표시합니다.
+          대시보드 API 일부를 불러오지 못했습니다. 확인된 블록만 표시합니다.
         </Alert>
       )}
 
-      {!dashboard.confirmed && (
-        <Alert severity="warning" sx={{ mt: 3 }}>
-          선택한 주차는 운영관리 확정 전입니다. 확정 전에는 주간 근태 요약과 특이사항을 표시하지 않습니다.
-        </Alert>
-      )}
+      <DashboardWeeklySummary
+        startDate={dashboard.startDate}
+        endDate={dashboard.endDate}
+        summaryCards={dashboard.summaryCards}
+        detailAttendanceCodes={dashboard.detailAttendanceCodes}
+        eventCounts={dashboard.eventCounts}
+      />
 
-      {!dashboard.confirmed && statusOverview}
-
-      {dashboard.confirmed && (
-        <>
-          <DashboardWeeklySummary
-            startDate={dashboard.startDate}
-            endDate={dashboard.endDate}
-            summaryCards={dashboard.summaryCards}
-            detailAttendanceCodes={dashboard.detailAttendanceCodes}
-            eventCounts={dashboard.eventCounts}
-          />
-
-          <div className="mt-5 grid gap-5 2xl:grid-cols-2">
-            <DashboardEventGrid
-              title="주간 근태 특이사항"
-              description="선택 주차의 지각, 조퇴, 결근 등 확인이 필요한 확정 이력입니다."
-              rows={dashboard.exceptionRows}
-            />
-            <DashboardEventGrid
-              title="주간 계획/특별 근태"
-              description="선택 주차에 입력된 연차, 반차, 병가, 재택근무 등 일반 근태코드입니다."
-              rows={dashboard.vacationRows}
-              showDetail={false}
-            />
-          </div>
-        </>
-      )}
-
-      {dashboard.confirmed && (
-        <DashboardShiftCalendar
-          startDate={dashboard.startDate}
-          endDate={dashboard.endDate}
-          days={dashboard.shiftCalendarDays}
-          shifts={dashboard.weekShifts}
+      <div className="mt-5 grid gap-5 2xl:grid-cols-2">
+        <DashboardEventGrid
+          title="주간 근태 특이사항"
+          description="선택 주차의 지각, 조퇴, 결근 등 확인이 필요한 근태 이력입니다."
+          rows={dashboard.exceptionRows}
         />
-      )}
+        <DashboardEventGrid
+          title="주간 계획/특별 근태"
+          description="선택 주차에 입력된 연차, 반차, 병가, 재택근무 등 일반 근태코드입니다."
+          rows={dashboard.vacationRows}
+          showDetail={false}
+        />
+      </div>
 
-      {dashboard.confirmed && statusOverview}
+      <DashboardShiftCalendar
+        startDate={dashboard.startDate}
+        endDate={dashboard.endDate}
+        days={dashboard.shiftCalendarDays}
+        shifts={dashboard.weekShifts}
+      />
     </main>
   );
 }

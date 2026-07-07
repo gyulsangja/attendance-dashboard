@@ -46,6 +46,8 @@ const TEXT = {
   editTitle: '직원 정보 수정',
   addTitle: '직원 등록',
   name: '이름',
+  email: '이메일',
+  phoneNo: '연락처',
   team: '부서/팀',
   position: '직급',
   workType: '근무유형',
@@ -78,6 +80,8 @@ const emptyEmployee = (
 ): OrganizationEmployee => ({
   id,
   name: '',
+  email: '',
+  phoneNo: '',
   teamId,
   position: defaultPosition,
   jobTitle: '',
@@ -154,6 +158,7 @@ function EmployeeDialogContent({
             value={form.name}
             onChange={(event) => setForm({ ...form, name: event.target.value })}
           />
+
 
           <FormControl fullWidth>
             <InputLabel>{TEXT.team}</InputLabel>
@@ -254,6 +259,22 @@ function EmployeeDialogContent({
             label={TEXT.shiftWorker}
           />
 
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <TextField
+              fullWidth
+              type="email"
+              label={TEXT.email}
+              value={form.email ?? ''}
+              onChange={(event) => setForm({ ...form, email: event.target.value })}
+            />
+            <TextField
+              fullWidth
+              label={TEXT.phoneNo}
+              value={form.phoneNo ?? ''}
+              onChange={(event) => setForm({ ...form, phoneNo: event.target.value })}
+            />
+          </div>
+
           <TextField
             fullWidth
             type="date"
@@ -280,6 +301,8 @@ function EmployeeDialogContent({
             {
               ...form,
               name: form.name.trim(),
+              email: form.email?.trim() ?? '',
+              phoneNo: form.phoneNo?.trim() ?? '',
               jobTitle: form.jobTitle.trim(),
             },
             dateValue,

@@ -28,6 +28,7 @@ export default function EmployeeGrid({
 }: EmployeeGridProps) {
   const columns: GridColDef<OrganizationEmployee>[] = [
     { field: 'name', headerName: '이름', minWidth: 110, flex: 0.8 },
+    { field: 'email', headerName: '이메일', minWidth: 180, flex: 1.1 },
     {
       field: 'teamId',
       headerName: '부서',

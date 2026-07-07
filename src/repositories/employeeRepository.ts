@@ -22,6 +22,8 @@ const mockOrganizationEmployees: OrganizationEmployee[] = staffs.flatMap((team) 
   team.staff.map((employee) => ({
     id: employee.id,
     name: employee.name,
+    email: '',
+    phoneNo: '',
     teamId: team.team,
     position: employee.position,
     jobTitle: employee.jobTitle,

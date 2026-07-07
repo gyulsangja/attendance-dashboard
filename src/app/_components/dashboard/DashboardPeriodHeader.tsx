@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import { getYearOptions } from '@/lib/date';
@@ -8,7 +8,6 @@ type Props = {
   month: number;
   weekNumber: number;
   weeks: { week: number; label: string; startDate: string; endDate: string }[];
-  confirmed: boolean;
   onYearChange: (value: number) => void;
   onMonthChange: (value: number) => void;
   onWeekChange: (value: number) => void;
@@ -19,7 +18,6 @@ export default function DashboardPeriodHeader({
   month,
   weekNumber,
   weeks,
-  confirmed,
   onYearChange,
   onMonthChange,
   onWeekChange,
@@ -30,17 +28,7 @@ export default function DashboardPeriodHeader({
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">대시보드</h1>
-          <span className={`rounded-full px-3 py-1 text-xs font-bold ${
-            confirmed
-              ? 'bg-emerald-100 text-emerald-700'
-              : 'bg-amber-100 text-amber-700'
-          }`}
-          >
-            {confirmed ? '현황통계 반영 완료' : '운영관리 진행 중'}
-          </span>
-        </div>
+        <h1 className="text-2xl font-bold">대시보드</h1>
         <p className="mt-2 text-sm text-slate-500">
           {selectedWeek?.startDate} ~ {selectedWeek?.endDate} 기준 주간 회사 현황입니다.
         </p>

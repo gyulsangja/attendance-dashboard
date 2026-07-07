@@ -54,7 +54,7 @@ export default function OperationManagementSection({
         </div>
         <Chip
           icon={confirmed ? <CheckCircle /> : undefined}
-          label={confirmed ? '현황통계 반영 완료' : '입력 진행 중'}
+          label={confirmed ? '상세보기 반영 완료' : '입력 진행 중'}
           color={confirmed ? 'success' : 'default'}
         />
       </div>

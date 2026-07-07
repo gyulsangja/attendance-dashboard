@@ -1,5 +1,3 @@
-'use client';
-
 import { Add, Edit, Groups } from '@mui/icons-material';
 import { Button, List, ListItemButton, ListItemText } from '@mui/material';
 import {

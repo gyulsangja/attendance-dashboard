@@ -50,7 +50,7 @@ export const userRoles: RoleAccess[] = [
   {
     id: 'GENERAL',
     label: '일반 사용자',
-    description: '대시보드와 현황통계를 조회할 수 있습니다.',
+    description: '대시보드와 상세보기를 조회할 수 있습니다.',
     canViewDashboard: true,
     canViewReports: true,
     canManageOperations: false,

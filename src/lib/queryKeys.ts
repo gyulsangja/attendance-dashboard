@@ -2,6 +2,8 @@ export const queryKeys = {
   attendanceCodes: ['attendance-codes'] as const,
   dashboardWeekly: (year: number, month: number, week: number) =>
     ['dashboard-weekly', year, month, week] as const,
+  dashboardBlock: (block: string, year: number, month: number, week: number) =>
+    ['dashboard-block', block, year, month, week] as const,
   attendManagerSummary: (year: number, month: number, week: number) =>
     ['attend-manager-summary', year, month, week] as const,
   attendManagerOperationConfirmStatus: (year: number, month: number, week: number) =>
@@ -37,4 +39,5 @@ export const queryKeys = {
   organizationEmployees: ['organization-employees'] as const,
   workTimePolicy: ['work-time-policy'] as const,
   users: ['users'] as const,
+  holidays: (year: number) => ['holidays', year] as const,
 };

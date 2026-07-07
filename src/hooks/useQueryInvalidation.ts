@@ -42,3 +42,12 @@ export const invalidateAttendManagerQueries = (queryClient: QueryClient) => {
   void queryClient.invalidateQueries({ queryKey: ['statistics-employee-attendance'] });
   void queryClient.invalidateQueries({ queryKey: ['statistics-attendance-records-monthly'] });
 };
+
+export const invalidateHolidayQueries = (queryClient: QueryClient, year?: number) => {
+  if (year) {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.holidays(year) });
+    return;
+  }
+
+  void queryClient.invalidateQueries({ queryKey: ['holidays'] });
+};
