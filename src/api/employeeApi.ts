@@ -49,8 +49,11 @@ export const employeeApi = {
     });
   },
 
-  async selectAttendAll() {
-    const response = await apiClient<EmployeeAttendDto[] | EmployeeAttendListResponseDto>('/api/employee/attend/select');
+  async selectAttendAll(payload: EmployeeAttendItemSelectRequestDto = { select_type: '3' }) {
+    const response = await apiClient<EmployeeAttendDto[] | EmployeeAttendListResponseDto>('/api/employee/attend/select', {
+      method: 'POST',
+      body: payload,
+    });
     if (Array.isArray(response)) return response;
     return response.employeeattendlist
       ?? response.employeeAttendList
@@ -63,8 +66,20 @@ export const employeeApi = {
       ?? [];
   },
 
-  selectAttendByEmployee(empNo: number | string) {
-    return apiClient<EmployeeAttendDto[]>(`/api/employee/attend/select/emp/${empNo}`);
+  async selectAttendByEmployee(empNo: number | string) {
+    const response = await apiClient<EmployeeAttendDto[] | EmployeeAttendListResponseDto>(
+      `/api/employee/attend/select/emp/${empNo}`,
+    );
+    if (Array.isArray(response)) return response;
+    return response.employeeattendlist
+      ?? response.employeeAttendList
+      ?? response.attendlist
+      ?? response.attendList
+      ?? response.items
+      ?? response.rows
+      ?? response.list
+      ?? response.data
+      ?? [];
   },
 
   async selectAttendByItems(payload: EmployeeAttendItemSelectRequestDto) {

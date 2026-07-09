@@ -32,6 +32,8 @@ const getShiftRows = (
   if (Array.isArray(response)) return response;
 
   return (
+    response.shiftenlist ??
+    response.shiftenList ??
     response.shiftlist ??
     response.shiftList ??
     response.shift_schedule_list ??
@@ -59,7 +61,7 @@ const getConfirmStatus = (response: AttendManagerConfirmStatusDto) => {
 export const attendManagerApi = {
   async getSummary(params: AttendManagerWeekParams) {
     const response = await apiClient<AttendManagerSummaryDto>(
-      `/api/attend/manager/summary?${toParams(params)}`,
+      `/api/attend/manager/summary/${params.year}/${params.month}/${params.week}`,
     );
     return getSummary(response);
   },
@@ -81,22 +83,36 @@ export const attendManagerApi = {
   async getShiftMonth(params: AttendManagerMonthParams) {
     const response = await apiClient<
       AttendManagerShiftScheduleDto[] | AttendManagerShiftScheduleListResponseDto
-    >(`/api/attend/manager/shift/month?${toParams(params)}`);
+    >('/api/employee/shiften/select/items', {
+      method: 'POST',
+      body: {
+        select_type: '3',
+        year: params.year,
+        month: params.month,
+      },
+    });
 
     return getShiftRows(response);
   },
 
-  saveShift(schedules: AttendManagerShiftScheduleDto[]) {
-    return apiClient<string>('/api/attend/manager/shift/save', {
-      method: 'POST',
-      body: { schedules },
-    });
+  async saveShift(schedules: AttendManagerShiftScheduleDto[]) {
+    await Promise.all(
+      schedules.map((schedule) =>
+        apiClient<string>('/api/employee/shiften/insert', {
+          method: 'POST',
+          body: {
+            work_date: schedule.work_date ?? schedule.workDate ?? schedule.date,
+            emp_no: schedule.emp_no ?? schedule.empNo,
+            shift_type: schedule.shift_type ?? schedule.shiftType,
+            etc: schedule.etc ?? '',
+          },
+        })),
+    );
   },
 
   deleteShift(shiftScheduleId: number | string) {
-    return apiClient<string>('/api/attend/manager/shift/delete', {
+    return apiClient<string>(`/api/employee/shiften/delete/${shiftScheduleId}`, {
       method: 'POST',
-      body: { shift_schedule_id: shiftScheduleId },
     });
   },
 

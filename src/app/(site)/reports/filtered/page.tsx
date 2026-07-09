@@ -2,9 +2,11 @@
 
 import { Alert } from '@mui/material';
 import { FilterCode, SwitchButton } from '@/app/_components';
-import FilteredAttendanceCalendar from '@/app/_components/reports/FilteredAttendanceCalendar';
-import FilteredAttendanceTable from '@/app/_components/reports/FilteredAttendanceTable';
-import { useFilteredAttendanceReport } from '@/app/_components/reports/hooks/useFilteredAttendanceReport';
+import {
+  FilteredAttendanceCalendar,
+  FilteredAttendanceTable,
+  useFilteredAttendanceReport,
+} from '@/app/_components';
 
 export default function Page() {
   const report = useFilteredAttendanceReport();
@@ -19,7 +21,7 @@ export default function Page() {
         )}
         {report.isCodeError && (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            근태코드 API 호출에 실패했습니다.
+            근태코드 API를 불러오지 못했습니다.
           </Alert>
         )}
         <FilterCode
@@ -33,7 +35,7 @@ export default function Page() {
           <div>
             <h2 className="font-bold">조건별 근태 이력</h2>
             <p className="mt-1 text-sm text-slate-500">
-              선택한 기간과 근태코드의 발생 이력입니다.
+              선택한 기간과 근태코드 기준으로 발생 이력을 조회합니다.
             </p>
           </div>
           <SwitchButton value={report.viewMode} onChange={report.setViewMode} />
@@ -41,12 +43,12 @@ export default function Page() {
 
         {report.isApiEmpty && (
           <Alert severity="info" sx={{ mb: 2 }}>
-            선택한 기간에 등록된 백엔드 출퇴근 기록이 없습니다.
+            선택한 기간에 조회된 근태 기록이 없습니다.
           </Alert>
         )}
         {report.isApiError && (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            백엔드 출퇴근 조회 API 호출에 실패했습니다.
+            근태 기록 조회 API를 불러오지 못했습니다.
           </Alert>
         )}
 

@@ -14,14 +14,17 @@ const unwrapHolidayList = (response: HolidayDto[] | HolidayListResponseDto) => {
 
 export const holidayApi = {
   async select(year: number) {
-    const response = await apiClient<HolidayDto[] | HolidayListResponseDto>(`/api/holiday/select?year=${year}`);
+    const response = await apiClient<HolidayDto[] | HolidayListResponseDto>(`/api/holiday/select/${year}`);
     return unwrapHolidayList(response);
   },
 
   insert(payload: HolidayDto) {
     return apiClient<string>('/api/holiday/insert', {
       method: 'POST',
-      body: { holidayinfo: payload },
+      body: {
+        holidayinfo: payload,
+        userinfo: payload,
+      },
     });
   },
 

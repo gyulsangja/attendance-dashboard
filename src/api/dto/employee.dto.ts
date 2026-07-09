@@ -1,4 +1,6 @@
 ﻿export type EmployeeDto = {
+  id?: number | string;
+  idx?: number | string;
   emp_company?: string;
   empCompany?: string;
   emp_no?: number | string;
@@ -24,8 +26,6 @@
   holdStatCode?: string;
   hold_stat_name?: string;
   holdStatName?: string;
-  attend_card_no?: number | string;
-  attendCardNo?: number | string;
   email?: string;
   phone_no?: string;
   phoneNo?: string;
@@ -77,12 +77,16 @@ export type EmployeeAttendDto = {
   rankName?: string;
   attend_code?: string;
   attendCode?: string;
+  attend_name?: string;
+  attendName?: string;
   attend_code_name?: string;
   attendCodeName?: string;
   detail_code?: string;
   detailCode?: string;
   detail_code_name?: string;
   detailCodeName?: string;
+  attend_reason?: string;
+  attendReason?: string;
   attend_date?: string;
   attendDate?: string;
   start_time?: string;
@@ -96,6 +100,11 @@ export type EmployeeAttendDto = {
 
 
 export type EmployeeAttendItemSelectRequestDto = {
+  select_type?: string;
+  selectType?: string;
+  year?: number | string;
+  month?: number | string;
+  week?: number | string;
   emp_no?: number | string;
   empNo?: number | string;
   attend_date?: string;

@@ -23,9 +23,15 @@ type UseScheduleEntryDraftsParams = {
 
 export type ScheduleEntryEmployee = {
   id: number;
+  employeeNo?: string;
   name: string;
   position: string;
   department: string;
+};
+
+const getApiEmployeeSelectId = (employee: { id: number; employeeNo?: string }) => {
+  const employeeNo = Number(employee.employeeNo);
+  return Number.isFinite(employeeNo) && employeeNo > 0 ? employeeNo : employee.id;
 };
 
 export function useScheduleEntryDrafts({ existing }: UseScheduleEntryDraftsParams) {
@@ -53,7 +59,8 @@ export function useScheduleEntryDrafts({ existing }: UseScheduleEntryDraftsParam
   const reportEmployees = useMemo(() => {
     if (isApiDataSource) {
       return (apiEmployeesQuery.data ?? []).map<ScheduleEntryEmployee>((employee) => ({
-        id: employee.id,
+        id: getApiEmployeeSelectId(employee),
+        employeeNo: employee.employeeNo,
         name: employee.name,
         position: employee.backendRankName ?? employee.position,
         department: employee.backendDeptName ?? employee.teamId,

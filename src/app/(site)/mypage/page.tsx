@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Alert, Button, Paper, Stack, TextField } from '@mui/material';
-import { useAccess } from '@/app/_components/auth/AccessProvider';
+import { useAccess } from '@/app/_components';
 import { useAppDispatch } from '@/store/hooks';
 import { changePassword } from '@/store/slices/authSlice';
 

@@ -14,7 +14,7 @@ const isNumericValue = (value: unknown) =>
   value !== undefined && value !== null && Number.isFinite(Number(value));
 
 const getEmployeeKey = (dto: AttendanceManagerDto) =>
-  String(dto.emp_no ?? dto.empNo ?? dto.emo_no ?? dto.attend_card_no ?? dto.attendCardNo ?? '');
+  String(dto.emp_no ?? dto.empNo ?? dto.emo_no ?? '');
 
 const getRecordId = (dto: AttendanceManagerDto) =>
   Number(dto.id ?? dto.idx)

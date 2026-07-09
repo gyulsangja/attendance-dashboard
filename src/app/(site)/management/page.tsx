@@ -1,11 +1,13 @@
 'use client';
 
 import { Alert } from '@mui/material';
-import ManagementDialogs from '@/app/_components/management/operations/ManagementDialogs';
-import OperationHeader from '@/app/_components/management/operations/OperationHeader';
-import OperationManagementSection from '@/app/_components/management/operations/OperationManagementSection';
-import ShiftInputSection from '@/app/_components/management/operations/ShiftInputSection';
-import { useManagementOperations } from '@/app/_components/management/operations/useManagementOperations';
+import {
+  ManagementDialogs,
+  OperationHeader,
+  OperationManagementSection,
+  ShiftInputSection,
+  useManagementOperations,
+} from '@/app/_components';
 
 export default function Page() {
   const operations = useManagementOperations();

@@ -52,6 +52,7 @@ export default function Page() {
     isApiDataSource
       ? (apiEmployeesQuery.data ?? []).map((employee) => ({
         id: employee.id,
+        employeeNo: employee.employeeNo,
         name: employee.name,
         department: employee.backendDeptName ?? employee.backendDeptCode ?? '-',
         position: employee.backendRankName ?? employee.backendRankCode ?? employee.position,
@@ -72,8 +73,10 @@ export default function Page() {
     ? selected
     : employees[0]?.id ?? null;
   const employee = employees.find((item) => item.id === effectiveSelected);
+  const selectedEmpNo = employee?.employeeNo ?? effectiveSelected;
+  const selectedEmpNoKey = String(selectedEmpNo ?? '');
   const periodType = week !== 'all' ? 'WEEK' : month !== 'all' ? 'MONTH' : 'YEAR';
-  const apiRecordsQuery = useStatisticsEmployeeAttendanceQuery(effectiveSelected, {
+  const apiRecordsQuery = useStatisticsEmployeeAttendanceQuery(selectedEmpNo, {
     periodType,
     year,
     month: month === 'all' ? undefined : month,
@@ -82,15 +85,21 @@ export default function Page() {
   const attendanceRecords = useMemo(() => (
     isApiDataSource ? apiRecordsQuery.data?.records ?? [] : storeAttendanceRecords
   ), [apiRecordsQuery.data, storeAttendanceRecords]);
-  const rows = useMemo<Row[]>(() => attendanceRecords
-    .filter((record) => record.employeeId === effectiveSelected)
+  const rows: Row[] = attendanceRecords
+    .filter((record) => (
+      isApiDataSource
+        ? String(record.employeeId) === selectedEmpNoKey
+        : record.employeeId === effectiveSelected
+    ))
     .flatMap((record) => record.events.map((event, index) => ({
       id: `${record.id}-${index}`,
       date: `${record.date}(${WEEKDAYS[new Date(`${record.date}T00:00:00`).getDay()]})`,
-      type: attendanceCodes.find((code) => code.id === event.codeId)?.label ?? event.codeId,
+      type: attendanceCodes.find((code) => code.id === event.codeId)?.label
+        ?? event.detail
+        ?? event.codeId,
       time: record.checkIn || record.checkOut ? `${record.checkIn ?? '-'} ~ ${record.checkOut ?? '-'}` : '-',
       memo: event.detail || record.memo || '',
-    }))), [attendanceRecords, attendanceCodes, effectiveSelected]);
+    })));
   const columns: GridColDef<Row>[] = [
     { field: 'date', headerName: '일자', minWidth: 160, flex: 1 },
     { field: 'type', headerName: '근태', minWidth: 120, flex: 0.8 },
@@ -161,17 +170,17 @@ export default function Page() {
       <section className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         {isApiEmpty && (
           <Alert severity="info" sx={{ mb: 2 }}>
-            선택한 기간에 등록된 백엔드 출퇴근 기록이 없습니다.
+            선택한 기간에 조회된 직원 근태 기록이 없습니다.
           </Alert>
         )}
         {isApiError && (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            백엔드 출퇴근 조회 API 호출에 실패했습니다.
+            직원별 근태 기록 조회 API를 불러오지 못했습니다.
           </Alert>
         )}
         {isApiDataSource && (apiEmployeesQuery.isLoading || apiAttendanceCodesQuery.isLoading) && (
           <Alert severity="info" sx={{ mb: 2 }}>
-            직원/근태코드 데이터를 불러오는 중입니다.
+            직원과 근태코드 데이터를 불러오는 중입니다.
           </Alert>
         )}
         <div className="mb-5 flex items-center gap-3">

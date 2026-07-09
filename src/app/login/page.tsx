@@ -11,7 +11,8 @@ import {
   Stack,
   TextField,
 } from '@mui/material';
-import { getDefaultPath } from '@/app/_components/auth/AuthGuard';
+import { getDefaultPath } from '@/app/_components';
+import { tokenStorage } from '@/api/tokenStorage';
 import { useLoginMutation } from '@/hooks/useAuthMutations';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { login, setApiSession } from '@/store/slices/authSlice';
@@ -19,6 +20,10 @@ import { login, setApiSession } from '@/store/slices/authSlice';
 const isApiLoginMode = process.env.NEXT_PUBLIC_DATA_SOURCE !== 'mock';
 const defaultUsername = isApiLoginMode ? 'dev1' : 'admin';
 const defaultPassword = isApiLoginMode ? 'password123' : 'admin123';
+
+const getInitialAuthMessage = () => (
+  typeof window === 'undefined' ? '' : tokenStorage.getAuthMessage() ?? ''
+);
 
 export default function Page() {
   const router = useRouter();
@@ -36,7 +41,11 @@ export default function Page() {
       ? false
       : Boolean(window.localStorage.getItem('attendance-saved-id'))
   ));
-  const [error, setError] = useState('');
+  const [error, setError] = useState(getInitialAuthMessage);
+
+  useEffect(() => {
+    tokenStorage.clearAuthMessage();
+  }, []);
 
   useEffect(() => {
     const currentUser = users.find((user) => user.id === currentUserId);
@@ -46,6 +55,7 @@ export default function Page() {
   const submit = () => {
     if (loginMutation.isPending) return;
     setError('');
+    tokenStorage.clearAuthMessage();
 
     loginMutation.mutate(
       { username, password },

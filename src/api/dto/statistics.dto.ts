@@ -43,10 +43,17 @@ export type StatisticsAttendanceRecordDto = {
 
 export type StatisticsAttendanceResponseDto = {
   records?: StatisticsAttendanceRecordDto[];
+  attendance_records?: StatisticsAttendanceRecordDto[];
+  attendanceRecords?: StatisticsAttendanceRecordDto[];
+  attendancelist?: StatisticsAttendanceRecordDto[];
+  attendanceList?: StatisticsAttendanceRecordDto[];
+  statisticslist?: StatisticsAttendanceRecordDto[];
+  statisticsList?: StatisticsAttendanceRecordDto[];
   items?: StatisticsAttendanceRecordDto[];
   rows?: StatisticsAttendanceRecordDto[];
   list?: StatisticsAttendanceRecordDto[];
   data?: StatisticsAttendanceRecordDto[];
+  result?: StatisticsAttendanceRecordDto[];
 };
 
 export type StatisticsEmployeeAttendanceResponseDto = {
@@ -65,8 +72,15 @@ export type StatisticsEmployeeAttendanceResponseDto = {
     rankName?: string;
   };
   records?: StatisticsAttendanceRecordDto[];
+  attendance_records?: StatisticsAttendanceRecordDto[];
+  attendanceRecords?: StatisticsAttendanceRecordDto[];
+  attendancelist?: StatisticsAttendanceRecordDto[];
+  attendanceList?: StatisticsAttendanceRecordDto[];
+  statisticslist?: StatisticsAttendanceRecordDto[];
+  statisticsList?: StatisticsAttendanceRecordDto[];
   items?: StatisticsAttendanceRecordDto[];
   rows?: StatisticsAttendanceRecordDto[];
   list?: StatisticsAttendanceRecordDto[];
   data?: StatisticsAttendanceRecordDto[];
+  result?: StatisticsAttendanceRecordDto[];
 };

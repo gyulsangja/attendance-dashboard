@@ -1,10 +1,10 @@
 
 import {
+  AccessProvider,
+  AuthGuard,
   Header,
   SideMenu,
-} from '@/app/_components/index'
-import { AccessProvider } from '@/app/_components/auth/AccessProvider';
-import AuthGuard from '@/app/_components/auth/AuthGuard';
+} from '@/app/_components';
 
 
 export default function layout({

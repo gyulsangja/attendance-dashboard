@@ -33,19 +33,34 @@ import {
   selectSelectedOperationWeek,
   selectShiftWeekConfirmed,
 } from '@/selectors/managementSelectors';
-import { selectOperationWeeklyReport } from '@/selectors/operationWeeklyReportSelectors';
+import {
+  selectOperationWeeklyReport,
+  type OperationWeeklyReport,
+} from '@/selectors/operationWeeklyReportSelectors';
 import { useAppSelector } from '@/store/hooks';
 
 const buildEmptyWeeklyReport = (
-  fallback: ReturnType<typeof selectOperationWeeklyReport>,
-): ReturnType<typeof selectOperationWeeklyReport> => ({
-  title: fallback.title,
-  periodLabel: fallback.periodLabel,
-  generatedAt: fallback.generatedAt,
+  week: { label: string; startDate: string; endDate: string },
+  weekDays: Array<{ date: string; label: string }>,
+): OperationWeeklyReport => ({
+  title: `${week.label} 주간 근태 보고`,
+  periodLabel: `${week.startDate} ~ ${week.endDate}`,
+  generatedAt: new Intl.DateTimeFormat('ko-KR', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date()),
   codeCounts: [],
-  timeColumns: fallback.timeColumns,
+  timeColumns: weekDays.map((day) => ({
+    date: day.date,
+    label: day.label,
+  })),
   timeRows: [],
 });
+
+const getApiEmployeeSelectId = (employee: { id: number; employeeNo?: string }) => {
+  const employeeNo = Number(employee.employeeNo);
+  return Number.isFinite(employeeNo) && employeeNo > 0 ? employeeNo : employee.id;
+};
 
 export const useManagementOperationState = () => {
   const management = useAppSelector(selectManagementState);
@@ -59,7 +74,9 @@ export const useManagementOperationState = () => {
   const weekDays = useAppSelector(selectOperationWeekDays);
   const weekOptions = useAppSelector(selectOperationWeekOptions);
   const weekShiftWorkers = useAppSelector(selectOperationWeekShiftWorkers);
-  const fallbackWeeklyReport = useAppSelector(selectOperationWeeklyReport);
+  const fallbackWeeklyReport = useAppSelector((state) => (
+    isApiDataSource ? null : selectOperationWeeklyReport(state)
+  ));
   const apiSummaryQuery = useAttendManagerSummaryQuery(
     management.year,
     management.month,
@@ -133,7 +150,7 @@ export const useManagementOperationState = () => {
     ? (apiOrganizationEmployeesQuery.data ?? [])
       .filter((employee) => employee.shiftWorker)
       .map((employee) => ({
-        employeeId: employee.id,
+        employeeId: getApiEmployeeSelectId(employee),
         name: employee.name,
       }))
     : weekShiftWorkers;
@@ -207,9 +224,9 @@ export const useManagementOperationState = () => {
   const weeklyReport = isApiDataSource
     ? adaptWeeklyReportDtoToOperationReport(
       apiWeeklyReportQuery.data,
-      buildEmptyWeeklyReport(fallbackWeeklyReport),
+      buildEmptyWeeklyReport(week, weekDays),
     )
-    : fallbackWeeklyReport;
+    : fallbackWeeklyReport ?? buildEmptyWeeklyReport(week, weekDays);
 
   return {
     ...management,

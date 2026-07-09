@@ -3,9 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Add } from '@mui/icons-material';
 import { Alert, Button, CircularProgress } from '@mui/material';
-import UserDialog from '@/app/_components/admin/UserDialog';
-import type { UserRoleOption } from '@/app/_components/admin/UserDialog';
-import UserGrid from '@/app/_components/admin/UserGrid';
+import { UserDialog, UserGrid, type UserRoleOption } from '@/app/_components';
 import { normalizeUserRole } from '@/adapters/authAdapter';
 import { useCommonCodesQuery } from '@/hooks/useCommonCodeQueries';
 import {

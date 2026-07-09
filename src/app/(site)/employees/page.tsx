@@ -3,19 +3,21 @@
 import { useMemo } from 'react';
 import { Add, Groups, History, Person, Schedule } from '@mui/icons-material';
 import { Alert, Button, CircularProgress, Paper, Tab, Tabs, TextField } from '@mui/material';
-import { useAccess } from '@/app/_components/auth/AccessProvider';
-import EmployeeDialog from '@/app/_components/employees/EmployeeDialog';
+import { useAccess } from '@/app/_components';
+import { EmployeeDialog } from '@/app/_components';
 import {
   useCommonCodesQuery,
   useDeleteCommonCodeMutation,
   useInsertCommonCodeMutation,
   useModifyCommonCodeMutation,
 } from '@/hooks/useCommonCodeQueries';
-import EmployeeGrid from '@/app/_components/employees/EmployeeGrid';
-import { useOrganizationManagement } from '@/app/_components/employees/hooks/useOrganizationManagement';
-import OrganizationHistoryGrid from '@/app/_components/employees/OrganizationHistoryGrid';
-import TeamDialog from '@/app/_components/employees/TeamDialog';
-import TeamPanel from '@/app/_components/employees/TeamPanel';
+import {
+  EmployeeGrid,
+  OrganizationHistoryGrid,
+  TeamDialog,
+  TeamPanel,
+  useOrganizationManagement,
+} from '@/app/_components';
 import { isApiDataSource } from '@/repositories/config';
 import type { CommonCode } from '@/adapters/commonCodeAdapter';
 import {
@@ -30,12 +32,12 @@ const DEPARTMENT_GROUP_CODE = 'G_TEAM_CODE';
 const createNextDepartmentCode = (codes: CommonCode[]) => {
   const departmentCodes = codes.filter((code) => code.groupCode === DEPARTMENT_GROUP_CODE);
   const maxNumber = departmentCodes.reduce((max, code) => {
-    const match = code.detailCode.match(/^DEP(\d+)$/);
+    const match = code.detailCode.match(/^TEAM(\d+)$/);
     if (!match) return max;
     return Math.max(max, Number(match[1]));
   }, 0);
 
-  return `DEP${String(maxNumber + 1).padStart(3, '0')}`;
+  return `TEAM${String(maxNumber + 1).padStart(2, '0')}`;
 };
 
 const getNextDepartmentSortOrder = (codes: CommonCode[]) => {
@@ -211,7 +213,7 @@ export default function Page() {
         <>
           <div className="mt-5 grid grid-cols-3 gap-4">
             {[
-              { label: '전체 조직', value: `${organization.snapshotTeams.length}개`, icon: <Groups /> },
+              { label: '전체 조직', value: `${effectiveTeams.length}개`, icon: <Groups /> },
               { label: '전체 구성원', value: `${organization.snapshotEmployees.length}명`, icon: <Person /> },
               { label: '교대근무자', value: `${organization.shiftWorkerCount}명`, icon: <Schedule /> },
             ].map((item) => (

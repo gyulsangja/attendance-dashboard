@@ -39,6 +39,12 @@ const formatShortDate = (date?: string) => {
 const getRecordId = (record: DashboardAttendanceRecordDto, index: number) =>
   String(record.id ?? `${record.emp_no ?? record.empNo ?? 'emp'}-${record.work_date ?? record.workDate ?? record.date ?? index}-${index}`);
 
+const shiftTimeByType: Record<string, { checkIn: string; checkOut: string }> = {
+  SHIFT_DAY: { checkIn: '09:00', checkOut: '18:00' },
+  SHIFT_AFTERNOON: { checkIn: '12:00', checkOut: '21:00' },
+  SHIFT_NIGHT: { checkIn: '21:00', checkOut: '09:00' },
+};
+
 const adaptRecordRow = (record: DashboardAttendanceRecordDto, index: number) => ({
   id: getRecordId(record, index),
   date: formatShortDate(record.work_date ?? record.workDate ?? record.date),
@@ -50,16 +56,20 @@ const adaptRecordRow = (record: DashboardAttendanceRecordDto, index: number) => 
 });
 
 const adaptShift = (shift: DashboardShiftScheduleDto, index: number): ShiftSchedule => {
-  const startTime = shift.start_time ?? shift.startTime ?? '';
-  const endTime = shift.end_time ?? shift.endTime ?? '';
+  const shiftType = shift.shift_type ?? shift.shiftType ?? shift.shift_name ?? shift.shiftName ?? '';
+  const shiftTime = shiftTimeByType[shiftType] ?? { checkIn: '', checkOut: '' };
+  const startTime = shift.start_time ?? shift.startTime ?? shiftTime.checkIn;
+  const endTime = shift.end_time ?? shift.endTime ?? shiftTime.checkOut;
+  const isNextDay = Boolean(startTime && endTime && endTime <= startTime);
+  const time = `${startTime}~${isNextDay ? '익일 ' : ''}${endTime}`;
 
   return {
-    id: toNumber(shift.shift_schedule_id ?? shift.shiftScheduleId, index + 1),
+    id: toNumber(shift.shift_schedule_id ?? shift.shiftScheduleId ?? shift.idx, index + 1),
     date: shift.work_date ?? shift.workDate ?? shift.date ?? '',
     employeeId: toNumber(shift.emp_no ?? shift.empNo, index + 1),
     name: shift.emp_name ?? shift.empName ?? '',
-    shift: `${startTime}~${endTime}`,
-    time: `${startTime}~${endTime}`,
+    shift: shiftType || time,
+    time,
     status: SHIFT_STATUS.CONFIRMED,
     checkIn: startTime,
     checkOut: endTime,

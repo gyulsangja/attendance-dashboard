@@ -46,6 +46,12 @@ export type AttendManagerShiftScheduleDto = {
   empNo?: number | string;
   emp_name?: string;
   empName?: string;
+  shift_type?: string;
+  shiftType?: string;
+  shift_code?: string;
+  shiftCode?: string;
+  shift_name?: string;
+  shiftName?: string;
   dept_code?: string;
   deptCode?: string;
   dept_name?: string;
@@ -59,9 +65,12 @@ export type AttendManagerShiftScheduleDto = {
   endTime?: string;
   is_next_day?: boolean | string;
   isNextDay?: boolean | string;
+  etc?: string;
 };
 
 export type AttendManagerShiftScheduleListResponseDto = {
+  shiftenlist?: AttendManagerShiftScheduleDto[];
+  shiftenList?: AttendManagerShiftScheduleDto[];
   shiftlist?: AttendManagerShiftScheduleDto[];
   shiftList?: AttendManagerShiftScheduleDto[];
   shift_schedule_list?: AttendManagerShiftScheduleDto[];

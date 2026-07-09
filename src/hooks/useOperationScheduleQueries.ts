@@ -23,6 +23,7 @@ export const useInsertOperationSchedulesMutation = (startDate: string, endDate: 
       void queryClient.invalidateQueries({
         queryKey: queryKeys.operationSchedules(startDate, endDate),
       });
+      invalidateAttendManagerQueries(queryClient);
     },
   });
 };
@@ -37,6 +38,7 @@ export const useModifyOperationScheduleMutation = (startDate: string, endDate: s
       void queryClient.invalidateQueries({
         queryKey: queryKeys.operationSchedules(startDate, endDate),
       });
+      invalidateAttendManagerQueries(queryClient);
     },
   });
 };

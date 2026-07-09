@@ -28,7 +28,14 @@ export const adaptStatisticsRecordToAttendanceRecord = (
   const empNo = dto.emp_no ?? dto.empNo ?? index + 1;
   const date = dto.work_date ?? dto.workDate ?? dto.attend_date ?? dto.attendDate ?? '';
   const codeId = dto.attendance_code ?? dto.attendanceCode ?? dto.detail_code ?? dto.detailCode;
-  const detail = dto.detail ?? dto.memo ?? dto.reason ?? dto.attend_reason ?? dto.attendReason ?? '';
+  const codeName = dto.attendance_code_name ?? dto.attendanceCodeName;
+  const detail = dto.detail
+    ?? dto.memo
+    ?? dto.reason
+    ?? dto.attend_reason
+    ?? dto.attendReason
+    ?? codeName
+    ?? '';
 
   return {
     id: toNumber(dto.id, toIdNumber(`${empNo}-${date}-${index}`, `${empNo}-${date}-${index}`)),

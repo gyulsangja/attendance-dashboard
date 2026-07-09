@@ -3,12 +3,14 @@
 import { useMemo, useState } from 'react';
 import { Add } from '@mui/icons-material';
 import { Alert, Button, Paper, Tab, Tabs } from '@mui/material';
-import { useAccess } from '@/app/_components/auth/AccessProvider';
-import AttendanceCodeDialog from '@/app/_components/settings/AttendanceCodeDialog';
-import AttendanceCodeSettingsGrid from '@/app/_components/settings/AttendanceCodeSettingsGrid';
-import EmployeeInfoOptionPanel from '@/app/_components/settings/EmployeeInfoOptionPanel';
-import HolidaySettingsPanel from '@/app/_components/settings/HolidaySettingsPanel';
-import WorkTimePolicyPanel from '@/app/_components/settings/WorkTimePolicyPanel';
+import { useAccess } from '@/app/_components';
+import {
+  AttendanceCodeDialog,
+  AttendanceCodeSettingsGrid,
+  EmployeeInfoOptionPanel,
+  HolidaySettingsPanel,
+  WorkTimePolicyPanel,
+} from '@/app/_components';
 import {
   useAttendanceCodesQuery,
   useEndAttendanceCodeMutation,

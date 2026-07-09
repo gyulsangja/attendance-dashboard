@@ -66,7 +66,7 @@ export const adaptCommonCodeDtoToAttendanceCode = (dto: CommonCodeDto): Attendan
 export const adaptAttendanceCodeToCommonCodeDto = (
   code: AttendanceCode,
 ): CommonCodeDto => ({
-  group_code: 'G_ATTEND_STAT',
+  group_code: 'G_ATTE_CODE',
   detail_code: code.id,
   detail_code_name: code.label,
   sort_order: 99,

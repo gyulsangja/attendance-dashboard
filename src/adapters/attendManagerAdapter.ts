@@ -11,6 +11,15 @@ const toNumber = (value: unknown, fallback = 0) => {
   return Number.isFinite(numberValue) ? numberValue : fallback;
 };
 
+const shiftTimeByType: Record<string, { checkIn: string; checkOut: string }> = {
+  SHIFT_DAY: { checkIn: '09:00', checkOut: '18:00' },
+  SHIFT_AFTERNOON: { checkIn: '12:00', checkOut: '21:00' },
+  SHIFT_NIGHT: { checkIn: '21:00', checkOut: '09:00' },
+};
+
+const getShiftType = (dto: AttendManagerShiftScheduleDto) =>
+  dto.shift_type ?? dto.shiftType ?? dto.shift_code ?? dto.shiftCode ?? dto.shift_name ?? dto.shiftName ?? '';
+
 export const toApiBoolean = (value: unknown, fallback = false) => {
   if (typeof value === 'boolean') return value;
   if (value === undefined || value === null || value === '') return fallback;
@@ -48,16 +57,20 @@ export const adaptAttendManagerShiftDtoToSchedule = (
   dto: AttendManagerShiftScheduleDto,
   index: number,
 ): ShiftSchedule => {
-  const startTime = dto.start_time ?? dto.startTime ?? '';
-  const endTime = dto.end_time ?? dto.endTime ?? '';
-  const time = `${startTime} ~ ${toApiBoolean(dto.is_next_day ?? dto.isNextDay) ? '익일 ' : ''}${endTime}`;
+  const shiftType = getShiftType(dto);
+  const shiftTime = shiftTimeByType[shiftType] ?? { checkIn: '', checkOut: '' };
+  const startTime = dto.start_time ?? dto.startTime ?? shiftTime.checkIn;
+  const endTime = dto.end_time ?? dto.endTime ?? shiftTime.checkOut;
+  const isNextDay = toApiBoolean(dto.is_next_day ?? dto.isNextDay)
+    || Boolean(startTime && endTime && endTime <= startTime);
+  const time = `${startTime} ~ ${isNextDay ? '익일 ' : ''}${endTime}`;
 
   return {
     id: toNumber(dto.shift_schedule_id ?? dto.shiftScheduleId ?? dto.id ?? dto.idx, index + 1),
     date: dto.work_date ?? dto.workDate ?? dto.date ?? '',
     employeeId: toNumber(dto.emp_no ?? dto.empNo, index + 1),
     name: dto.emp_name ?? dto.empName ?? '',
-    shift: time,
+    shift: shiftType || time,
     time,
     status: SHIFT_STATUS.CONFIRMED,
     checkIn: startTime,
@@ -68,10 +81,12 @@ export const adaptAttendManagerShiftDtoToSchedule = (
 export const adaptShiftScheduleToAttendManagerDto = (
   shift: ShiftSchedule,
 ): AttendManagerShiftScheduleDto => ({
+  idx: shift.id,
   shift_schedule_id: shift.id,
   emp_no: shift.employeeId,
   emp_name: shift.name,
   work_date: shift.date,
+  shift_type: shift.shift,
   start_time: shift.checkIn,
   end_time: shift.checkOut,
   is_next_day: Boolean(

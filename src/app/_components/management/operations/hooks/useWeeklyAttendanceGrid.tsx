@@ -2,7 +2,6 @@
 
 import { Chip, Box } from '@mui/material';
 import type { GridColDef } from '@mui/x-data-grid';
-import { getKoreanPublicHoliday } from '@/lib/date';
 import type { AttendanceRecord, OperationSchedule } from '@/types/domain';
 
 export type WeeklyAttendanceEmployeeRow = {
@@ -21,9 +20,14 @@ type UseWeeklyAttendanceGridParams = {
   readOnly?: boolean;
 };
 
-const getDayClassName = (date: string, type: 'header' | 'cell') => {
+const getDayClassName = (
+  date: string,
+  type: 'header' | 'cell',
+  records: AttendanceRecord[],
+) => {
   const day = new Date(`${date}T00:00:00`).getDay();
-  if (getKoreanPublicHoliday(date) || day === 0) return `attendance-holiday-${type}`;
+  const apiHoliday = records.some((record) => record.date === date && record.isHoliday);
+  if (apiHoliday || day === 0) return `attendance-holiday-${type}`;
   if (day === 6) return `attendance-saturday-${type}`;
   return '';
 };
@@ -85,8 +89,8 @@ export function useWeeklyAttendanceGrid({
     ...days.map((day) => ({
       field: day.date,
       headerName: day.label,
-      headerClassName: getDayClassName(day.date, 'header'),
-      cellClassName: getDayClassName(day.date, 'cell'),
+      headerClassName: getDayClassName(day.date, 'header', records),
+      cellClassName: getDayClassName(day.date, 'cell', records),
       minWidth: 130,
       flex: 1,
       align: 'center' as const,
@@ -103,7 +107,9 @@ export function useWeeklyAttendanceGrid({
         const recordLabels = record?.events.map(
           (event) => event.detail || event.codeId,
         ) ?? [];
-        const publicHoliday = row.shiftWorker ? null : getKoreanPublicHoliday(day.date);
+        const publicHoliday = !row.shiftWorker && record?.isHoliday && record.holidayName
+          ? { name: record.holidayName }
+          : null;
         const attendanceLabels = [...new Set([
           ...(publicHoliday ? [publicHoliday.name] : []),
           ...items.map((item) => item.type),

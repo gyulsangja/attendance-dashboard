@@ -20,7 +20,7 @@
 }
 
 .rdp-root.schedule-calendar {
-  --rdp-accent-color: #2c3e50; /* Use blue as the accent color. */
+  --rdp-accent-color: #2c3e50;
 
   --rdp-day-height: 60px;
   --rdp-day_button-height: 95%;

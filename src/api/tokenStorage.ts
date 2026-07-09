@@ -2,6 +2,7 @@ import type { SystemUser } from '@/types/domain';
 
 const ACCESS_TOKEN_KEY = 'attendance-access-token';
 const SESSION_USER_KEY = 'attendance-session-user';
+const AUTH_MESSAGE_KEY = 'attendance-auth-message';
 
 export const tokenStorage = {
   getAccessToken() {
@@ -32,6 +33,21 @@ export const tokenStorage = {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(ACCESS_TOKEN_KEY, token);
     window.localStorage.setItem(SESSION_USER_KEY, JSON.stringify(user));
+  },
+
+  getAuthMessage() {
+    if (typeof window === 'undefined') return null;
+    return window.localStorage.getItem(AUTH_MESSAGE_KEY);
+  },
+
+  setAuthMessage(message: string) {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(AUTH_MESSAGE_KEY, message);
+  },
+
+  clearAuthMessage() {
+    if (typeof window === 'undefined') return;
+    window.localStorage.removeItem(AUTH_MESSAGE_KEY);
   },
 
   clearAccessToken() {

@@ -4,8 +4,6 @@ export type AttendanceManagerDto = {
   emp_no?: number | string;
   empNo?: number | string;
   emo_no?: number | string;
-  attend_card_no?: number | string;
-  attendCardNo?: number | string;
   emp_name?: string;
   empName?: string;
   dept_code?: string;

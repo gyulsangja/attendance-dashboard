@@ -31,6 +31,7 @@ export type DashboardAttendanceRecordDto = {
 export type DashboardShiftScheduleDto = {
   shift_schedule_id?: string | number;
   shiftScheduleId?: string | number;
+  idx?: string | number;
   work_date?: string;
   workDate?: string;
   date?: string;
@@ -38,6 +39,10 @@ export type DashboardShiftScheduleDto = {
   empNo?: string | number;
   emp_name?: string;
   empName?: string;
+  shift_type?: string;
+  shiftType?: string;
+  shift_name?: string;
+  shiftName?: string;
   dept_name?: string;
   deptName?: string;
   start_time?: string;
@@ -109,6 +114,26 @@ export type DashboardWeeklyDto = {
   companyStatus?: DashboardCompanyStatusDto;
   attendance_code_counts?: DashboardAttendanceCodeCountDto[];
   attendanceCodeCounts?: DashboardAttendanceCodeCountDto[];
+  attendance_count?: number | string;
+  attendanceCount?: number | string;
+  lateness_count?: number | string;
+  latenessCount?: number | string;
+  from_work_count?: number | string;
+  fromWorkCount?: number | string;
+  shift_count?: number | string;
+  shiftCount?: number | string;
+  day_off_count?: number | string;
+  dayOffCount?: number | string;
+  morning_off_count?: number | string;
+  morningOffCount?: number | string;
+  afternoon_off_count?: number | string;
+  afternoonOffCount?: number | string;
+  early_leave_count?: number | string;
+  earlyLeaveCount?: number | string;
+  direct_work_count?: number | string;
+  directWorkCount?: number | string;
+  direct_leave_count?: number | string;
+  directLeaveCount?: number | string;
   data?: DashboardWeeklyDto;
   result?: DashboardWeeklyDto;
   dashboard?: DashboardWeeklyDto;

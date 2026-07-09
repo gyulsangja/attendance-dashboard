@@ -50,20 +50,20 @@ const apiEmployeeRepository: EmployeeRepository = {
       employeeApi.selectAll(),
       commonCodeRepository.selectLookup().catch(() => null),
     ]);
-    return employees.map((employee) =>
+    return employees.map((employee, index) =>
       lookup
-        ? adaptEmployeeDtoToReportEmployee(employee, lookup)
-        : adaptEmployeeDtoToReportEmployee(employee));
+        ? adaptEmployeeDtoToReportEmployee(employee, lookup, index)
+        : adaptEmployeeDtoToReportEmployee(employee, undefined, index));
   },
   async selectOrganizationEmployees() {
     const [employees, lookup] = await Promise.all([
       employeeApi.selectAll(),
       commonCodeRepository.selectLookup().catch(() => null),
     ]);
-    return employees.map((employee) =>
+    return employees.map((employee, index) =>
       lookup
-        ? adaptEmployeeDtoToOrganizationEmployee(employee, lookup)
-        : adaptEmployeeDtoToOrganizationEmployee(employee));
+        ? adaptEmployeeDtoToOrganizationEmployee(employee, lookup, index)
+        : adaptEmployeeDtoToOrganizationEmployee(employee, undefined, index));
   },
   async insert(employee) {
     await employeeApi.insert(adaptOrganizationEmployeeToEmployeeDto(employee));
@@ -72,7 +72,7 @@ const apiEmployeeRepository: EmployeeRepository = {
     await employeeApi.modify(adaptOrganizationEmployeeToEmployeeDto(employee));
   },
   async delete(employee) {
-    await employeeApi.delete(employee.id);
+    await employeeApi.delete(employee.employeeNo ?? employee.id);
   },
 };
 

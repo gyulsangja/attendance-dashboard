@@ -18,6 +18,10 @@ const attendanceCodeGroupAliases = new Set([
   'ATTENDANCE_CODE',
   'ATTEND_CODE',
   'ATTEND_STAT',
+  'ATTE_CODE',
+  'ATTE_STATUS',
+  'G_ATTE_CODE',
+  'G_ATTE_STATUS',
   'G_ATTEND_STAT',
   'G_ATTENDANCE_CODE',
 ]);

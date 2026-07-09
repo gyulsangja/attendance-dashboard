@@ -37,6 +37,7 @@ export const invalidateAttendManagerQueries = (queryClient: QueryClient) => {
   void queryClient.invalidateQueries({ queryKey: ['attend-manager-shift-confirm-status'] });
   void queryClient.invalidateQueries({ queryKey: ['attend-manager-shift-month'] });
   void queryClient.invalidateQueries({ queryKey: ['dashboard-weekly'] });
+  void queryClient.invalidateQueries({ queryKey: ['dashboard-block'] });
   void queryClient.invalidateQueries({ queryKey: ['weekly-report'] });
   void queryClient.invalidateQueries({ queryKey: ['statistics-attendance'] });
   void queryClient.invalidateQueries({ queryKey: ['statistics-employee-attendance'] });

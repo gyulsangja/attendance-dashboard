@@ -51,7 +51,13 @@ export function useFilteredAttendanceReport() {
   const initializedCodes = useRef(false);
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('calendar');
 
-  const availableCodeIds = useMemo(() => attendanceCodes.map((code) => code.id), [attendanceCodes]);
+  const availableCodeIds = useMemo(() => {
+    const ids = new Set(attendanceCodes.map((code) => code.id));
+    attendanceRecords.forEach((record) => {
+      record.events.forEach((event) => ids.add(event.codeId));
+    });
+    return [...ids];
+  }, [attendanceCodes, attendanceRecords]);
   useEffect(() => {
     if (initializedCodes.current || availableCodeIds.length === 0) return;
     setSelectedCodes(availableCodeIds);
@@ -71,7 +77,9 @@ export function useFilteredAttendanceReport() {
         department: record.department,
         name: record.employeeName,
         codeId: event.codeId,
-        content: attendanceCodes.find((code) => code.id === event.codeId)?.label ?? event.codeId,
+        content: attendanceCodes.find((code) => code.id === event.codeId)?.label
+          ?? event.detail
+          ?? event.codeId,
         detail: event.detail,
       })),
   ), [attendanceRecords, attendanceCodes, effectiveSelectedCodes]);

@@ -25,7 +25,15 @@ export const adaptEmployeeAttendDtoToOperationSchedule = (
   dto: EmployeeAttendDto,
 ): OperationSchedule => {
   const codeId = dto.attend_code ?? dto.attendCode ?? dto.detail_code ?? dto.detailCode ?? '';
-  const codeName = dto.attend_code_name ?? dto.attendCodeName ?? dto.detail_code_name ?? dto.detailCodeName ?? codeId;
+  const codeName = dto.attend_code_name
+    ?? dto.attendCodeName
+    ?? dto.attend_name
+    ?? dto.attendName
+    ?? dto.detail_code_name
+    ?? dto.detailCodeName
+    ?? dto.attend_reason
+    ?? dto.attendReason
+    ?? codeId;
   const date = dto.attend_date ?? dto.attendDate ?? '';
 
   return {
@@ -50,6 +58,7 @@ export const adaptOperationScheduleToEmployeeAttendDto = (
   attend_date: schedule.date,
   attend_code: schedule.codeId,
   detail_code: schedule.codeId,
+  attend_reason: schedule.type,
   remark: schedule.detail,
   memo: schedule.detail,
 });

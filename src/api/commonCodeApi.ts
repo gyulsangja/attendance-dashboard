@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { ApiError, apiClient } from './client';
 import type {
   CommonCodeDto,
   CommonCodeListResponseDto,
@@ -68,7 +68,11 @@ export const commonCodeApi = {
       return await apiClient<string>(`/api/common/code/delete/${detailCode}`, {
         method: 'POST',
       });
-    } catch {
+    } catch (error) {
+      if (!(error instanceof ApiError) || ![404, 405].includes(error.status)) {
+        throw error;
+      }
+
       return apiClient<string>(`/api/common/group/delete/${detailCode}`, {
         method: 'POST',
       });

@@ -31,6 +31,11 @@ type Props = {
   onSave: () => void | Promise<void>;
 };
 
+const getApiEmployeeSelectId = (employee: { id: number; employeeNo?: string }) => {
+  const employeeNo = Number(employee.employeeNo);
+  return Number.isFinite(employeeNo) && employeeNo > 0 ? employeeNo : employee.id;
+};
+
 export default function ScheduleEditDialog({ value, onChange, onSave }: Props) {
   const codeMaster = useAppSelector((state) => state.attendanceCode);
   const organization = useAppSelector((state) => state.organization);
@@ -52,7 +57,8 @@ export default function ScheduleEditDialog({ value, onChange, onSave }: Props) {
   );
   const reportEmployees = isApiDataSource
     ? (apiEmployeesQuery.data ?? []).map((employee) => ({
-      id: employee.id,
+      id: getApiEmployeeSelectId(employee),
+      employeeNo: employee.employeeNo,
       name: employee.name,
       department: employee.backendDeptName ?? employee.backendDeptCode ?? '-',
     }))

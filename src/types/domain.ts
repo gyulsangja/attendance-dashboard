@@ -63,6 +63,7 @@ export type Holiday = {
 
 export type ReportEmployee = {
   id: number;
+  employeeNo?: string;
   name: string;
   department: string;
   position: string;
@@ -136,6 +137,7 @@ export type OrganizationTeam = {
 
 export type OrganizationEmployee = {
   id: number;
+  employeeNo?: string;
   name: string;
   email?: string;
   phoneNo?: string;

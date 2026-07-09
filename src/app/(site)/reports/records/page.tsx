@@ -8,8 +8,7 @@ import {
   MenuItem,
   Select,
 } from '@mui/material';
-import AttendanceRecordsTable from '@/app/_components/reports/AttendanceRecordsTable';
-import { useAttendanceRecordsReport } from '@/app/_components/reports/hooks/useAttendanceRecordsReport';
+import { AttendanceRecordsTable, useAttendanceRecordsReport } from '@/app/_components';
 import { getYearOptions } from '@/lib/date';
 
 export default function Page() {
@@ -50,7 +49,7 @@ export default function Page() {
             </div>
           </div>
           <p className="mt-2 text-sm text-slate-500">
-            확정 당시의 직원 및 소속 정보를 기준으로 표시합니다.
+            선택한 연도와 월 기준으로 직원별 출퇴근 시간을 조회합니다.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -61,17 +60,17 @@ export default function Page() {
 
       {report.isApiEmpty && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          선택한 기간에 등록된 백엔드 출퇴근 기록이 없습니다.
+          선택한 월에 조회된 출퇴근 기록이 없습니다.
         </Alert>
       )}
       {report.isApiError && (
         <Alert severity="warning" sx={{ mb: 2 }}>
-          백엔드 출퇴근 조회 API 호출에 실패했습니다.
+          월간 출퇴근 기록 조회 API를 불러오지 못했습니다.
         </Alert>
       )}
       {report.isApiLoading && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          월간 출퇴근기록 데이터를 불러오는 중입니다.
+          월간 출퇴근 기록 데이터를 불러오는 중입니다.
         </Alert>
       )}
 

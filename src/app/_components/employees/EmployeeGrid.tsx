@@ -27,6 +27,13 @@ export default function EmployeeGrid({
   editDisabled = false,
 }: EmployeeGridProps) {
   const columns: GridColDef<OrganizationEmployee>[] = [
+    {
+      field: 'employeeNo',
+      headerName: '사번',
+      minWidth: 110,
+      flex: 0.7,
+      valueGetter: (_value, row) => row.employeeNo ?? String(row.id),
+    },
     { field: 'name', headerName: '이름', minWidth: 110, flex: 0.8 },
     { field: 'email', headerName: '이메일', minWidth: 180, flex: 1.1 },
     {
@@ -50,7 +57,7 @@ export default function EmployeeGrid({
       renderCell: ({ value }) => (
         <Chip
           size="small"
-          label={value ? '대상' : '해당 없음'}
+          label={value ? '교대' : '일반'}
           sx={{
             bgcolor: value ? '#e0f2fe' : '#f1f5f9',
             color: value ? '#0369a1' : '#64748b',

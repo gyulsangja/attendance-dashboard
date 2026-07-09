@@ -1,16 +1,25 @@
 export type SystemSettingDto = {
   regularStart?: string;
   regular_start?: string;
+  woking_time?: string;
+  working_time?: string;
   regularEnd?: string;
   regular_end?: string;
+  leave_time?: string;
   halfAmStart?: string;
   half_am_start?: string;
+  moring_off_time?: string;
+  morning_off_time?: string;
   halfAmEnd?: string;
   half_am_end?: string;
   halfPmStart?: string;
   half_pm_start?: string;
+  afternoon_off_time?: string;
   halfPmEnd?: string;
   half_pm_end?: string;
+  woking_late_time?: string;
+  working_late_time?: string;
+  early_leave_time?: string;
   lateGraceMinutes?: number | string;
   late_grace_minutes?: number | string;
   lateThresholdMinutes?: number | string;

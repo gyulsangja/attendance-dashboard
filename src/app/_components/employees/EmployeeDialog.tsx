@@ -2,18 +2,17 @@
 
 import { useState } from 'react';
 import {
+  Alert,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   FormControl,
-  FormControlLabel,
   InputLabel,
   MenuItem,
   Select,
   Stack,
-  Switch,
   TextField,
 } from '@mui/material';
 import {
@@ -45,6 +44,7 @@ type EmployeeDialogProps = {
 const TEXT = {
   editTitle: '직원 정보 수정',
   addTitle: '직원 등록',
+  employeeNo: '사번',
   name: '이름',
   email: '이메일',
   phoneNo: '연락처',
@@ -53,11 +53,12 @@ const TEXT = {
   workType: '근무유형',
   holdStatus: '재직상태',
   select: '선택',
-  shiftWorker: '교대근무 대상자',
   effectiveDate: '변경 적용일',
   hireDate: '입사일',
+  retireDate: '퇴사일',
   cancel: '취소',
   save: '저장',
+  missingOptions: '직원 등록에 필요한 공통코드 선택값이 없습니다. 부서/직급/근무유형/재직상태 코드를 먼저 등록해 주세요.',
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -79,6 +80,7 @@ const emptyEmployee = (
   defaultHoldStatus: string,
 ): OrganizationEmployee => ({
   id,
+  employeeNo: '',
   name: '',
   email: '',
   phoneNo: '',
@@ -87,6 +89,7 @@ const emptyEmployee = (
   jobTitle: '',
   shiftWorker: false,
   startDate: today(),
+  endDate: '',
   backendHoldStatusCode: defaultHoldStatus,
 });
 
@@ -152,11 +155,31 @@ function EmployeeDialogContent({
       <DialogTitle>{employee ? TEXT.editTitle : TEXT.addTitle}</DialogTitle>
       <DialogContent sx={{ pt: '12px !important' }}>
         <Stack spacing={2.5}>
+          {isApiDataSource && (
+            teams.length === 0 ||
+            resolvedPositionOptions.length === 0 ||
+            jobTitleOptions.length === 0 ||
+            resolvedHoldStatusOptions.length === 0
+          ) && (
+            <Alert severity="warning">{TEXT.missingOptions}</Alert>
+          )}
+
           <TextField
             fullWidth
             label={TEXT.name}
             value={form.name}
             onChange={(event) => setForm({ ...form, name: event.target.value })}
+          />
+
+          <TextField
+            fullWidth
+            label={TEXT.employeeNo}
+            value={form.employeeNo ?? ''}
+            disabled={Boolean(employee)}
+            onChange={(event) => setForm({
+              ...form,
+              employeeNo: event.target.value,
+            })}
           />
 
 
@@ -212,11 +235,13 @@ function EmployeeDialogContent({
                 value={form.backendWorkTypeCode ?? form.jobTitle}
                 onChange={(event) => {
                   const value = event.target.value;
+                  const isShiftWorker = value.toUpperCase() === 'WORK_SHIFT';
                   setForm({
                     ...form,
                     jobTitle: getOptionLabel(jobTitleOptions, value),
                     backendWorkTypeCode: value,
                     backendWorkTypeName: getOptionLabel(jobTitleOptions, value),
+                    shiftWorker: isShiftWorker,
                   });
                 }}
               >
@@ -248,17 +273,6 @@ function EmployeeDialogContent({
             </FormControl>
           </div>
 
-          <FormControlLabel
-            sx={{ mx: 0 }}
-            control={(
-              <Switch
-                checked={form.shiftWorker}
-                onChange={(event) => setForm({ ...form, shiftWorker: event.target.checked })}
-              />
-            )}
-            label={TEXT.shiftWorker}
-          />
-
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <TextField
               fullWidth
@@ -286,6 +300,17 @@ function EmployeeDialogContent({
             }}
             slotProps={{ inputLabel: { shrink: true } }}
           />
+
+          {employee && (
+            <TextField
+              fullWidth
+              type="date"
+              label={TEXT.retireDate}
+              value={form.endDate ?? ''}
+              onChange={(event) => setForm({ ...form, endDate: event.target.value })}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+          )}
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 3 }}>
@@ -294,12 +319,19 @@ function EmployeeDialogContent({
           variant="contained"
           disabled={
             !form.name.trim()
+            || (isApiDataSource && !form.employeeNo?.trim())
             || !form.teamId
-            || (isApiDataSource && (!form.backendRankCode || !form.backendHoldStatusCode))
+            || (isApiDataSource && (
+              form.teamId === UNASSIGNED_TEAM_ID ||
+              !form.backendRankCode ||
+              !form.backendWorkTypeCode ||
+              !form.backendHoldStatusCode
+            ))
           }
           onClick={() => onSave(
             {
               ...form,
+              employeeNo: form.employeeNo?.trim() ?? '',
               name: form.name.trim(),
               email: form.email?.trim() ?? '',
               phoneNo: form.phoneNo?.trim() ?? '',

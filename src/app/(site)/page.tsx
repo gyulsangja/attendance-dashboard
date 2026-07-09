@@ -2,10 +2,12 @@
 
 import { useMemo, useState } from 'react';
 import { Alert } from '@mui/material';
-import DashboardEventGrid from '@/app/_components/dashboard/DashboardEventGrid';
-import DashboardPeriodHeader from '@/app/_components/dashboard/DashboardPeriodHeader';
-import DashboardShiftCalendar from '@/app/_components/dashboard/DashboardShiftCalendar';
-import DashboardWeeklySummary from '@/app/_components/dashboard/DashboardWeeklySummary';
+import {
+  DashboardEventGrid,
+  DashboardPeriodHeader,
+  DashboardShiftCalendar,
+  DashboardWeeklySummary,
+} from '@/app/_components';
 import {
   adaptDashboardWeeklyDtoToViewModel,
   type DashboardViewModel,
@@ -18,10 +20,74 @@ import {
   useDashboardWeeklyShiftSchedulesQuery,
   useDashboardWeeklySummaryQuery,
 } from '@/hooks/useDashboardQueries';
+import { getPreviousWeekPeriod, getWeeksInMonth } from '@/lib/date';
+import { getOperationWeekPeriod } from '@/lib/management/operationWeek';
 import { isApiDataSource } from '@/repositories/config';
 import { selectDashboardData } from '@/selectors/dashboardSelectors';
 import { useAppSelector } from '@/store/hooks';
 import type { RootState } from '@/store/store';
+
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+const getDashboardWeekDays = (startDate: string, endDate: string) => {
+  const days: DashboardViewModel['shiftCalendarDays'] = [];
+  const end = new Date(`${endDate}T00:00:00`);
+
+  for (
+    const current = new Date(`${startDate}T00:00:00`);
+    current <= end;
+    current.setDate(current.getDate() + 1)
+  ) {
+    days.push({
+      date: [
+        current.getFullYear(),
+        String(current.getMonth() + 1).padStart(2, '0'),
+        String(current.getDate()).padStart(2, '0'),
+      ].join('-'),
+      day: current.getDate(),
+      weekday: WEEKDAYS[current.getDay()],
+    });
+  }
+
+  return days;
+};
+
+const buildApiDashboardBase = (
+  year: number,
+  month: number,
+  weekNumber: number,
+): DashboardViewModel => {
+  const weeks = getWeeksInMonth(year, month);
+  const period = getOperationWeekPeriod(year, month, weekNumber);
+
+  return {
+    weeks,
+    selectedWeekNumber: period.weekNumber,
+    startDate: period.startDate,
+    endDate: period.endDate,
+    confirmed: true,
+    attendanceCodes: [],
+    organizationSnapshot: {
+      teams: [],
+      employees: [],
+    },
+    weekShifts: [],
+    shiftCalendarDays: getDashboardWeekDays(period.startDate, period.endDate),
+    eventCounts: {},
+    summaryCards: [],
+    detailAttendanceCodes: [],
+    shiftWorkerCount: 0,
+    operationItems: [],
+    vacationRows: [],
+    exceptionRows: [],
+    companyStatus: {
+      teamCount: 0,
+      employeeCount: 0,
+      shiftWorkerCount: 0,
+      activeAttendanceCodeCount: 0,
+    },
+  };
+};
 
 const mergeDashboardBlocks = (
   summary?: DashboardWeeklyDto | null,
@@ -48,38 +114,30 @@ export default function Home() {
   const management = useAppSelector((state) => state.management);
   const attendanceCode = useAppSelector((state) => state.attendanceCode);
   const organization = useAppSelector((state) => state.organization);
-  const [year, setYear] = useState(management.year);
-  const [month, setMonth] = useState(management.month);
-  const [weekNumber, setWeekNumber] = useState(management.weekNumber);
-  const fallbackDashboard = useMemo<DashboardViewModel>(
-    () => selectDashboardData({
-      attendanceCode,
-      management,
-      organization,
-    } as RootState, year, month, weekNumber),
-    [attendanceCode, management, month, organization, weekNumber, year],
+  const defaultPeriod = useMemo(() => getPreviousWeekPeriod(), []);
+  const [year, setYear] = useState(isApiDataSource ? defaultPeriod.year : management.year);
+  const [month, setMonth] = useState(isApiDataSource ? defaultPeriod.month : management.month);
+  const [weekNumber, setWeekNumber] = useState(
+    isApiDataSource ? defaultPeriod.weekNumber : management.weekNumber,
   );
-  const apiBaseDashboard = useMemo<DashboardViewModel>(() => ({
-    ...fallbackDashboard,
-    confirmed: true,
-    summaryCards: [],
-    detailAttendanceCodes: [],
-    attendanceCodes: [],
-    eventCounts: {},
-    exceptionRows: [],
-    vacationRows: [],
-    weekShifts: [],
-    shiftWorkerCount: 0,
-    operationItems: [],
-    companyStatus: {
-      teamCount: 0,
-      employeeCount: 0,
-      shiftWorkerCount: 0,
-      activeAttendanceCodeCount: 0,
-    },
-  }), [fallbackDashboard]);
+  const apiBaseDashboard = useMemo(
+    () => buildApiDashboardBase(year, month, weekNumber),
+    [month, weekNumber, year],
+  );
+  const fallbackDashboard = useMemo<DashboardViewModel>(
+    () => (
+      isApiDataSource
+        ? apiBaseDashboard
+        : selectDashboardData({
+          attendanceCode,
+          management,
+          organization,
+        } as RootState, year, month, weekNumber)
+    ),
+    [apiBaseDashboard, attendanceCode, management, month, organization, weekNumber, year],
+  );
   const dashboardBase = isApiDataSource ? apiBaseDashboard : fallbackDashboard;
-  const selectedWeekNumber = fallbackDashboard.selectedWeekNumber;
+  const selectedWeekNumber = dashboardBase.selectedWeekNumber;
   const summaryQuery = useDashboardWeeklySummaryQuery(year, month, selectedWeekNumber);
   const codeCountsQuery = useDashboardWeeklyAttendanceCodeCountsQuery(year, month, selectedWeekNumber);
   const exceptionsQuery = useDashboardWeeklyExceptionalRecordsQuery(year, month, selectedWeekNumber);
@@ -136,13 +194,13 @@ export default function Home() {
 
       {isDashboardLoading && (
         <Alert severity="info" sx={{ mt: 3 }}>
-          대시보드 데이터를 불러오는 중입니다.
+          {'대시보드 데이터를 불러오는 중입니다.'}
         </Alert>
       )}
 
       {isDashboardError && (
         <Alert severity="warning" sx={{ mt: 3 }}>
-          대시보드 API 일부를 불러오지 못했습니다. 확인된 블록만 표시합니다.
+          {'대시보드 API 일부를 불러오지 못했습니다. 확인된 블록만 표시합니다.'}
         </Alert>
       )}
 
@@ -156,13 +214,13 @@ export default function Home() {
 
       <div className="mt-5 grid gap-5 2xl:grid-cols-2">
         <DashboardEventGrid
-          title="주간 근태 특이사항"
-          description="선택 주차의 지각, 조퇴, 결근 등 확인이 필요한 근태 이력입니다."
+          title={'주간 근태 특이사항'}
+          description={'선택 주차의 지각, 조퇴, 결근 등 확인이 필요한 근태 이력입니다.'}
           rows={dashboard.exceptionRows}
         />
         <DashboardEventGrid
-          title="주간 계획/특별 근태"
-          description="선택 주차에 입력된 연차, 반차, 병가, 재택근무 등 일반 근태코드입니다."
+          title={'주간 계획/특별 근태'}
+          description={'선택 주차의 연차, 반차, 병가, 재택근무 등 일반 근태코드입니다.'}
           rows={dashboard.vacationRows}
           showDetail={false}
         />

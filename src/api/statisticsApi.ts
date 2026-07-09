@@ -32,7 +32,19 @@ const toParams = (params: Record<string, number | string | undefined>) => {
 const getRows = (response: StatisticsAttendanceRecordDto[] | StatisticsAttendanceResponseDto) => {
   if (Array.isArray(response)) return response;
 
-  return response.records ?? response.items ?? response.rows ?? response.list ?? response.data ?? [];
+  return response.records
+    ?? response.attendance_records
+    ?? response.attendanceRecords
+    ?? response.attendancelist
+    ?? response.attendanceList
+    ?? response.statisticslist
+    ?? response.statisticsList
+    ?? response.items
+    ?? response.rows
+    ?? response.list
+    ?? response.data
+    ?? response.result
+    ?? [];
 };
 
 export const statisticsApi = {
@@ -61,7 +73,19 @@ export const statisticsApi = {
 
     return {
       employee: response.employee,
-      records: response.records ?? response.items ?? response.rows ?? response.list ?? response.data ?? [],
+      records: response.records
+        ?? response.attendance_records
+        ?? response.attendanceRecords
+        ?? response.attendancelist
+        ?? response.attendanceList
+        ?? response.statisticslist
+        ?? response.statisticsList
+        ?? response.items
+        ?? response.rows
+        ?? response.list
+        ?? response.data
+        ?? response.result
+        ?? [],
     };
   },
 

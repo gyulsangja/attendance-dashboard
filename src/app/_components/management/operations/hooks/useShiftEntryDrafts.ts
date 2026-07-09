@@ -13,9 +13,9 @@ export type ShiftPreset = {
 };
 
 export const SHIFT_PRESETS: ShiftPreset[] = [
-  { value: '주간', checkIn: '09:00', checkOut: '18:00', label: '09:00~18:00' },
-  { value: '오후', checkIn: '12:00', checkOut: '21:00', label: '12:00~21:00' },
-  { value: '야간', checkIn: '21:00', checkOut: '09:00', label: '21:00~익일 09:00' },
+  { value: 'SHIFT_DAY', checkIn: '09:00', checkOut: '18:00', label: '09:00~18:00' },
+  { value: 'SHIFT_AFTERNOON', checkIn: '12:00', checkOut: '21:00', label: '12:00~21:00' },
+  { value: 'SHIFT_NIGHT', checkIn: '21:00', checkOut: '09:00', label: '21:00~익일 09:00' },
 ];
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];

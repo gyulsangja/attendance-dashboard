@@ -22,11 +22,25 @@ const adaptSettingDtoToPolicy = (
   const setting = unwrapSettingDto(dto);
 
   return {
-    regularStart: setting.regularStart ?? setting.regular_start ?? defaultPolicy.regularStart,
-    regularEnd: setting.regularEnd ?? setting.regular_end ?? defaultPolicy.regularEnd,
-    halfAmStart: setting.halfAmStart ?? setting.half_am_start ?? defaultPolicy.halfAmStart,
+    regularStart: setting.regularStart
+      ?? setting.regular_start
+      ?? setting.woking_time
+      ?? setting.working_time
+      ?? defaultPolicy.regularStart,
+    regularEnd: setting.regularEnd
+      ?? setting.regular_end
+      ?? setting.leave_time
+      ?? defaultPolicy.regularEnd,
+    halfAmStart: setting.halfAmStart
+      ?? setting.half_am_start
+      ?? setting.moring_off_time
+      ?? setting.morning_off_time
+      ?? defaultPolicy.halfAmStart,
     halfAmEnd: setting.halfAmEnd ?? setting.half_am_end ?? defaultPolicy.halfAmEnd,
-    halfPmStart: setting.halfPmStart ?? setting.half_pm_start ?? defaultPolicy.halfPmStart,
+    halfPmStart: setting.halfPmStart
+      ?? setting.half_pm_start
+      ?? setting.afternoon_off_time
+      ?? defaultPolicy.halfPmStart,
     halfPmEnd: setting.halfPmEnd ?? setting.half_pm_end ?? defaultPolicy.halfPmEnd,
     lateGraceMinutes: 0,
     earlyLeaveGraceMinutes: 0,
@@ -41,11 +55,20 @@ const adaptPolicyToSettingDto = (policy: WorkTimePolicy) => ({
   halfPmStart: policy.halfPmStart,
   halfPmEnd: policy.halfPmEnd,
   regular_start: policy.regularStart,
+  woking_time: policy.regularStart,
+  working_time: policy.regularStart,
   regular_end: policy.regularEnd,
+  leave_time: policy.regularEnd,
   half_am_start: policy.halfAmStart,
+  moring_off_time: policy.halfAmStart,
+  morning_off_time: policy.halfAmStart,
   half_am_end: policy.halfAmEnd,
   half_pm_start: policy.halfPmStart,
+  afternoon_off_time: policy.halfPmStart,
   half_pm_end: policy.halfPmEnd,
+  woking_late_time: policy.regularStart,
+  working_late_time: policy.regularStart,
+  early_leave_time: policy.regularEnd,
 });
 
 export type SettingsRepository = {

@@ -2,7 +2,12 @@
 import type { CommonCodeLookup } from '@/adapters/commonCodeAdapter';
 import type { OrganizationEmployee, ReportEmployee } from '@/types/domain';
 
-const getEmployeeId = (dto: EmployeeDto) => Number(dto.emp_no ?? dto.empNo ?? 0);
+const getEmployeeId = (dto: EmployeeDto, index = 0) => {
+  const sourceId = dto.id ?? dto.idx;
+  const numeric = Number(sourceId);
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : index + 1;
+};
+const getEmployeeNo = (dto: EmployeeDto) => String(dto.emp_no ?? dto.empNo ?? '');
 const getEmployeeName = (dto: EmployeeDto) => dto.emp_name ?? dto.empName ?? dto.name ?? '-';
 const getDepartment = (dto: EmployeeDto) =>
   dto.dept_code ?? dto.deptCode ?? dto.dept_name ?? dto.deptName ?? dto.department ?? '-';
@@ -33,7 +38,9 @@ const getHoldStatusLabel = (dto: EmployeeDto, lookup: CommonCodeLookup) => {
 };
 const isShiftWorker = (dto: EmployeeDto) => {
   const shiftValue = dto.shift_yn ?? dto.shiftYn ?? dto.work_type_code ?? dto.workTypeCode ?? 'N';
-  return ['Y', 'SHIFT', 'SHIFT_WORK', 'SHIFTWORK', '교대'].includes(String(shiftValue).trim().toUpperCase());
+  return ['Y', 'SHIFT', 'WORK_SHIFT', 'SHIFT_WORK', 'SHIFTWORK', '교대'].includes(
+    String(shiftValue).trim().toUpperCase(),
+  );
 };
 
 const fallbackLookup: CommonCodeLookup = {
@@ -44,8 +51,10 @@ const fallbackLookup: CommonCodeLookup = {
 export const adaptEmployeeDtoToReportEmployee = (
   dto: EmployeeDto,
   lookup: CommonCodeLookup = fallbackLookup,
+  index = 0,
 ): ReportEmployee => ({
-  id: getEmployeeId(dto),
+  id: getEmployeeId(dto, index),
+  employeeNo: getEmployeeNo(dto),
   name: getEmployeeName(dto),
   department: lookup.getLabelInGroup('G_TEAM_CODE', getDepartment(dto), getDepartment(dto)),
   position: lookup.getLabelInGroup('G_RANK_CODE', getPosition(dto), getPosition(dto)),
@@ -54,8 +63,10 @@ export const adaptEmployeeDtoToReportEmployee = (
 export const adaptEmployeeDtoToOrganizationEmployee = (
   dto: EmployeeDto,
   lookup: CommonCodeLookup = fallbackLookup,
+  index = 0,
 ): OrganizationEmployee => ({
-  id: getEmployeeId(dto),
+  id: getEmployeeId(dto, index),
+  employeeNo: getEmployeeNo(dto),
   name: getEmployeeName(dto),
   email: dto.email ?? '',
   phoneNo: dto.phone_no ?? dto.phoneNo ?? '',
@@ -79,17 +90,15 @@ export const adaptOrganizationEmployeeToEmployeeDto = (
   employee: OrganizationEmployee,
 ): EmployeeDto => ({
   emp_company: 'LX',
-  emp_no: employee.id,
+  emp_no: employee.employeeNo ?? employee.id,
   emp_name: employee.name,
   dept_code: employee.backendDeptCode ?? employee.teamId,
   rank_code: employee.backendRankCode ?? employee.position,
   work_type_code: employee.backendWorkTypeCode ?? employee.jobTitle,
-  hold_stat_code: employee.backendHoldStatusCode ?? 'TEE1',
+  hold_stat_code: employee.backendHoldStatusCode ?? 'HOLD_ACTIVE',
   email: employee.email ?? '',
   phone_no: employee.phoneNo ?? '',
   hire_date: employee.startDate,
-  retire_date: employee.endDate,
-  shift_yn: employee.shiftWorker ? 'Y' : 'N',
   etc: '',
 });
 
