@@ -17,7 +17,6 @@ export type ManagementState = {
   deviceUpload: DeviceUploadSummary | null;
   confirmed: boolean;
   confirmedWeekKeys: string[];
-  confirmedShiftWeekKeys: string[];
 };
 
 export type DeviceRecordPayload = {

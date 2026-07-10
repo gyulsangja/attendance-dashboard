@@ -14,8 +14,8 @@ export type ShiftPreset = {
 
 export const SHIFT_PRESETS: ShiftPreset[] = [
   { value: 'SHIFT_DAY', checkIn: '09:00', checkOut: '18:00', label: '09:00~18:00' },
-  { value: 'SHIFT_AFTERNOON', checkIn: '12:00', checkOut: '21:00', label: '12:00~21:00' },
-  { value: 'SHIFT_NIGHT', checkIn: '21:00', checkOut: '09:00', label: '21:00~익일 09:00' },
+  { value: 'SHIFT_NIGHT', checkIn: '12:00', checkOut: '21:00', label: '12:00~21:00' },
+  { value: 'SHIFT_DAWN', checkIn: '21:00', checkOut: '09:00', label: '21:00~익일 09:00' },
 ];
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -25,7 +25,7 @@ const formatTimeRange = (checkIn: string, checkOut: string) =>
 
 type UseShiftEntryDraftsParams = {
   existing: ShiftSchedule[];
-  workers: { employeeId: number; name: string }[];
+  workers: { employeeId: number; employeeNo?: string; name: string }[];
   period: { startDate: string; endDate: string };
 };
 
@@ -100,6 +100,7 @@ export function useShiftEntryDrafts({
         id: existingSchedule?.id ?? nextId++,
         date,
         employeeId: worker.employeeId,
+        employeeNo: worker.employeeNo,
         name: worker.name,
         shift: shiftType,
         time: formatTimeRange(checkIn, checkOut),

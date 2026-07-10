@@ -11,7 +11,6 @@ import { buildInitialManagementState } from '@/lib/management/managementInitialS
 import {
   getCurrentOperationWeek,
   isOperationWeekConfirmed,
-  isShiftWeekConfirmed,
   markCurrentWeekDirty,
   syncConfirmedState,
 } from '@/lib/management/managementState';
@@ -19,7 +18,6 @@ import {
   confirmOperationWeek,
   unconfirmOperationWeek,
 } from '@/lib/management/operationConfirmation';
-import { getOperationWeekKeyByDate } from '@/lib/management/operationWeek';
 import { SHIFT_STATUS } from '@/lib/management/shiftSchedules';
 import type {
   AttendanceRecord,
@@ -97,19 +95,14 @@ const managementSlice = createSlice({
 
       let changed = false;
       action.payload.forEach((shift) => {
-        if (
-          isShiftWeekConfirmed(state, shift.date)
-          || isOperationWeekConfirmed(state, shift.date)
-        ) return;
+        if (isOperationWeekConfirmed(state, shift.date)) return;
 
         const index = state.shifts.findIndex(
           (item) => item.employeeId === shift.employeeId && item.date === shift.date,
         );
         if (index >= 0) {
-          if (state.shifts[index].status !== SHIFT_STATUS.CONFIRMED) {
-            state.shifts[index] = shift;
-            changed = true;
-          }
+          state.shifts[index] = shift;
+          changed = true;
         } else {
           state.shifts.push(shift);
           changed = true;
@@ -117,46 +110,11 @@ const managementSlice = createSlice({
       });
       if (changed) markCurrentWeekDirty(state);
     },
-    setShiftWeekConfirmed(
-      state,
-      action: PayloadAction<{
-        startDate: string;
-        endDate: string;
-        confirmed: boolean;
-      }>,
-    ) {
-      if (state.confirmed) return;
-
-      const key = getOperationWeekKeyByDate(action.payload.startDate);
-      if (!key) return;
-
-      if (action.payload.confirmed) {
-        if (!state.confirmedShiftWeekKeys.includes(key)) {
-          state.confirmedShiftWeekKeys.push(key);
-        }
-      } else {
-        state.confirmedShiftWeekKeys = state.confirmedShiftWeekKeys.filter(
-          (item) => item !== key,
-        );
-      }
-
-      state.shifts.forEach((item) => {
-        if (
-          item.date >= action.payload.startDate
-          && item.date <= action.payload.endDate
-        ) {
-          item.status = action.payload.confirmed
-            ? SHIFT_STATUS.CONFIRMED
-            : SHIFT_STATUS.PENDING;
-        }
-      });
-      markCurrentWeekDirty(state);
-    },
     updatePendingShift(state, action: PayloadAction<ShiftSchedule>) {
       if (state.confirmed) return;
 
       const index = state.shifts.findIndex((item) => item.id === action.payload.id);
-      if (index < 0 || state.shifts[index].status !== SHIFT_STATUS.PENDING) return;
+      if (index < 0) return;
 
       state.shifts[index] = { ...action.payload, status: SHIFT_STATUS.PENDING };
       markCurrentWeekDirty(state);
@@ -165,7 +123,7 @@ const managementSlice = createSlice({
       if (state.confirmed) return;
 
       const shift = state.shifts.find((item) => item.id === action.payload);
-      if (!shift || shift.status !== SHIFT_STATUS.PENDING) return;
+      if (!shift) return;
 
       state.shifts = state.shifts.filter((item) => item.id !== action.payload);
       markCurrentWeekDirty(state);
@@ -231,7 +189,6 @@ const managementSlice = createSlice({
           publishedRecords: state.publishedRecords,
           shifts: state.shifts,
           confirmedWeekKeys: state.confirmedWeekKeys,
-          confirmedShiftWeekKeys: state.confirmedShiftWeekKeys,
         })
         : confirmOperationWeek({
           period,
@@ -239,13 +196,11 @@ const managementSlice = createSlice({
           publishedRecords: state.publishedRecords,
           shifts: state.shifts,
           confirmedWeekKeys: state.confirmedWeekKeys,
-          confirmedShiftWeekKeys: state.confirmedShiftWeekKeys,
         });
 
       state.publishedRecords = nextState.publishedRecords;
       state.shifts = nextState.shifts;
       state.confirmedWeekKeys = nextState.confirmedWeekKeys;
-      state.confirmedShiftWeekKeys = nextState.confirmedShiftWeekKeys;
       state.confirmed = nextState.confirmed;
     },
   },
@@ -261,7 +216,6 @@ export const {
   addShifts,
   updatePendingShift,
   deletePendingShift,
-  setShiftWeekConfirmed,
   setCsvUploaded,
   uploadDeviceRecords,
   saveDeviceRecord,

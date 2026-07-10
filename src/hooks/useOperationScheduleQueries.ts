@@ -6,14 +6,24 @@ import { operationScheduleRepository } from '@/repositories/operationScheduleRep
 import type { OperationSchedule } from '@/types/domain';
 import { invalidateAttendManagerQueries } from './useQueryInvalidation';
 
-export const useOperationSchedulesQuery = (startDate: string, endDate: string) =>
+export const useOperationSchedulesQuery = (
+  startDate: string,
+  endDate: string,
+  params?: { year?: number; month?: number; week?: number },
+) =>
   useQuery({
-    queryKey: queryKeys.operationSchedules(startDate, endDate),
-    queryFn: () => operationScheduleRepository.selectByPeriod(startDate, endDate),
+    queryKey: queryKeys.operationSchedules(
+      startDate,
+      endDate,
+      params?.year,
+      params?.month,
+      params?.week,
+    ),
+    queryFn: () => operationScheduleRepository.selectByPeriod(startDate, endDate, params),
     enabled: Boolean(startDate && endDate),
   });
 
-export const useInsertOperationSchedulesMutation = (startDate: string, endDate: string) => {
+export const useInsertOperationSchedulesMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -21,14 +31,14 @@ export const useInsertOperationSchedulesMutation = (startDate: string, endDate: 
       operationScheduleRepository.insertMany(schedules),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.operationSchedules(startDate, endDate),
+        queryKey: ['operation-schedules'],
       });
       invalidateAttendManagerQueries(queryClient);
     },
   });
 };
 
-export const useModifyOperationScheduleMutation = (startDate: string, endDate: string) => {
+export const useModifyOperationScheduleMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -36,14 +46,14 @@ export const useModifyOperationScheduleMutation = (startDate: string, endDate: s
       operationScheduleRepository.modify(schedule),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.operationSchedules(startDate, endDate),
+        queryKey: ['operation-schedules'],
       });
       invalidateAttendManagerQueries(queryClient);
     },
   });
 };
 
-export const useDeleteOperationScheduleMutation = (startDate: string, endDate: string) => {
+export const useDeleteOperationScheduleMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -51,7 +61,7 @@ export const useDeleteOperationScheduleMutation = (startDate: string, endDate: s
       operationScheduleRepository.delete(schedule),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.operationSchedules(startDate, endDate),
+        queryKey: ['operation-schedules'],
       });
       invalidateAttendManagerQueries(queryClient);
     },

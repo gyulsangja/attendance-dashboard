@@ -8,10 +8,10 @@ export type AttendManagerSummaryDto = {
   weekEndDate?: string;
   operation_confirmed?: boolean | string;
   operationConfirmed?: boolean | string;
-  shift_confirmed?: boolean | string;
-  shiftConfirmed?: boolean | string;
   attendance_schedule_count?: number | string;
   attendanceScheduleCount?: number | string;
+  shift_schedule_count?: number | string;
+  shiftScheduleCount?: number | string;
   device_record_count?: number | string;
   deviceRecordCount?: number | string;
   can_modify?: boolean | string;
@@ -69,6 +69,8 @@ export type AttendManagerShiftScheduleDto = {
 };
 
 export type AttendManagerShiftScheduleListResponseDto = {
+  shiftinfolist?: AttendManagerShiftScheduleDto[];
+  shiftInfoList?: AttendManagerShiftScheduleDto[];
   shiftenlist?: AttendManagerShiftScheduleDto[];
   shiftenList?: AttendManagerShiftScheduleDto[];
   shiftlist?: AttendManagerShiftScheduleDto[];

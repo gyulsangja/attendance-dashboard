@@ -45,17 +45,19 @@ export const employeeApi = {
   insertAttend(payload: EmployeeAttendDto) {
     return apiClient<string>('/api/employee/attend/insert', {
       method: 'POST',
-      body: payload,
+      body: { newattendanceinfo: payload },
     });
   },
 
   async selectAttendAll(payload: EmployeeAttendItemSelectRequestDto = { select_type: '3' }) {
     const response = await apiClient<EmployeeAttendDto[] | EmployeeAttendListResponseDto>('/api/employee/attend/select', {
       method: 'POST',
-      body: payload,
+      body: { attendselectinfo: payload },
     });
     if (Array.isArray(response)) return response;
-    return response.employeeattendlist
+    return response.attendancelist
+      ?? response.attendanceList
+      ?? response.employeeattendlist
       ?? response.employeeAttendList
       ?? response.attendlist
       ?? response.attendList
@@ -71,7 +73,9 @@ export const employeeApi = {
       `/api/employee/attend/select/emp/${empNo}`,
     );
     if (Array.isArray(response)) return response;
-    return response.employeeattendlist
+    return response.attendancelist
+      ?? response.attendanceList
+      ?? response.employeeattendlist
       ?? response.employeeAttendList
       ?? response.attendlist
       ?? response.attendList
@@ -85,10 +89,12 @@ export const employeeApi = {
   async selectAttendByItems(payload: EmployeeAttendItemSelectRequestDto) {
     const response = await apiClient<EmployeeAttendDto[] | EmployeeAttendListResponseDto>('/api/employee/attend/select/items', {
       method: 'POST',
-      body: payload,
+      body: { attendanceitems: payload },
     });
     if (Array.isArray(response)) return response;
-    return response.employeeattendlist
+    return response.attendancelist
+      ?? response.attendanceList
+      ?? response.employeeattendlist
       ?? response.employeeAttendList
       ?? response.attendlist
       ?? response.attendList
@@ -102,7 +108,7 @@ export const employeeApi = {
   modifyAttend(payload: EmployeeAttendDto) {
     return apiClient<string>('/api/employee/attend/modify', {
       method: 'POST',
-      body: payload,
+      body: { attendanceinfo: payload },
     });
   },
 

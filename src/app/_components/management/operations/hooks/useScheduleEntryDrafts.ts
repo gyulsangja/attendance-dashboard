@@ -3,10 +3,6 @@
 import { useMemo, useState } from 'react';
 import { useAttendanceCodesQuery } from '@/hooks/useAttendanceCodeQueries';
 import { useOrganizationEmployeesQuery } from '@/hooks/useEmployeeQueries';
-import {
-  selectOperationWeekDays,
-  selectSelectedOperationWeek,
-} from '@/selectors/managementSelectors';
 import { isApiDataSource } from '@/repositories/config';
 import { useAppSelector } from '@/store/hooks';
 import { getAttendanceCodesAtDate } from '@/store/slices/attendanceCodeSlice';
@@ -37,24 +33,26 @@ const getApiEmployeeSelectId = (employee: { id: number; employeeNo?: string }) =
 export function useScheduleEntryDrafts({ existing }: UseScheduleEntryDraftsParams) {
   const codeMaster = useAppSelector((state) => state.attendanceCode);
   const organization = useAppSelector((state) => state.organization);
-  const week = useAppSelector(selectSelectedOperationWeek);
-  const weekDays = useAppSelector(selectOperationWeekDays);
   const apiEmployeesQuery = useOrganizationEmployeesQuery();
   const apiAttendanceCodesQuery = useAttendanceCodesQuery();
   const [department, setDepartment] = useState('');
   const [employeeIds, setEmployeeIds] = useState<string[]>([]);
   const [codeId, setCodeId] = useState('');
-  const [dates, setDates] = useState<string[]>(() => [weekDays[0]?.date ?? week.startDate]);
-  const [dateDraft, setDateDraft] = useState(() => weekDays[1]?.date ?? week.startDate);
+  const [dates, setDates] = useState<string[]>([]);
+  const [dateDraft, setDateDraft] = useState('');
   const referenceDate = dates[0] ?? dateDraft;
-  const sourceCodes = isApiDataSource ? apiAttendanceCodesQuery.data ?? [] : codeMaster.codes;
-  const sourceHistory = isApiDataSource ? [] : codeMaster.history;
+  const attendanceCodes = (isApiDataSource
+    ? apiAttendanceCodesQuery.data ?? []
+    : getAttendanceCodesAtDate(
+      codeMaster.codes,
+      codeMaster.history,
+      referenceDate,
+    )
+  ).filter((code) => code.isActive);
 
-  const attendanceCodes = getAttendanceCodesAtDate(
-    sourceCodes,
-    sourceHistory,
-    referenceDate,
-  ).filter((code) => code.isSchedulable);
+  const effectiveCodeId = attendanceCodes.some((code) => code.id === codeId)
+    ? codeId
+    : '';
 
   const reportEmployees = useMemo(() => {
     if (isApiDataSource) {
@@ -93,11 +91,11 @@ export function useScheduleEntryDrafts({ existing }: UseScheduleEntryDraftsParam
   const departments = [...new Set(reportEmployees.map((item) => item.department))];
   const selectedDepartment = department && departments.includes(department)
     ? department
-    : departments[0] ?? '';
+    : '';
   const departmentEmployees = reportEmployees.filter((item) => item.department === selectedDepartment);
   const selectedEmployees = reportEmployees.filter((item) =>
     employeeIds.includes(String(item.id)));
-  const code = attendanceCodes.find((item) => item.id === codeId);
+  const code = attendanceCodes.find((item) => item.id === effectiveCodeId);
   const preview = selectedEmployees.flatMap((employee) =>
     dates.map((date) => ({ employee, date })));
 
@@ -118,6 +116,7 @@ export function useScheduleEntryDrafts({ existing }: UseScheduleEntryDraftsParam
   };
 
   const addDate = () => {
+    if (!dateDraft) return;
     setDates((current) =>
       current.includes(dateDraft) ? current : [...current, dateDraft].sort());
   };
@@ -146,6 +145,7 @@ export function useScheduleEntryDrafts({ existing }: UseScheduleEntryDraftsParam
           date,
           department: employee.department,
           employeeId: employee.id,
+          employeeNo: employee.employeeNo,
           name: employee.name,
           codeId: code.id,
           type: code.label,
@@ -157,7 +157,7 @@ export function useScheduleEntryDrafts({ existing }: UseScheduleEntryDraftsParam
   return {
     department: selectedDepartment,
     employeeIds,
-    codeId,
+    codeId: effectiveCodeId,
     dates,
     dateDraft,
     attendanceCodes,

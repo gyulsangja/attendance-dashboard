@@ -1,9 +1,8 @@
-import {
+﻿import {
   formatDateKey,
   getWeeksInMonth,
 } from '@/lib/date';
 import {
-  buildOperationWeekKey,
   filterItemsByPeriod,
   getOperationWeekPeriod,
 } from '@/lib/management/operationWeek';
@@ -78,10 +77,13 @@ export const selectOperationTemplateEmployees = (state: RootState) => {
   const snapshot = selectOperationTemplateSnapshot(state);
 
   return snapshot.employees.map((employee) => ({
+    employeeId: employee.id,
     employeeName: employee.name,
     department: employee.teamId === UNASSIGNED_TEAM_ID
       ? UNASSIGNED_TEAM_NAME
       : snapshot.teams.find((team) => team.id === employee.teamId)?.name ?? '-',
+    position: employee.position,
+    shiftWorker: employee.shiftWorker,
   }));
 };
 
@@ -121,23 +123,11 @@ export const selectOperationWeekTerminalRecords = (state: RootState) =>
 export const selectOperationWeekCsvUploaded = (state: RootState) =>
   selectOperationWeekTerminalRecords(state).length > 0;
 
-export const selectShiftWeekConfirmed = (state: RootState) => {
-  const { year, month, weekNumber, confirmedShiftWeekKeys } = state.management;
-  return confirmedShiftWeekKeys.includes(buildOperationWeekKey(year, month, weekNumber));
-};
-
-export const selectPendingShiftCount = (state: RootState) => {
-  const weekShifts = selectOperationWeekShifts(state);
-  const shiftWeekConfirmed = selectShiftWeekConfirmed(state);
-  return weekShifts.length > 0 && !shiftWeekConfirmed ? weekShifts.length : 0;
-};
-
 export const selectOperationSteps = (state: RootState): OperationStepSummary[] => {
   const weekSchedules = selectOperationWeekSchedules(state);
   const weekShifts = selectOperationWeekShifts(state);
   const weekTerminalRecords = selectOperationWeekTerminalRecords(state);
   const weekCsvUploaded = weekTerminalRecords.length > 0;
-  const shiftWeekConfirmed = selectShiftWeekConfirmed(state);
   const { confirmed } = state.management;
 
   return [
@@ -155,8 +145,8 @@ export const selectOperationSteps = (state: RootState): OperationStepSummary[] =
       label: '교대 근무',
       value: weekShifts.length === 0
         ? '일정 없음'
-        : shiftWeekConfirmed ? '주차 확정' : '미확정',
-      done: weekShifts.length === 0 || shiftWeekConfirmed,
+        : `${weekShifts.length}건 등록`,
+      done: true,
     },
     {
       label: '운영관리',
@@ -165,3 +155,4 @@ export const selectOperationSteps = (state: RootState): OperationStepSummary[] =
     },
   ];
 };
+

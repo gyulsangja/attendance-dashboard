@@ -13,12 +13,20 @@ const toNumber = (value: unknown, fallback = 0) => {
 
 const shiftTimeByType: Record<string, { checkIn: string; checkOut: string }> = {
   SHIFT_DAY: { checkIn: '09:00', checkOut: '18:00' },
-  SHIFT_AFTERNOON: { checkIn: '12:00', checkOut: '21:00' },
-  SHIFT_NIGHT: { checkIn: '21:00', checkOut: '09:00' },
+  SHIFT_NIGHT: { checkIn: '12:00', checkOut: '21:00' },
+  SHIFT_DAWN: { checkIn: '21:00', checkOut: '09:00' },
 };
 
 const getShiftType = (dto: AttendManagerShiftScheduleDto) =>
   dto.shift_type ?? dto.shiftType ?? dto.shift_code ?? dto.shiftCode ?? dto.shift_name ?? dto.shiftName ?? '';
+
+const normalizeShiftType = (shift: ShiftSchedule) => {
+  if (shift.shift.startsWith('SHIFT_')) return shift.shift;
+  if (shift.checkIn === '09:00' && shift.checkOut === '18:00') return 'SHIFT_DAY';
+  if (shift.checkIn === '12:00' && shift.checkOut === '21:00') return 'SHIFT_NIGHT';
+  if (shift.checkIn === '21:00' && shift.checkOut === '09:00') return 'SHIFT_DAWN';
+  return shift.shift;
+};
 
 export const toApiBoolean = (value: unknown, fallback = false) => {
   if (typeof value === 'boolean') return value;
@@ -44,7 +52,6 @@ export const adaptAttendManagerSummary = (
       dto.operation_confirmed ?? dto.operationConfirmed,
       false,
     ),
-    shiftConfirmed: toApiBoolean(dto.shift_confirmed ?? dto.shiftConfirmed, false),
     attendanceScheduleCount: toNumber(
       dto.attendance_schedule_count ?? dto.attendanceScheduleCount,
     ),
@@ -69,6 +76,9 @@ export const adaptAttendManagerShiftDtoToSchedule = (
     id: toNumber(dto.shift_schedule_id ?? dto.shiftScheduleId ?? dto.id ?? dto.idx, index + 1),
     date: dto.work_date ?? dto.workDate ?? dto.date ?? '',
     employeeId: toNumber(dto.emp_no ?? dto.empNo, index + 1),
+    employeeNo: dto.emp_no === undefined && dto.empNo === undefined
+      ? undefined
+      : String(dto.emp_no ?? dto.empNo),
     name: dto.emp_name ?? dto.empName ?? '',
     shift: shiftType || time,
     time,
@@ -83,10 +93,10 @@ export const adaptShiftScheduleToAttendManagerDto = (
 ): AttendManagerShiftScheduleDto => ({
   idx: shift.id,
   shift_schedule_id: shift.id,
-  emp_no: shift.employeeId,
+  emp_no: shift.employeeNo ?? shift.employeeId,
   emp_name: shift.name,
   work_date: shift.date,
-  shift_type: shift.shift,
+  shift_type: normalizeShiftType(shift),
   start_time: shift.checkIn,
   end_time: shift.checkOut,
   is_next_day: Boolean(

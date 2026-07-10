@@ -11,7 +11,6 @@ const fullAccess = {
   canManageOrganization: true,
   canManageSettings: true,
   canInputShifts: true,
-  canApproveShifts: true,
   canManageUsers: true,
 };
 
@@ -31,14 +30,13 @@ export const userRoles: RoleAccess[] = [
   {
     id: 'SHIFT_MANAGER',
     label: '교대근무 담당',
-    description: '교대근무 일정을 입력, 수정, 삭제하고 주차별로 확정할 수 있습니다.',
+    description: '교대근무 일정을 입력, 수정, 삭제할 수 있습니다.',
     canViewDashboard: true,
     canViewReports: true,
     canManageOperations: false,
     canManageOrganization: false,
     canManageSettings: false,
     canInputShifts: true,
-    canApproveShifts: true,
     canManageUsers: false,
   },
   {
@@ -57,7 +55,6 @@ export const userRoles: RoleAccess[] = [
     canManageOrganization: false,
     canManageSettings: false,
     canInputShifts: false,
-    canApproveShifts: false,
     canManageUsers: false,
   },
 ];

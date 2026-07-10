@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import koLocale from '@fullcalendar/core/locales/ko';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -17,10 +17,8 @@ type ShiftPanelProps = {
   selectedWeek: { startDate: string; endDate: string };
   confirmed: boolean;
   onAdd: () => void;
-  onToggleConfirm: () => void;
   onEdit: (shift: ShiftSchedule) => void;
   canInput?: boolean;
-  canApprove?: boolean;
 };
 
 const shiftColors: Record<string, string> = {
@@ -47,14 +45,12 @@ export default function ShiftPanel({
   selectedWeek,
   confirmed,
   onAdd,
-  onToggleConfirm,
   onEdit,
   canInput = false,
-  canApprove = false,
 }: ShiftPanelProps) {
-  const weekRows = rows.filter((item) => isInSelectedWeek(item.date, selectedWeek));
   const events = rows.map((schedule) => {
     const color = shiftColors[schedule.time] ?? '#475569';
+    const editable = isInSelectedWeek(schedule.date, selectedWeek);
     return {
       id: String(schedule.id),
       title: `${schedule.name} · ${schedule.time}`,
@@ -62,7 +58,8 @@ export default function ShiftPanel({
       backgroundColor: color,
       borderColor: color,
       textColor: '#ffffff',
-      extendedProps: { time: schedule.time },
+      classNames: editable ? [] : ['shift-readonly-event'],
+      extendedProps: { time: schedule.time, editable },
     };
   });
 
@@ -72,7 +69,7 @@ export default function ShiftPanel({
         <div>
           <h2 className="font-bold">{year}년 {month}월 교대근무 일정</h2>
           <p className="mt-1 text-sm text-slate-500">
-            월간 일정은 달력으로 확인하고, 입력과 확정은 선택 주차 기준으로 처리합니다.
+            월간 일정을 달력으로 확인하고 선택 주차의 교대근무 일정을 입력합니다.
           </p>
         </div>
         <Stack direction="row" spacing={1}>
@@ -86,17 +83,6 @@ export default function ShiftPanel({
               선택 주차 일정 입력
             </Button>
           )}
-          {canApprove && (
-            <Button
-              variant="contained"
-              color={confirmed ? 'inherit' : 'primary'}
-              disabled={weekRows.length === 0}
-              onClick={onToggleConfirm}
-              sx={{ bgcolor: confirmed ? '#475569' : '#0f172a', color: '#fff' }}
-            >
-              {confirmed ? '선택 주차 확정 취소' : '선택 주차 확정'}
-            </Button>
-          )}
         </Stack>
       </div>
 
@@ -106,7 +92,7 @@ export default function ShiftPanel({
       </Alert>
       {confirmed && (
         <Alert severity="warning" sx={{ mb: 2 }}>
-          선택 주차의 교대근무 일정이 확정되어 입력, 수정, 삭제할 수 없습니다. 일정을 변경하려면 먼저 확정을 취소하세요.
+          운영관리 최종 확정 상태에서는 교대근무 일정을 입력, 수정, 삭제할 수 없습니다.
         </Alert>
       )}
 
@@ -132,13 +118,13 @@ export default function ShiftPanel({
           }}
           eventDidMount={({ el, event }) => {
             el.title = event.title;
-            if (canInput && !confirmed) {
+            if (canInput && !confirmed && event.extendedProps.editable) {
               el.style.cursor = 'pointer';
             }
           }}
           eventClick={({ event }) => {
             const schedule = rows.find((item) => item.id === Number(event.id));
-            if (!schedule) return;
+            if (!schedule || !event.extendedProps.editable) return;
             if (canInput && !confirmed) {
               onEdit(schedule);
             }
@@ -148,3 +134,4 @@ export default function ShiftPanel({
     </>
   );
 }
+

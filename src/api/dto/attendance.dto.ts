@@ -1,4 +1,4 @@
-export type AttendanceManagerDto = {
+﻿export type AttendanceManagerDto = {
   id?: number | string;
   idx?: number | string;
   emp_no?: number | string;
@@ -85,6 +85,8 @@ export type AttendanceUploadFailedRowDto = {
 };
 
 export type AttendanceUploadResultDto = {
+  attendinfo?: AttendanceUploadResultDto[];
+  attendInfo?: AttendanceUploadResultDto[];
   upload_id?: number | string;
   uploadId?: number | string;
   total_count?: number | string;
@@ -105,3 +107,4 @@ export type AttendanceUploadResultDto = {
   upload_result?: AttendanceUploadResultDto;
   uploadResult?: AttendanceUploadResultDto;
 };
+

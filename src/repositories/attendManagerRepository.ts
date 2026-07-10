@@ -15,18 +15,14 @@ export type AttendManagerRepository = {
   getOperationConfirmStatus: (
     params: AttendManagerWeekParams
   ) => Promise<AttendManagerConfirmStatusDto | null>;
-  getShiftConfirmStatus: (
-    params: AttendManagerWeekParams
-  ) => Promise<AttendManagerConfirmStatusDto | null>;
   getShiftMonth: (
     params: AttendManagerMonthParams
   ) => Promise<AttendManagerShiftScheduleDto[]>;
   saveShift: (schedules: AttendManagerShiftScheduleDto[]) => Promise<void>;
+  modifyShift: (schedule: AttendManagerShiftScheduleDto) => Promise<void>;
   deleteShift: (shiftScheduleId: number | string) => Promise<void>;
   confirmOperationWeek: (params: AttendManagerWeekParams) => Promise<void>;
   cancelOperationWeek: (params: AttendManagerWeekParams) => Promise<void>;
-  confirmShiftWeek: (params: AttendManagerWeekParams) => Promise<void>;
-  cancelShiftWeek: (params: AttendManagerWeekParams) => Promise<void>;
 };
 
 const mockAttendManagerRepository: AttendManagerRepository = {
@@ -36,27 +32,25 @@ const mockAttendManagerRepository: AttendManagerRepository = {
   async getOperationConfirmStatus() {
     return null;
   },
-  async getShiftConfirmStatus() {
-    return null;
-  },
   async getShiftMonth() {
     return [];
   },
   async saveShift() {},
+  async modifyShift() {},
   async deleteShift() {},
   async confirmOperationWeek() {},
   async cancelOperationWeek() {},
-  async confirmShiftWeek() {},
-  async cancelShiftWeek() {},
 };
 
 const apiAttendManagerRepository: AttendManagerRepository = {
   getSummary: attendManagerApi.getSummary,
   getOperationConfirmStatus: attendManagerApi.getOperationConfirmStatus,
-  getShiftConfirmStatus: attendManagerApi.getShiftConfirmStatus,
   getShiftMonth: attendManagerApi.getShiftMonth,
   async saveShift(schedules) {
     await attendManagerApi.saveShift(schedules);
+  },
+  async modifyShift(schedule) {
+    await attendManagerApi.modifyShift(schedule);
   },
   async deleteShift(shiftScheduleId) {
     await attendManagerApi.deleteShift(shiftScheduleId);
@@ -66,12 +60,6 @@ const apiAttendManagerRepository: AttendManagerRepository = {
   },
   async cancelOperationWeek(params) {
     await attendManagerApi.cancelOperationWeek(params);
-  },
-  async confirmShiftWeek(params) {
-    await attendManagerApi.confirmShiftWeek(params);
-  },
-  async cancelShiftWeek(params) {
-    await attendManagerApi.cancelShiftWeek(params);
   },
 };
 

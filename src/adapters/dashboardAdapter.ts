@@ -41,8 +41,8 @@ const getRecordId = (record: DashboardAttendanceRecordDto, index: number) =>
 
 const shiftTimeByType: Record<string, { checkIn: string; checkOut: string }> = {
   SHIFT_DAY: { checkIn: '09:00', checkOut: '18:00' },
-  SHIFT_AFTERNOON: { checkIn: '12:00', checkOut: '21:00' },
-  SHIFT_NIGHT: { checkIn: '21:00', checkOut: '09:00' },
+  SHIFT_NIGHT: { checkIn: '12:00', checkOut: '21:00' },
+  SHIFT_DAWN: { checkIn: '21:00', checkOut: '09:00' },
 };
 
 const adaptRecordRow = (record: DashboardAttendanceRecordDto, index: number) => ({
@@ -80,7 +80,6 @@ const adaptAttendanceCodeCount = (item: DashboardAttendanceCodeCountDto): Attend
   id: item.attendance_code ?? item.attendanceCode ?? '',
   label: item.attendance_code_name ?? item.attendanceCodeName ?? item.attendance_code ?? item.attendanceCode ?? '',
   isActive: true,
-  isSchedulable: false,
   isExceptional: false,
   startDate: '2024-01-01',
 });
@@ -132,11 +131,11 @@ export const adaptDashboardWeeklyDtoToViewModel = (
           return { ...item, value: count > 0 ? `${count}건 확인` : '업로드 필요', done: count > 0 };
         }
         if (index === 2) {
-          const done = toBoolean(
-            operationProgress.shift_confirmed ?? operationProgress.shiftConfirmed,
-            item.done,
-          );
-          return { ...item, value: done ? '확정 완료' : '확정 전', done };
+          const rawCount = operationProgress.shift_schedule_count
+            ?? operationProgress.shiftScheduleCount;
+          if (rawCount === undefined || rawCount === null || rawCount === '') return item;
+          const count = toNumber(rawCount);
+          return { ...item, value: count > 0 ? `${count}건 등록` : '일정 없음', done: true };
         }
         if (index === 3) {
           const done = toBoolean(

@@ -31,8 +31,8 @@ export default function OperationManagementSection({
     deviceUpload,
     displayedWeekSchedules,
     month,
-    pendingShifts,
-    shiftWeekConfirmed,
+    schedulesApiError,
+    schedulesApiLoading,
     shifts,
     steps,
     templateEmployees,
@@ -75,9 +75,57 @@ export default function OperationManagementSection({
           운영관리 API 요청을 처리 중입니다.
         </Alert>
       )}
+      {schedulesApiLoading && (
+        <Alert severity="info" sx={{ mt: 2 }}>
+          근태 일정 목록을 불러오는 중입니다.
+        </Alert>
+      )}
+      {schedulesApiError && (
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          근태 일정 목록 API를 불러오지 못했습니다.
+        </Alert>
+      )}
       {actions.apiMutationError && (
         <Alert severity="error" sx={{ mt: 2 }}>
           {actions.apiMutationError}
+        </Alert>
+      )}
+      {actions.scheduleSaveResult && actions.scheduleSaveResult.totalCount > 0 && (
+        <Alert
+          severity={
+            actions.scheduleSaveResult.failureCount === 0
+              ? 'success'
+              : actions.scheduleSaveResult.successCount === 0
+                ? 'error'
+                : 'warning'
+          }
+          sx={{ mt: 2 }}
+        >
+          {actions.scheduleSaveResult.failureCount === 0 && (
+            <>근태 일정 저장이 완료되었습니다.</>
+          )}
+          {actions.scheduleSaveResult.failureCount > 0 && (
+            <>
+              <p>
+                {actions.scheduleSaveResult.successCount > 0
+                  ? '일부 근태 일정만 저장되었습니다. 저장되지 않은 항목을 확인해 다시 처리하세요.'
+                  : '근태 일정이 저장되지 않았습니다. 아래 항목을 확인해 다시 처리하세요.'}
+              </p>
+              <ul className="mt-2 list-disc pl-5">
+                {actions.scheduleSaveResult.failures.slice(0, 5).map(({ schedule, message }) => (
+                  <li key={`${schedule.date}-${schedule.employeeNo ?? schedule.employeeId}-${schedule.codeId}`}>
+                    {schedule.date} {schedule.department} {schedule.name} {schedule.detail}
+                    {message ? ` - ${message}` : ''}
+                  </li>
+                ))}
+              </ul>
+              {actions.scheduleSaveResult.failures.length > 5 && (
+                <p className="mt-2">
+                  외 {actions.scheduleSaveResult.failures.length - 5}건이 더 저장되지 않았습니다.
+                </p>
+              )}
+            </>
+          )}
         </Alert>
       )}
 
@@ -97,7 +145,7 @@ export default function OperationManagementSection({
         >
           <Tab label="근태 일정 입력" />
           <Tab label="단말기 CSV" />
-          <Tab label="교대근무 확정" />
+          <Tab label="교대근무 일정" />
           <Tab label="운영관리 확정" />
         </Tabs>
         {confirmed && (
@@ -142,12 +190,10 @@ export default function OperationManagementSection({
               year={year}
               month={month}
               selectedWeek={{ startDate: week.startDate, endDate: week.endDate }}
-              confirmed={shiftWeekConfirmed}
+              confirmed={confirmed}
               onAdd={() => dialogs.setShiftOpen(true)}
-              onToggleConfirm={actions.toggleShiftWeekConfirmed}
               onEdit={dialogs.setEditingShift}
               canInput={access.canInputShifts && !confirmed}
-              canApprove={access.canApproveShifts && !confirmed}
             />
           )}
           {tab === 3 && (
@@ -155,7 +201,6 @@ export default function OperationManagementSection({
               steps={steps}
               confirmed={confirmed}
               csvUploaded={weekCsvUploaded}
-              pendingShifts={pendingShifts}
               weeklyReport={weeklyReport}
               onToggle={actions.toggleConfirmed}
             />

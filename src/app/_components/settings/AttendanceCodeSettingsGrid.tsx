@@ -21,9 +21,6 @@ type AttendanceCodeSettingsGridProps = {
 
 const TEXT = {
   label: '근태코드명',
-  schedulable: '운영관리 입력',
-  canInput: '입력 가능',
-  autoJudgement: '자동판정',
   exceptional: '특이근태',
   show: '표시',
   hide: '미표시',
@@ -59,15 +56,6 @@ export default function AttendanceCodeSettingsGrid({
 }: AttendanceCodeSettingsGridProps) {
   const codeColumns: GridColDef<AttendanceCode>[] = [
     { field: 'label', headerName: TEXT.label, minWidth: 150, flex: 1 },
-    {
-      field: 'isSchedulable',
-      headerName: TEXT.schedulable,
-      minWidth: 150,
-      flex: 1,
-      renderCell: ({ value }) => (
-        <Chip size="small" label={value ? TEXT.canInput : TEXT.autoJudgement} />
-      ),
-    },
     {
       field: 'isExceptional',
       headerName: TEXT.exceptional,

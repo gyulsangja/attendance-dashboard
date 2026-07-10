@@ -16,6 +16,7 @@ import {
   TextField,
 } from '@mui/material';
 import { useScheduleEntryDrafts } from '@/app/_components/management/operations/hooks/useScheduleEntryDrafts';
+import type { OperationScheduleSaveResult } from '@/repositories/operationScheduleRepository';
 import type { OperationSchedule } from '@/types/domain';
 import ScheduleEntryPreview from './ScheduleEntryPreview';
 
@@ -23,7 +24,9 @@ type Props = {
   open: boolean;
   existing: OperationSchedule[];
   onClose: () => void;
-  onSave: (items: OperationSchedule[]) => void | Promise<void>;
+  onSave: (
+    items: OperationSchedule[],
+  ) => void | OperationScheduleSaveResult | Promise<void | OperationScheduleSaveResult>;
 };
 
 export default function ScheduleEntryDialog({
@@ -41,7 +44,7 @@ export default function ScheduleEntryDialog({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>근태 일정 일괄 입력</DialogTitle>
+      <DialogTitle>근태일정 일괄 입력</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           {entry.isLoading && (
@@ -54,6 +57,7 @@ export default function ScheduleEntryDialog({
               부서, 직원 또는 근태코드 API를 불러오지 못했습니다.
             </Alert>
           )}
+
           <FormControl fullWidth>
             <InputLabel>부서</InputLabel>
             <Select
@@ -61,8 +65,13 @@ export default function ScheduleEntryDialog({
               label="부서"
               onChange={(event) => entry.setDepartment(event.target.value)}
             >
+              <MenuItem value="" disabled>
+                부서를 선택하세요
+              </MenuItem>
               {entry.departments.map((item) => (
-                <MenuItem key={item} value={item}>{item}</MenuItem>
+                <MenuItem key={item} value={item}>
+                  {item}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -75,13 +84,12 @@ export default function ScheduleEntryDialog({
               </Button>
             </div>
             <FormControl fullWidth>
-              <InputLabel>{entry.department} 직원</InputLabel>
+              <InputLabel>{entry.department || '직원'}</InputLabel>
               <Select
                 multiple
                 value={entry.employeeIds.filter((id) =>
-                  entry.departmentEmployees.some((item) => String(item.id) === id),
-                )}
-                label={`${entry.department} 직원`}
+                  entry.departmentEmployees.some((item) => String(item.id) === id))}
+                label={`${entry.department || '직원'}`}
                 renderValue={(selected) => `${selected.length}명 선택`}
                 onChange={(event) => {
                   const values = typeof event.target.value === 'string'
@@ -106,8 +114,13 @@ export default function ScheduleEntryDialog({
               label="근태코드"
               onChange={(event) => entry.setCodeId(event.target.value)}
             >
+              <MenuItem value="" disabled>
+                근태코드를 선택하세요
+              </MenuItem>
               {entry.attendanceCodes.map((item) => (
-                <MenuItem key={item.id} value={item.id}>{item.label}</MenuItem>
+                <MenuItem key={item.id} value={item.id}>
+                  {item.label}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -121,7 +134,7 @@ export default function ScheduleEntryDialog({
               onChange={(event) => entry.setDateDraft(event.target.value)}
               slotProps={{ inputLabel: { shrink: true } }}
             />
-            <Button variant="outlined" onClick={entry.addDate}>
+            <Button variant="outlined" disabled={!entry.dateDraft} onClick={entry.addDate}>
               추가
             </Button>
           </Stack>

@@ -26,13 +26,14 @@ export default function ManagementDialogs({
   return (
     <>
       <ScheduleEntryDialog
+        key={`schedule-entry-${week.startDate}-${week.endDate}-${dialogs.scheduleOpen}`}
         open={dialogs.scheduleOpen}
         existing={schedules}
         onClose={() => dialogs.setScheduleOpen(false)}
         onSave={actions.addSchedules}
       />
       <ShiftEntryDialog
-        key={`${week.startDate}-${week.endDate}-${dialogs.shiftOpen}`}
+        key={`shift-entry-${week.startDate}-${week.endDate}-${dialogs.shiftOpen}`}
         open={dialogs.shiftOpen}
         existing={shifts}
         workers={weekShiftWorkers}
@@ -44,12 +45,12 @@ export default function ManagementDialogs({
         key={dialogs.editingShift?.id ?? 'closed-shift-editor'}
         value={dialogs.editingShift}
         onClose={() => dialogs.setEditingShift(null)}
-        onSave={(shift) => {
-          actions.updatePendingShift(shift);
+        onSave={async (shift) => {
+          await actions.updatePendingShift(shift);
           dialogs.setEditingShift(null);
         }}
-        onDelete={(id) => {
-          actions.deletePendingShift(id);
+        onDelete={async (id) => {
+          await actions.deletePendingShift(id);
           dialogs.setEditingShift(null);
         }}
       />
@@ -72,5 +73,6 @@ export default function ManagementDialogs({
     </>
   );
 }
+
 
 

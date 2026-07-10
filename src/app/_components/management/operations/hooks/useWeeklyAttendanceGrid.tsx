@@ -13,6 +13,13 @@ export type WeeklyAttendanceEmployeeRow = {
 
 type UseWeeklyAttendanceGridParams = {
   days: { date: string; label: string }[];
+  employees?: Array<{
+    employeeId: number;
+    employeeName: string;
+    department: string;
+    position?: string;
+    shiftWorker?: boolean;
+  }>;
   records: AttendanceRecord[];
   schedules: OperationSchedule[];
   department: string;
@@ -34,6 +41,7 @@ const getDayClassName = (
 
 export function useWeeklyAttendanceGrid({
   days,
+  employees = [],
   records,
   schedules,
   department,
@@ -41,6 +49,16 @@ export function useWeeklyAttendanceGrid({
   readOnly = false,
 }: UseWeeklyAttendanceGridParams) {
   const employeeMap = new Map<number, WeeklyAttendanceEmployeeRow>();
+
+  employees.forEach((employee) => {
+    if (employeeMap.has(employee.employeeId)) return;
+    employeeMap.set(employee.employeeId, {
+      id: employee.employeeId,
+      name: employee.employeeName,
+      shiftWorker: Boolean(employee.shiftWorker),
+      department: employee.department,
+    });
+  });
 
   records.forEach((record) => {
     if (employeeMap.has(record.employeeId)) return;

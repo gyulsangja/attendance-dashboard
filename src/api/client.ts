@@ -1,4 +1,4 @@
-import { tokenStorage } from './tokenStorage';
+﻿import { tokenStorage } from './tokenStorage';
 
 export type ApiClientOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -68,6 +68,16 @@ const parsePayload = async (response: Response) => {
   }
 };
 
+const getPayloadMessage = (payload: unknown) => {
+  if (typeof payload === 'string') return payload;
+  if (!payload || typeof payload !== 'object') return '';
+
+  const record = payload as Record<string, unknown>;
+  const value = record.message ?? record.error ?? record.detail ?? record.reason;
+
+  return typeof value === 'string' ? value : '';
+};
+
 const handleUnauthorized = () => {
   if (typeof window === 'undefined') return;
 
@@ -104,22 +114,20 @@ export const apiClient = async <T>(
   logApiResponse(method, url, response.status, payload);
 
   if (!response.ok) {
-    const message = typeof payload === 'string' && payload
-      ? payload
-      : response.status === 401
+    const payloadMessage = getPayloadMessage(payload);
+    const message = payloadMessage
+      || (typeof payload === 'string' && payload.trim() ? payload : '')
+      || (response.status === 401
         ? SESSION_EXPIRED_MESSAGE
-        : 'API 요청에 실패했습니다.';
+        : `API 요청에 실패했습니다. (${response.status})`);
 
     if (response.status === 401 && options.auth !== false) {
       handleUnauthorized();
     }
 
-    throw new ApiError(
-      message,
-      response.status,
-      payload,
-    );
+    throw new ApiError(message, response.status, payload);
   }
 
   return payload as T;
 };
+

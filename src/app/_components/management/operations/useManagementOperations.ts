@@ -7,7 +7,6 @@ import { useDeviceUpload } from './hooks/useDeviceUpload';
 import { useManagementDialogState } from './hooks/useManagementDialogState';
 import { useManagementOperationActions } from './hooks/useManagementOperationActions';
 import { useManagementOperationState } from './hooks/useManagementOperationState';
-import { useShiftWeekActions } from './hooks/useShiftWeekActions';
 
 export const useManagementOperations = () => {
   const access = useAccess();
@@ -24,7 +23,6 @@ export const useManagementOperations = () => {
     codeMaster,
     deviceRecords: state.deviceRecords,
     organization,
-    week: state.week,
   });
   const deviceUpload = useDeviceUpload({
     deviceRecords: state.deviceRecords,
@@ -38,24 +36,15 @@ export const useManagementOperations = () => {
     week: state.week,
     weekDays: state.weekDays,
   });
-  const shiftWeekActions = useShiftWeekActions({
-    shiftWeekConfirmed: state.shiftWeekConfirmed,
-    year: state.year,
-    month: state.month,
-    weekNumber: state.weekNumber,
-    week: state.week,
-  });
   const actions = useManagementOperationActions({
     deviceEditing,
     deviceUpload,
     scheduleEditing,
-    shiftWeekActions,
     confirmed: state.confirmed,
     schedules: state.displayedWeekSchedules,
     year: state.year,
     month: state.month,
     weekNumber: state.weekNumber,
-    week: state.week,
   });
 
   return {

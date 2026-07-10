@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Alert, Button, Stack } from '@mui/material';
+import { Button, Stack } from '@mui/material';
 import {
   Edit,
   PublishedWithChanges,
@@ -15,7 +15,6 @@ type ConfirmPanelProps = {
   steps: OperationStep[];
   confirmed: boolean;
   csvUploaded: boolean;
-  pendingShifts: number;
   weeklyReport: OperationWeeklyReport;
   onToggle: () => void;
 };
@@ -24,7 +23,6 @@ export default function ConfirmPanel({
   steps,
   confirmed,
   csvUploaded,
-  pendingShifts,
   weeklyReport,
   onToggle,
 }: ConfirmPanelProps) {
@@ -44,18 +42,13 @@ export default function ConfirmPanel({
           </div>
         ))}
       </div>
-      {pendingShifts > 0 && (
-        <Alert severity="warning" sx={{ mt: 3 }}>
-          확정되지 않은 교대근무 일정이 {pendingShifts}건 있습니다.
-        </Alert>
-      )}
       <Stack spacing={1.5} sx={{ mt: 3 }}>
         <Button
           fullWidth
           size="large"
           variant="contained"
           startIcon={confirmed ? <Edit /> : <PublishedWithChanges />}
-          disabled={!csvUploaded || pendingShifts > 0}
+          disabled={!csvUploaded}
           onClick={onToggle}
           sx={{ bgcolor: confirmed ? '#475569' : '#0f172a' }}
         >

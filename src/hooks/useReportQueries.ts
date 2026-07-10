@@ -8,10 +8,11 @@ export const useWeeklyReportQuery = (
   year: number,
   month: number,
   week: number,
+  enabled = true,
 ) =>
   useQuery({
     queryKey: queryKeys.weeklyReport(year, month, week),
     queryFn: () => reportRepository.getWeekly({ year, month, week }),
-    enabled: Boolean(year && month && week),
+    enabled: enabled && Boolean(year && month && week),
     retry: false,
   });

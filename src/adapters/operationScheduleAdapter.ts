@@ -21,6 +21,11 @@ const getScheduleId = (dto: EmployeeAttendDto) => {
 const getEmployeeId = (dto: EmployeeAttendDto) =>
   Number(dto.emp_no ?? dto.empNo) || toNumericId(String(dto.emp_no ?? dto.empNo ?? ''));
 
+const getEmployeeNo = (dto: EmployeeAttendDto) => {
+  const value = dto.emp_no ?? dto.empNo;
+  return value === undefined || value === null ? undefined : String(value);
+};
+
 export const adaptEmployeeAttendDtoToOperationSchedule = (
   dto: EmployeeAttendDto,
 ): OperationSchedule => {
@@ -41,6 +46,7 @@ export const adaptEmployeeAttendDtoToOperationSchedule = (
     date,
     department: dto.dept_name ?? dto.deptName ?? dto.dept_code ?? dto.deptCode ?? '-',
     employeeId: getEmployeeId(dto),
+    employeeNo: getEmployeeNo(dto),
     name: dto.emp_name ?? dto.empName ?? '-',
     codeId,
     type: codeName,
@@ -50,15 +56,12 @@ export const adaptEmployeeAttendDtoToOperationSchedule = (
 
 export const adaptOperationScheduleToEmployeeAttendDto = (
   schedule: OperationSchedule,
+  options: { includeId?: boolean } = {},
 ): EmployeeAttendDto => ({
-  id: schedule.id,
-  emp_no: schedule.employeeId,
-  emp_name: schedule.name,
-  dept_name: schedule.department,
+  ...(options.includeId ? { idx: schedule.id } : {}),
+  emp_no: schedule.employeeNo ?? schedule.employeeId,
   attend_date: schedule.date,
-  attend_code: schedule.codeId,
   detail_code: schedule.codeId,
   attend_reason: schedule.type,
-  remark: schedule.detail,
-  memo: schedule.detail,
+  etc: schedule.detail,
 });

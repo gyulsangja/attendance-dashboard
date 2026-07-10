@@ -16,7 +16,6 @@ import {
 import { useAttendanceCodesQuery } from '@/hooks/useAttendanceCodeQueries';
 import { useOrganizationEmployeesQuery } from '@/hooks/useEmployeeQueries';
 import { isApiDataSource } from '@/repositories/config';
-import type { OperationSchedule } from '@/types/domain';
 import { useAppSelector } from '@/store/hooks';
 import { getAttendanceCodesAtDate } from '@/store/slices/attendanceCodeSlice';
 import {
@@ -24,6 +23,7 @@ import {
   UNASSIGNED_TEAM_ID,
   UNASSIGNED_TEAM_NAME,
 } from '@/store/slices/organizationSlice';
+import type { OperationSchedule } from '@/types/domain';
 
 type Props = {
   value: OperationSchedule | null;
@@ -48,7 +48,7 @@ export default function ScheduleEditDialog({ value, onChange, onSave }: Props) {
       codeMaster.codes,
       codeMaster.history,
       date,
-    )).filter((code) => code.isSchedulable);
+    )).filter((code) => code.isActive);
   const organizationSnapshot = getOrganizationSnapshot(
     organization.teams,
     organization.employees,
@@ -69,9 +69,13 @@ export default function ScheduleEditDialog({ value, onChange, onSave }: Props) {
         : organizationSnapshot.teams.find((team) => team.id === employee.teamId)?.name ?? '-',
     }));
 
+  const save = async () => {
+    await onSave();
+  };
+
   return (
     <Dialog open={Boolean(value)} onClose={() => onChange(null)} fullWidth maxWidth="sm">
-      <DialogTitle>근태 일정 수정</DialogTitle>
+      <DialogTitle>근태일정 수정</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <FormControl fullWidth>
@@ -79,12 +83,19 @@ export default function ScheduleEditDialog({ value, onChange, onSave }: Props) {
             <Select
               value={String(value?.employeeId ?? '')}
               label="직원"
-              onChange={(event) => value && onChange({
-                ...value,
-                employeeId: Number(event.target.value),
-                name: reportEmployees.find((employee) => employee.id === Number(event.target.value))?.name ?? value.name,
-                department: reportEmployees.find((employee) => employee.id === Number(event.target.value))?.department ?? value.department,
-              })}
+              onChange={(event) => {
+                if (!value) return;
+                const selectedEmployee = reportEmployees.find(
+                  (employee) => employee.id === Number(event.target.value),
+                );
+                onChange({
+                  ...value,
+                  employeeId: Number(event.target.value),
+                  employeeNo: selectedEmployee?.employeeNo,
+                  name: selectedEmployee?.name ?? value.name,
+                  department: selectedEmployee?.department ?? value.department,
+                });
+              }}
             >
               {reportEmployees.map((employee) => (
                 <MenuItem key={employee.id} value={String(employee.id)}>
@@ -93,6 +104,7 @@ export default function ScheduleEditDialog({ value, onChange, onSave }: Props) {
               ))}
             </Select>
           </FormControl>
+
           <FormControl fullWidth>
             <InputLabel>근태코드</InputLabel>
             <Select
@@ -109,6 +121,7 @@ export default function ScheduleEditDialog({ value, onChange, onSave }: Props) {
               ))}
             </Select>
           </FormControl>
+
           <TextField
             type="date"
             label="일자"
@@ -123,7 +136,13 @@ export default function ScheduleEditDialog({ value, onChange, onSave }: Props) {
       </DialogContent>
       <DialogActions>
         <Button onClick={() => onChange(null)}>취소</Button>
-        <Button variant="contained" onClick={() => { void onSave(); }}>수정 저장</Button>
+        <Button
+          variant="contained"
+          disabled={!value?.employeeId || !value?.codeId || !value?.date}
+          onClick={() => { void save(); }}
+        >
+          수정 저장
+        </Button>
       </DialogActions>
     </Dialog>
   );

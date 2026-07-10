@@ -1,4 +1,4 @@
-import type { AttendanceUploadResultDto } from '@/api/dto/attendance.dto';
+﻿import type { AttendanceUploadResultDto } from '@/api/dto/attendance.dto';
 import type { DeviceUploadSummary } from '@/types/domain';
 
 type Period = {
@@ -16,7 +16,12 @@ const unwrapUploadResult = (
   dto: AttendanceUploadResultDto | string | undefined,
 ): AttendanceUploadResultDto | null => {
   if (!dto || typeof dto === 'string') return null;
-  return dto.data ?? dto.result ?? dto.upload_result ?? dto.uploadResult ?? dto;
+
+  const wrapped = dto.data ?? dto.result ?? dto.upload_result ?? dto.uploadResult ?? dto;
+  const attendInfo = wrapped.attendinfo ?? wrapped.attendInfo;
+  if (Array.isArray(attendInfo)) return attendInfo[0] ?? null;
+
+  return wrapped;
 };
 
 export const adaptUploadResultToSummary = (
@@ -55,3 +60,4 @@ export const adaptUploadResultToSummary = (
     ],
   };
 };
+

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import {
@@ -15,42 +15,47 @@ import {
   TextField,
 } from '@mui/material';
 import type { ShiftSchedule } from '@/types/domain';
+import { SHIFT_PRESETS } from '../hooks/useShiftEntryDrafts';
 
 type Props = {
   value: ShiftSchedule | null;
   onClose: () => void;
-  onSave: (value: ShiftSchedule) => void;
-  onDelete: (id: number) => void;
+  onSave: (value: ShiftSchedule) => void | Promise<void>;
+  onDelete: (id: number) => void | Promise<void>;
 };
 
-export default function ShiftEditDialog({ value, onClose, onSave, onDelete }: Props) {
+const getShiftLabel = (checkIn: string, checkOut: string) =>
+  `${checkIn} ~ ${checkOut <= checkIn ? '익일 ' : ''}${checkOut}`;
+
+function ShiftEditDialogForm({ value, onClose, onSave, onDelete }: Props & { value: ShiftSchedule }) {
   const [form, setForm] = useState<ShiftSchedule | null>(value);
+  const [saving, setSaving] = useState(false);
 
   const setTimes = (shift: string) => {
     if (!form) return;
-    const defaults = shift === '주간'
-      ? { checkIn: '09:00', checkOut: '18:00' }
-      : shift === '오후'
-        ? { checkIn: '12:00', checkOut: '21:00' }
-        : { checkIn: '21:00', checkOut: '09:00' };
-    const { checkIn, checkOut } = defaults;
+
+    const preset = SHIFT_PRESETS.find((item) => item.value === shift);
+    if (!preset) return;
+
     setForm({
       ...form,
-      shift,
-      checkIn,
-      checkOut,
-      time: `${checkIn} ~ ${checkOut <= checkIn ? '익일 ' : ''}${checkOut}`,
+      shift: preset.value,
+      checkIn: preset.checkIn,
+      checkOut: preset.checkOut,
+      time: getShiftLabel(preset.checkIn, preset.checkOut),
     });
   };
 
   const updateTime = (field: 'checkIn' | 'checkOut', time: string) => {
     if (!form) return;
+
     const next = { ...form, [field]: time };
     const checkIn = next.checkIn ?? '';
     const checkOut = next.checkOut ?? '';
+
     setForm({
       ...next,
-      time: `${checkIn} ~ ${checkOut <= checkIn ? '익일 ' : ''}${checkOut}`,
+      time: getShiftLabel(checkIn, checkOut),
     });
   };
 
@@ -64,13 +69,15 @@ export default function ShiftEditDialog({ value, onClose, onSave, onDelete }: Pr
           <FormControl fullWidth>
             <InputLabel>기준시간 선택</InputLabel>
             <Select
-              value={form?.shift ?? '주간'}
+              value={form?.shift ?? SHIFT_PRESETS[0].value}
               label="기준시간 선택"
               onChange={(event) => setTimes(event.target.value)}
             >
-              <MenuItem value="주간">09:00 ~ 18:00</MenuItem>
-              <MenuItem value="오후">12:00 ~ 21:00</MenuItem>
-              <MenuItem value="야간">21:00 ~ 익일 09:00</MenuItem>
+              {SHIFT_PRESETS.map((preset) => (
+                <MenuItem key={preset.value} value={preset.value}>
+                  {getShiftLabel(preset.checkIn, preset.checkOut)}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
           <Stack direction="row" spacing={2}>
@@ -106,8 +113,16 @@ export default function ShiftEditDialog({ value, onClose, onSave, onDelete }: Pr
           <Button onClick={onClose}>취소</Button>
           <Button
             variant="contained"
-            disabled={!form?.checkIn || !form?.checkOut}
-            onClick={() => form && onSave(form)}
+            disabled={saving || !form?.checkIn || !form?.checkOut}
+            onClick={async () => {
+              if (!form) return;
+              setSaving(true);
+              try {
+                await onSave(form);
+              } finally {
+                setSaving(false);
+              }
+            }}
           >
             수정 저장
           </Button>
@@ -116,3 +131,10 @@ export default function ShiftEditDialog({ value, onClose, onSave, onDelete }: Pr
     </Dialog>
   );
 }
+
+export default function ShiftEditDialog(props: Props) {
+  if (!props.value) return null;
+
+  return <ShiftEditDialogForm key={props.value.id} {...props} value={props.value} />;
+}
+

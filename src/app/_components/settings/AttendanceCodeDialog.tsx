@@ -25,7 +25,6 @@ const TEXT = {
   addTitle: '근태코드 추가',
   label: '근태코드명',
   labelPlaceholder: '예: 병가',
-  schedulable: '운영관리에서 일정 입력 가능',
   exceptional: '대시보드에 특이근태로 표시',
   effectiveDate: '변경 적용일',
   startDate: '사용 시작일',
@@ -39,7 +38,6 @@ const emptyCode = (): AttendanceCode => ({
   id: '',
   label: '',
   isActive: true,
-  isSchedulable: true,
   isExceptional: false,
   startDate: today(),
 });
@@ -60,16 +58,6 @@ export default function AttendanceCodeDialog({ open, code, onClose, onSave }: Pr
           placeholder={TEXT.labelPlaceholder}
           value={form.label}
           onChange={(event) => setForm({ ...form, label: event.target.value })}
-        />
-
-        <FormControlLabel
-          control={(
-            <Switch
-              checked={form.isSchedulable}
-              onChange={(event) => setForm({ ...form, isSchedulable: event.target.checked })}
-            />
-          )}
-          label={TEXT.schedulable}
         />
 
         <FormControlLabel

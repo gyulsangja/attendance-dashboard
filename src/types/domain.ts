@@ -15,7 +15,6 @@ export type RoleAccess = {
   canManageOrganization: boolean;
   canManageSettings: boolean;
   canInputShifts: boolean;
-  canApproveShifts: boolean;
   canManageUsers: boolean;
 };
 
@@ -34,7 +33,6 @@ export type AttendanceCode = {
   id: string;
   label: string;
   isActive: boolean;
-  isSchedulable: boolean;
   isExceptional: boolean;
   startDate: string;
   endDate?: string;
@@ -108,6 +106,7 @@ export type OperationSchedule = {
   date: string;
   department: string;
   employeeId: number;
+  employeeNo?: string;
   name: string;
   codeId: string;
   type: string;
@@ -120,6 +119,7 @@ export type ShiftSchedule = {
   id: number;
   date: string;
   employeeId: number;
+  employeeNo?: string;
   name: string;
   shift: string;
   time: string;

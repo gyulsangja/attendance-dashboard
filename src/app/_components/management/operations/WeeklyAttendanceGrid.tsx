@@ -15,6 +15,13 @@ import type { AttendanceRecord, OperationSchedule } from '@/types/domain';
 
 type WeeklyAttendanceGridProps = {
   days: { date: string; label: string }[];
+  employees?: Array<{
+    employeeId: number;
+    employeeName: string;
+    department: string;
+    position?: string;
+    shiftWorker?: boolean;
+  }>;
   records: AttendanceRecord[];
   schedules: OperationSchedule[];
   onEdit: (employeeId: number, date: string) => void;
@@ -23,6 +30,7 @@ type WeeklyAttendanceGridProps = {
 
 export default function WeeklyAttendanceGrid({
   days,
+  employees = [],
   records,
   schedules,
   onEdit,
@@ -31,6 +39,7 @@ export default function WeeklyAttendanceGrid({
   const [department, setDepartment] = useState('all');
   const { rows, columns, departments } = useWeeklyAttendanceGrid({
     days,
+    employees,
     records,
     schedules,
     department,

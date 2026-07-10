@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import type { OperationSchedule, ShiftSchedule } from '@/types/domain';
 import {
   useCancelAttendManagerOperationWeekMutation,
   useConfirmAttendManagerOperationWeekMutation,
   useDeleteAttendManagerShiftMutation,
+  useModifyAttendManagerShiftMutation,
   useSaveAttendManagerShiftsMutation,
 } from '@/hooks/useAttendManagerQueries';
 import {
@@ -12,6 +14,7 @@ import {
   useInsertOperationSchedulesMutation,
 } from '@/hooks/useOperationScheduleQueries';
 import { isApiDataSource } from '@/repositories/config';
+import type { OperationScheduleSaveResult } from '@/repositories/operationScheduleRepository';
 import { useAppDispatch } from '@/store/hooks';
 import {
   addSchedules,
@@ -27,40 +30,34 @@ import {
 import type { useDeviceRecordEditing } from './useDeviceRecordEditing';
 import type { useDeviceUpload } from './useDeviceUpload';
 import type { useScheduleEditing } from './useScheduleEditing';
-import type { useShiftWeekActions } from './useShiftWeekActions';
 
 type Props = {
   deviceEditing: ReturnType<typeof useDeviceRecordEditing>;
   deviceUpload: ReturnType<typeof useDeviceUpload>;
   scheduleEditing: ReturnType<typeof useScheduleEditing>;
-  shiftWeekActions: ReturnType<typeof useShiftWeekActions>;
   confirmed: boolean;
   schedules: OperationSchedule[];
   year: number;
   month: number;
   weekNumber: number;
-  week: {
-    startDate: string;
-    endDate: string;
-  };
 };
 
 export const useManagementOperationActions = ({
   deviceEditing,
   deviceUpload,
   scheduleEditing,
-  shiftWeekActions,
   confirmed,
   schedules,
   year,
   month,
   weekNumber,
-  week,
 }: Props) => {
   const dispatch = useAppDispatch();
-  const insertSchedulesMutation = useInsertOperationSchedulesMutation(week.startDate, week.endDate);
-  const deleteScheduleMutation = useDeleteOperationScheduleMutation(week.startDate, week.endDate);
+  const [scheduleSaveResult, setScheduleSaveResult] = useState<OperationScheduleSaveResult | null>(null);
+  const insertSchedulesMutation = useInsertOperationSchedulesMutation();
+  const deleteScheduleMutation = useDeleteOperationScheduleMutation();
   const saveShiftsMutation = useSaveAttendManagerShiftsMutation();
+  const modifyShiftMutation = useModifyAttendManagerShiftMutation();
   const deleteShiftMutation = useDeleteAttendManagerShiftMutation();
   const confirmOperationMutation = useConfirmAttendManagerOperationWeekMutation();
   const cancelOperationMutation = useCancelAttendManagerOperationWeekMutation();
@@ -68,6 +65,7 @@ export const useManagementOperationActions = ({
     insertSchedulesMutation.isPending ||
     deleteScheduleMutation.isPending ||
     saveShiftsMutation.isPending ||
+    modifyShiftMutation.isPending ||
     deleteShiftMutation.isPending ||
     confirmOperationMutation.isPending ||
     cancelOperationMutation.isPending
@@ -76,12 +74,14 @@ export const useManagementOperationActions = ({
     insertSchedulesMutation.error,
     deleteScheduleMutation.error,
     saveShiftsMutation.error,
+    modifyShiftMutation.error,
     deleteShiftMutation.error,
     confirmOperationMutation.error,
     cancelOperationMutation.error,
   ].find(Boolean);
 
   return {
+    scheduleSaveResult,
     apiMutationError: isApiDataSource && mutationError
       ? mutationError instanceof Error
         ? mutationError.message
@@ -89,12 +89,22 @@ export const useManagementOperationActions = ({
       : '',
     apiMutating: isApiDataSource && isMutating,
     addSchedules: async (items: OperationSchedule[]) => {
+      setScheduleSaveResult(null);
       if (isApiDataSource) {
-        await insertSchedulesMutation.mutateAsync(items);
-        return;
+        const result = await insertSchedulesMutation.mutateAsync(items);
+        setScheduleSaveResult(result);
+        return result;
       }
 
       dispatch(addSchedules(items));
+      const result: OperationScheduleSaveResult = {
+        totalCount: items.length,
+        successCount: items.length,
+        failureCount: 0,
+        failures: [],
+      };
+      setScheduleSaveResult(result);
+      return result;
     },
     addShifts: async (items: ShiftSchedule[]) => {
       if (isApiDataSource) {
@@ -141,10 +151,9 @@ export const useManagementOperationActions = ({
 
       dispatch(toggleManagementConfirmed());
     },
-    toggleShiftWeekConfirmed: shiftWeekActions.toggleShiftWeekConfirmed,
     updatePendingShift: async (shift: ShiftSchedule) => {
       if (isApiDataSource) {
-        await saveShiftsMutation.mutateAsync([shift]);
+        await modifyShiftMutation.mutateAsync(shift);
         return;
       }
 

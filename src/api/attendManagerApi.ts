@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+﻿import { apiClient } from './client';
 import type {
   AttendManagerConfirmStatusDto,
   AttendManagerShiftScheduleDto,
@@ -16,7 +16,9 @@ export type AttendManagerWeekParams = {
 export type AttendManagerMonthParams = {
   year: number;
   month: number;
+  week: number;
 };
+
 
 const toParams = (params: Record<string, number | string>) =>
   new URLSearchParams(
@@ -32,6 +34,8 @@ const getShiftRows = (
   if (Array.isArray(response)) return response;
 
   return (
+    response.shiftinfolist ??
+    response.shiftInfoList ??
     response.shiftenlist ??
     response.shiftenList ??
     response.shiftlist ??
@@ -58,6 +62,38 @@ const getConfirmStatus = (response: AttendManagerConfirmStatusDto) => {
   return response.data ?? nestedStatus ?? response.confirm_status ?? response.confirmStatus ?? response;
 };
 
+const buildShiftRequestBody = (schedule: AttendManagerShiftScheduleDto) => {
+  const payload = {
+    work_date: schedule.work_date ?? schedule.workDate ?? schedule.date,
+    emp_no: schedule.emp_no ?? schedule.empNo,
+    shift_type: schedule.shift_type ?? schedule.shiftType,
+    etc: schedule.etc ?? '',
+  };
+
+  return {
+    newenshitfinfo: payload,
+  };
+};
+
+const buildShiftModifyRequestBody = (schedule: AttendManagerShiftScheduleDto) => {
+  const idx = schedule.idx ?? schedule.shift_schedule_id ?? schedule.shiftScheduleId;
+  const workDate = schedule.work_date ?? schedule.workDate ?? schedule.date;
+  const empNo = schedule.emp_no ?? schedule.empNo;
+  const shiftType = schedule.shift_type ?? schedule.shiftType;
+
+  const payload = {
+    idx: idx === undefined || idx === null ? '' : String(idx),
+    work_date: workDate ?? '',
+    emp_no: empNo === undefined || empNo === null ? '' : String(empNo),
+    shift_type: shiftType ?? '',
+    etc: schedule.etc ?? '',
+  };
+
+  return {
+    modifyshitfinfo: payload,
+  };
+};
+
 export const attendManagerApi = {
   async getSummary(params: AttendManagerWeekParams) {
     const response = await apiClient<AttendManagerSummaryDto>(
@@ -73,22 +109,18 @@ export const attendManagerApi = {
     return getConfirmStatus(response);
   },
 
-  async getShiftConfirmStatus(params: AttendManagerWeekParams) {
-    const response = await apiClient<AttendManagerConfirmStatusDto>(
-      `/api/attend/manager/shift/confirm/status?${toParams(params)}`,
-    );
-    return getConfirmStatus(response);
-  },
-
   async getShiftMonth(params: AttendManagerMonthParams) {
     const response = await apiClient<
       AttendManagerShiftScheduleDto[] | AttendManagerShiftScheduleListResponseDto
-    >('/api/employee/shiften/select/items', {
+    >('/api/employee/shiften/select', {
       method: 'POST',
       body: {
-        select_type: '3',
-        year: params.year,
-        month: params.month,
+        shiftselectinfo: {
+          select_type: '1',
+          year: String(params.year),
+          month: String(params.month),
+          week: String(params.week),
+        },
       },
     });
 
@@ -96,18 +128,19 @@ export const attendManagerApi = {
   },
 
   async saveShift(schedules: AttendManagerShiftScheduleDto[]) {
-    await Promise.all(
-      schedules.map((schedule) =>
-        apiClient<string>('/api/employee/shiften/insert', {
-          method: 'POST',
-          body: {
-            work_date: schedule.work_date ?? schedule.workDate ?? schedule.date,
-            emp_no: schedule.emp_no ?? schedule.empNo,
-            shift_type: schedule.shift_type ?? schedule.shiftType,
-            etc: schedule.etc ?? '',
-          },
-        })),
-    );
+    for (const schedule of schedules) {
+      await apiClient<string>('/api/employee/shiften/insert', {
+        method: 'POST',
+        body: buildShiftRequestBody(schedule),
+      });
+    }
+  },
+
+  modifyShift(schedule: AttendManagerShiftScheduleDto) {
+    return apiClient<string>('/api/employee/shiften/modify', {
+      method: 'POST',
+      body: buildShiftModifyRequestBody(schedule),
+    });
   },
 
   deleteShift(shiftScheduleId: number | string) {
@@ -137,17 +170,7 @@ export const attendManagerApi = {
     });
   },
 
-  confirmShiftWeek(params: AttendManagerWeekParams) {
-    return apiClient<string>('/api/attend/manager/shift/confirm', {
-      method: 'POST',
-      body: params,
-    });
-  },
-
-  cancelShiftWeek(params: AttendManagerWeekParams) {
-    return apiClient<string>('/api/attend/manager/shift/confirm/cancel', {
-      method: 'POST',
-      body: params,
-    });
-  },
 };
+
+
+

@@ -14,14 +14,12 @@ type OperationConfirmationInput = {
   publishedRecords: AttendanceRecord[];
   shifts: ShiftSchedule[];
   confirmedWeekKeys: string[];
-  confirmedShiftWeekKeys: string[];
 };
 
 type OperationConfirmationResult = {
   publishedRecords: AttendanceRecord[];
   shifts: ShiftSchedule[];
   confirmedWeekKeys: string[];
-  confirmedShiftWeekKeys: string[];
   confirmed: boolean;
 };
 
@@ -37,7 +35,6 @@ export const confirmOperationWeek = ({
   publishedRecords,
   shifts,
   confirmedWeekKeys,
-  confirmedShiftWeekKeys,
 }: OperationConfirmationInput): OperationConfirmationResult => ({
   publishedRecords: [
     ...excludeItemsByPeriod(publishedRecords, period),
@@ -49,7 +46,6 @@ export const confirmOperationWeek = ({
       : shift,
   ),
   confirmedWeekKeys: addUnique(confirmedWeekKeys, period.key),
-  confirmedShiftWeekKeys: addUnique(confirmedShiftWeekKeys, period.key),
   confirmed: true,
 });
 
@@ -58,11 +54,9 @@ export const unconfirmOperationWeek = ({
   publishedRecords,
   shifts,
   confirmedWeekKeys,
-  confirmedShiftWeekKeys,
 }: OperationConfirmationInput): OperationConfirmationResult => ({
   publishedRecords: excludeItemsByPeriod(publishedRecords, period),
   shifts,
   confirmedWeekKeys: removeValue(confirmedWeekKeys, period.key),
-  confirmedShiftWeekKeys,
   confirmed: false,
 });

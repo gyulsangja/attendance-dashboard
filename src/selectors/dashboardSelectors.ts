@@ -4,7 +4,6 @@ import {
   filterItemsByPeriod,
   getOperationWeekPeriod,
 } from '@/lib/management/operationWeek';
-import { SHIFT_STATUS } from '@/lib/management/shiftSchedules';
 import { getAttendanceCodesAtDate } from '@/store/slices/attendanceCodeSlice';
 import { getOrganizationSnapshot } from '@/store/slices/organizationSlice';
 import type { RootState } from '@/store/store';
@@ -75,11 +74,6 @@ export const selectDashboardData = (
   const weekSchedules = filterItemsByPeriod(state.management.schedules, period);
   const weekShifts = filterItemsByPeriod(state.management.shifts, period);
   const shiftCalendarDays = getDashboardWeekDays(startDate, endDate);
-  const pendingShifts = weekShifts.filter(
-    (shift) => shift.status === SHIFT_STATUS.PENDING,
-  ).length;
-  const shiftWeekKey = buildOperationWeekKey(year, month, selectedWeekNumber);
-  const shiftConfirmed = (state.management.confirmedShiftWeekKeys ?? []).includes(shiftWeekKey);
   const exceptionalCodeIds = new Set(
     attendanceCodes
       .filter((code) => code.isExceptional)
@@ -131,9 +125,9 @@ export const selectDashboardData = (
       done: terminalRecords.length > 0,
     },
     {
-      label: '교대근무 확정',
-      value: shiftConfirmed ? '확정 완료' : pendingShifts > 0 ? `${pendingShifts}건 승인 대기` : '확정 전',
-      done: shiftConfirmed,
+      label: '교대근무 일정',
+      value: weekShifts.length > 0 ? `${weekShifts.length}건 등록` : '일정 없음',
+      done: true,
     },
     {
       label: '운영관리 최종 확정',

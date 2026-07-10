@@ -29,7 +29,7 @@ import ShiftDraftList from './ShiftDraftList';
 type Props = {
   open: boolean;
   existing: ShiftSchedule[];
-  workers: { employeeId: number; name: string }[];
+  workers: { employeeId: number; employeeNo?: string; name: string }[];
   period: { startDate: string; endDate: string };
   onClose: () => void;
   onSave: (items: ShiftSchedule[]) => void;

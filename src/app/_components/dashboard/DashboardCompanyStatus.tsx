@@ -21,7 +21,7 @@ export default function DashboardCompanyStatus({
 }: DashboardCompanyStatusProps) {
   const activeCodeCount = activeAttendanceCodeCount ?? attendanceCodes.length;
   const attendanceCodeDetail = activeAttendanceCodeCount === undefined
-    ? `${attendanceCodes.filter((code) => code.isSchedulable).length}개 일정 입력 가능`
+    ? '공통코드 기준'
     : '대시보드 API 기준';
   const cards = [
     {

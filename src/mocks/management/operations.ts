@@ -21,11 +21,11 @@ export const shiftWorkers = [
 
 const plannedCodeIds = new Set(
   attendanceCodes
-    .filter((code) => code.isSchedulable)
+    .filter((code) => code.isActive)
     .map((code) => code.id),
 );
 
-// 상세보기와 동일한 출퇴근 기록에서 계획성 근태만 운영관리 일정으로 변환합니다.
+// 상세보기와 동일한 출퇴근 기록에서 근태코드 일정을 변환합니다.
 export const operationSchedules: OperationSchedule[] = attendanceRecords.flatMap(
   (record) => {
     const employee = getReportEmployee(record.employeeId);

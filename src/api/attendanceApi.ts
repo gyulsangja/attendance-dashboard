@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+﻿import { apiClient } from './client';
 import type {
   AttendanceManagerDto,
   AttendanceManagerListResponseDto,
@@ -54,13 +54,16 @@ export const attendanceApi = {
   ) {
     const formData = new FormData();
     formData.append('file', file);
-    if (period) {
-      formData.append('year', String(period.year));
-      formData.append('month', String(period.month));
-      formData.append('week', String(period.week));
-    }
 
-    return apiClient<string | AttendanceUploadResultDto>('/api/attend/manager/upload', {
+    const params = period
+      ? `?${new URLSearchParams({
+        year: String(period.year),
+        month: String(period.month),
+        week: String(period.week),
+      }).toString()}`
+      : '';
+
+    return apiClient<string | AttendanceUploadResultDto>(`/api/attend/manager/upload${params}`, {
       method: 'POST',
       body: formData,
     });
@@ -117,3 +120,4 @@ export const attendanceApi = {
     });
   },
 };
+

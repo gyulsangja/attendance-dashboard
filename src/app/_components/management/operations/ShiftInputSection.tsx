@@ -7,15 +7,12 @@ import ShiftPanel from './ShiftPanel';
 type Props = Pick<ManagementOperations, 'access' | 'actions' | 'dialogs' | 'state'>;
 
 export default function ShiftInputSection({
-  access,
-  actions,
   dialogs,
   state,
 }: Props) {
   const {
     confirmed,
     month,
-    shiftWeekConfirmed,
     shifts,
     week,
     year,
@@ -27,7 +24,7 @@ export default function ShiftInputSection({
       sx={{ mt: 3, border: '1px solid #e2e8f0', borderRadius: 3, p: 3 }}
     >
       <Alert severity="info" sx={{ mb: 3 }}>
-        교대근무 일정을 입력한 뒤 선택 주차 확정까지 진행해 주세요.
+        교대근무 일정을 입력하고 운영관리 최종 확정 전까지 수정할 수 있습니다.
       </Alert>
       {confirmed && (
         <Alert severity="warning" sx={{ mb: 3 }}>
@@ -40,12 +37,10 @@ export default function ShiftInputSection({
         year={year}
         month={month}
         selectedWeek={{ startDate: week.startDate, endDate: week.endDate }}
-        confirmed={shiftWeekConfirmed}
+        confirmed={confirmed}
         onAdd={() => dialogs.setShiftOpen(true)}
-        onToggleConfirm={actions.toggleShiftWeekConfirmed}
         onEdit={dialogs.setEditingShift}
         canInput={!confirmed}
-        canApprove={access.canApproveShifts && !confirmed}
       />
     </Paper>
   );

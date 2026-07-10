@@ -1,8 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useState, type ChangeEvent, type DragEvent } from 'react';
 import { Alert, Button, CircularProgress } from '@mui/material';
 import { CloudDownload, CloudUpload } from '@mui/icons-material';
+import { ApiError } from '@/api/client';
 import {
   type AttendanceRecord,
   type DeviceUploadSummary,
@@ -16,8 +17,11 @@ type DevicePanelProps = {
   uploadSummary: DeviceUploadSummary | null;
   onUpload: (file: File) => Promise<DeviceUploadSummary>;
   templateEmployees: Array<{
+    employeeId: number;
     employeeName: string;
     department: string;
+    position?: string;
+    shiftWorker?: boolean;
   }>;
   days: { date: string; label: string }[];
   records: AttendanceRecord[];
@@ -61,8 +65,12 @@ export default function DevicePanel({
     setProcessing(true);
     try {
       setResult(await onUpload(file));
-    } catch {
-      setFileError('파일을 읽는 중 오류가 발생했습니다.');
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setFileError(`업로드 API 호출에 실패했습니다. (${error.status}) ${error.message}`);
+      } else {
+        setFileError('파일을 읽는 중 오류가 발생했습니다.');
+      }
     } finally {
       setProcessing(false);
     }
@@ -159,12 +167,16 @@ export default function DevicePanel({
           <Button variant="text" startIcon={<CloudDownload />} onClick={downloadTemplate}>
             출입통제 CSV 양식 받기
           </Button>
-          {uploaded && (
-            <Button component="label" variant="outlined" startIcon={<CloudUpload />} disabled={processing || locked}>
-              파일 다시 업로드
-              <input hidden type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={handleChange} />
-            </Button>
-          )}
+          <Button
+            component="label"
+            variant={uploaded ? 'outlined' : 'contained'}
+            startIcon={<CloudUpload />}
+            disabled={processing || locked}
+            sx={uploaded ? undefined : { bgcolor: '#0f172a' }}
+          >
+            {uploaded ? '파일 다시 업로드' : '파일 업로드'}
+            <input hidden type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={handleChange} />
+          </Button>
         </div>
       </div>
 
@@ -193,30 +205,31 @@ export default function DevicePanel({
         </Alert>
       )}
 
-      {uploaded ? (
-        <WeeklyAttendanceGrid
-          days={days}
-          records={records}
-          schedules={schedules}
-          onEdit={onEdit}
-          readOnly={locked || recordsReadOnly}
-        />
-      ) : (
+      {!uploaded && (
         <div
-          className={`mt-6 rounded-xl border-2 border-dashed p-10 text-center transition ${dragging ? 'border-blue-500 bg-blue-50' : 'border-slate-300 bg-slate-50'}`}
+          className={`mt-6 rounded-xl border-2 border-dashed p-6 text-center transition ${dragging ? 'border-blue-500 bg-blue-50' : 'border-slate-300 bg-slate-50'}`}
           onDragOver={(event) => { event.preventDefault(); setDragging(true); }}
           onDragLeave={() => setDragging(false)}
           onDrop={locked ? undefined : handleDrop}
         >
-          {processing ? <CircularProgress size={44} /> : <CloudUpload sx={{ fontSize: 44, color: '#64748b' }} />}
+          {processing ? <CircularProgress size={36} /> : <CloudUpload sx={{ fontSize: 36, color: '#64748b' }} />}
           <p className="mt-2 font-bold">CSV 또는 XLSX 파일을 선택하거나 이곳에 놓아주세요</p>
-          <p className="mt-1 text-xs text-slate-500">최대 5MB · CSV는 UTF-8/EUC-KR 지원</p>
-          <Button component="label" variant="contained" disabled={processing || locked} sx={{ mt: 3, bgcolor: '#0f172a' }}>
-            {processing ? '처리 중...' : '파일 선택'}
-            <input hidden type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={handleChange} />
-          </Button>
+          <p className="mt-1 text-xs text-slate-500">
+            파일 업로드 없이도 아래 표에서 날짜 셀을 클릭해 직접 입력할 수 있습니다.
+          </p>
         </div>
       )}
+
+      <WeeklyAttendanceGrid
+        days={days}
+        employees={templateEmployees}
+        records={records}
+        schedules={schedules}
+        onEdit={onEdit}
+        readOnly={locked || recordsReadOnly}
+      />
     </>
   );
 }
+
+

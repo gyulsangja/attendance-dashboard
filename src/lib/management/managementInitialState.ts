@@ -43,10 +43,6 @@ export const buildInitialManagementState = (): ManagementState => {
   );
   const defaultOperationWeek = getPreviousWeekPeriod();
   const confirmedWeekKeys = confirmedOperationWeeks.map((period) => period.key);
-  const confirmedShiftWeekKeys = [...new Set([
-    '2026-6-2',
-    ...confirmedWeekKeys,
-  ])];
   const defaultOperationWeekKey = buildOperationWeekKey(
     defaultOperationWeek.year,
     defaultOperationWeek.month,
@@ -77,6 +73,5 @@ export const buildInitialManagementState = (): ManagementState => {
     },
     confirmed: confirmedWeekKeys.includes(defaultOperationWeekKey),
     confirmedWeekKeys,
-    confirmedShiftWeekKeys,
   };
 };

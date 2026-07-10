@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useMemo } from 'react';
 import {
@@ -9,8 +9,7 @@ import {
 import { adaptWeeklyReportDtoToOperationReport } from '@/adapters/weeklyReportAdapter';
 import {
   useAttendManagerOperationConfirmStatusQuery,
-  useAttendManagerShiftConfirmStatusQuery,
-  useAttendManagerShiftMonthQuery,
+  useAttendManagerShiftMonthWeeksQuery,
   useAttendManagerSummaryQuery,
 } from '@/hooks/useAttendManagerQueries';
 import { useAttendanceRecordsQuery } from '@/hooks/useAttendanceRecordQueries';
@@ -29,9 +28,7 @@ import {
   selectOperationWeekDays,
   selectOperationWeekOptions,
   selectOperationWeekShiftWorkers,
-  selectPendingShiftCount,
   selectSelectedOperationWeek,
-  selectShiftWeekConfirmed,
 } from '@/selectors/managementSelectors';
 import {
   selectOperationWeeklyReport,
@@ -62,12 +59,11 @@ const getApiEmployeeSelectId = (employee: { id: number; employeeNo?: string }) =
   return Number.isFinite(employeeNo) && employeeNo > 0 ? employeeNo : employee.id;
 };
 
+
 export const useManagementOperationState = () => {
   const management = useAppSelector(selectManagementState);
   const attendanceCodes = useAppSelector(selectOperationAttendanceCodes);
   const displayedWeekSchedules = useAppSelector(selectDisplayedOperationWeekSchedules);
-  const pendingShifts = useAppSelector(selectPendingShiftCount);
-  const shiftWeekConfirmed = useAppSelector(selectShiftWeekConfirmed);
   const steps = useAppSelector(selectOperationSteps);
   const templateEmployees = useAppSelector(selectOperationTemplateEmployees);
   const week = useAppSelector(selectSelectedOperationWeek);
@@ -81,28 +77,36 @@ export const useManagementOperationState = () => {
     management.year,
     management.month,
     management.weekNumber,
+    false,
   );
   const apiOperationConfirmStatusQuery = useAttendManagerOperationConfirmStatusQuery(
     management.year,
     management.month,
     management.weekNumber,
+    false,
   );
-  const apiShiftConfirmStatusQuery = useAttendManagerShiftConfirmStatusQuery(
+  const apiShiftMonthQuery = useAttendManagerShiftMonthWeeksQuery(
     management.year,
     management.month,
-    management.weekNumber,
-  );
-  const apiShiftMonthQuery = useAttendManagerShiftMonthQuery(
-    management.year,
-    management.month,
+    weekOptions,
+    isApiDataSource,
   );
   const apiWeeklyReportQuery = useWeeklyReportQuery(
     management.year,
     management.month,
     management.weekNumber,
+    false,
   );
   const apiOrganizationEmployeesQuery = useOrganizationEmployeesQuery();
-  const apiSchedulesQuery = useOperationSchedulesQuery(week.startDate, week.endDate);
+  const apiSchedulesQuery = useOperationSchedulesQuery(
+    week.startDate,
+    week.endDate,
+    {
+      year: management.year,
+      month: management.month,
+      week: management.weekNumber,
+    },
+  );
   const apiRecordsQuery = useAttendanceRecordsQuery(
     buildAttendanceWeekKey(management.year, management.month, management.weekNumber),
   );
@@ -114,28 +118,19 @@ export const useManagementOperationState = () => {
     () => adaptAttendManagerSummary(apiSummaryQuery.data),
     [apiSummaryQuery.data],
   );
-  const apiMonthShifts = useMemo(
-    () => (apiShiftMonthQuery.data ?? []).map(adaptAttendManagerShiftDtoToSchedule),
-    [apiShiftMonthQuery.data],
-  );
+  const apiMonthShifts = useMemo(() => {
+    const schedules = (apiShiftMonthQuery.data ?? []).map(adaptAttendManagerShiftDtoToSchedule);
+    return [...new Map(schedules.map((item) => [item.id, item])).values()];
+  }, [apiShiftMonthQuery.data]);
   const effectiveConfirmed = isApiDataSource
     ? (
       apiSummary?.operationConfirmed
       ?? adaptAttendManagerConfirmStatus(
         apiOperationConfirmStatusQuery.data,
-        management.confirmed,
+        false,
       )
     )
     : management.confirmed;
-  const effectiveShiftWeekConfirmed = isApiDataSource
-    ? (
-      apiSummary?.shiftConfirmed
-      ?? adaptAttendManagerConfirmStatus(
-        apiShiftConfirmStatusQuery.data,
-        shiftWeekConfirmed,
-      )
-    )
-    : shiftWeekConfirmed;
   const effectiveDeviceRecords = isApiDataSource
     ? apiWeekRecords
     : management.deviceRecords;
@@ -151,21 +146,22 @@ export const useManagementOperationState = () => {
       .filter((employee) => employee.shiftWorker)
       .map((employee) => ({
         employeeId: getApiEmployeeSelectId(employee),
+        employeeNo: employee.employeeNo,
         name: employee.name,
       }))
     : weekShiftWorkers;
   const effectiveTemplateEmployees = isApiDataSource
     ? (apiOrganizationEmployeesQuery.data ?? []).map((employee) => ({
+      employeeId: getApiEmployeeSelectId(employee),
       employeeName: employee.name,
       department: employee.backendDeptName ?? employee.backendDeptCode ?? '-',
+      position: employee.backendRankName ?? employee.backendRankCode ?? employee.position,
+      shiftWorker: employee.shiftWorker,
     }))
     : templateEmployees;
   const effectiveWeekTerminalRecords = filterItemsByPeriod(effectiveDeviceRecords, week)
     .filter((item) => Boolean(item.checkIn || item.checkOut));
   const effectiveWeekCsvUploaded = effectiveWeekTerminalRecords.length > 0;
-  const effectivePendingShifts = effectiveWeekShifts.length > 0 && !effectiveShiftWeekConfirmed
-    ? effectiveWeekShifts.length
-    : 0;
   const effectiveSteps = steps.map((step, index) => {
     if (index === 0) {
       return {
@@ -205,11 +201,11 @@ export const useManagementOperationState = () => {
     if (index === 2) {
       const shiftValue = effectiveWeekShifts.length === 0
         ? '일정 없음'
-        : effectiveShiftWeekConfirmed ? '주차 확정' : '미확정';
+        : `${effectiveWeekShifts.length}건 등록`;
       return {
         ...step,
         value: shiftValue,
-        done: effectiveWeekShifts.length === 0 || effectiveShiftWeekConfirmed,
+        done: true,
       };
     }
     if (index === 3) {
@@ -234,7 +230,6 @@ export const useManagementOperationState = () => {
     attendManagerApiError: isApiDataSource && (
       apiSummaryQuery.isError ||
       apiOperationConfirmStatusQuery.isError ||
-      apiShiftConfirmStatusQuery.isError ||
       apiShiftMonthQuery.isError ||
       apiWeeklyReportQuery.isError ||
       apiOrganizationEmployeesQuery.isError
@@ -242,7 +237,6 @@ export const useManagementOperationState = () => {
     attendManagerApiLoading: isApiDataSource && (
       apiSummaryQuery.isLoading ||
       apiOperationConfirmStatusQuery.isLoading ||
-      apiShiftConfirmStatusQuery.isLoading ||
       apiShiftMonthQuery.isLoading ||
       apiWeeklyReportQuery.isLoading ||
       apiOrganizationEmployeesQuery.isLoading
@@ -255,8 +249,6 @@ export const useManagementOperationState = () => {
     schedulesApiError: isApiDataSource && apiSchedulesQuery.isError,
     schedulesApiLoading: isApiDataSource && apiSchedulesQuery.isLoading,
     shifts: effectiveShifts,
-    pendingShifts: isApiDataSource ? effectivePendingShifts : pendingShifts,
-    shiftWeekConfirmed: effectiveShiftWeekConfirmed,
     steps: summarySteps,
     templateEmployees: effectiveTemplateEmployees,
     week,
@@ -269,4 +261,7 @@ export const useManagementOperationState = () => {
 };
 
 export type ManagementOperationState = ReturnType<typeof useManagementOperationState>;
+
+
+
 

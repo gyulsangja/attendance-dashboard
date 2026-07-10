@@ -95,6 +95,7 @@ export type EmployeeAttendDto = {
   endTime?: string;
   remark?: string;
   memo?: string;
+  etc?: string;
 };
 
 
@@ -122,6 +123,8 @@ export type EmployeeAttendItemSelectRequestDto = {
 };
 
 export type EmployeeAttendListResponseDto = {
+  attendancelist?: EmployeeAttendDto[];
+  attendanceList?: EmployeeAttendDto[];
   employeeattendlist?: EmployeeAttendDto[];
   employeeAttendList?: EmployeeAttendDto[];
   attendlist?: EmployeeAttendDto[];

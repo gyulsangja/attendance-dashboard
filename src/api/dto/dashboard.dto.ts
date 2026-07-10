@@ -63,10 +63,10 @@ export type DashboardOperationProgressDto = {
   items?: DashboardOperationProgressItemDto[];
   operation_confirmed?: boolean | string;
   operationConfirmed?: boolean | string;
-  shift_confirmed?: boolean | string;
-  shiftConfirmed?: boolean | string;
   attendance_schedule_count?: number | string;
   attendanceScheduleCount?: number | string;
+  shift_schedule_count?: number | string;
+  shiftScheduleCount?: number | string;
   device_record_count?: number | string;
   deviceRecordCount?: number | string;
 };

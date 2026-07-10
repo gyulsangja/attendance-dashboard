@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from 'react';
 import type { AttendanceCode, OperationSchedule } from '@/types/domain';
 import { useModifyOperationScheduleMutation } from '@/hooks/useOperationScheduleQueries';
@@ -16,23 +14,34 @@ import type { RootState } from '@/store/store';
 type Props = {
   attendanceCodes: AttendanceCode[];
   organization: RootState['organization'];
-  week: {
-    startDate: string;
-    endDate: string;
-  };
 };
 
 export const useScheduleEditing = ({
   attendanceCodes,
   organization,
-  week,
 }: Props) => {
   const dispatch = useAppDispatch();
-  const modifyScheduleMutation = useModifyOperationScheduleMutation(week.startDate, week.endDate);
+  const modifyScheduleMutation = useModifyOperationScheduleMutation();
   const [editingSchedule, setEditingSchedule] = useState<OperationSchedule | null>(null);
 
   const saveEditedSchedule = async () => {
     if (!editingSchedule) return;
+
+    const code = attendanceCodes.find((item) => item.id === editingSchedule.codeId);
+    const codeLabel = code?.label ?? editingSchedule.type ?? editingSchedule.codeId;
+    const nextSchedule = {
+      ...editingSchedule,
+      type: codeLabel,
+      detail: `${codeLabel} 일정`,
+    };
+
+    if (isApiDataSource) {
+      await modifyScheduleMutation.mutateAsync(nextSchedule);
+      setEditingSchedule(null);
+      return;
+    }
+
+    if (!code) return;
 
     const snapshot = getOrganizationSnapshot(
       organization.teams,
@@ -43,27 +52,17 @@ export const useScheduleEditing = ({
     const organizationEmployee = snapshot.employees.find(
       (item) => item.id === editingSchedule.employeeId,
     );
-    const code = attendanceCodes.find((item) => item.id === editingSchedule.codeId);
-    if (!organizationEmployee || !code) return;
+    if (!organizationEmployee) return;
 
     const department = organizationEmployee.teamId === UNASSIGNED_TEAM_ID
       ? UNASSIGNED_TEAM_NAME
       : snapshot.teams.find((team) => team.id === organizationEmployee.teamId)?.name ?? '-';
 
-    const nextSchedule = {
-      ...editingSchedule,
+    dispatch(updateSchedule({
+      ...nextSchedule,
       department,
       name: organizationEmployee.name,
-      type: code.label,
-      detail: `${code.label} 일정`,
-    };
-
-    if (isApiDataSource) {
-      await modifyScheduleMutation.mutateAsync(nextSchedule);
-    } else {
-      dispatch(updateSchedule(nextSchedule));
-    }
-
+    }));
     setEditingSchedule(null);
   };
 

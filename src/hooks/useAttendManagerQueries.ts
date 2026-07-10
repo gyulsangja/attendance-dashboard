@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { adaptShiftScheduleToAttendManagerDto } from '@/adapters/attendManagerAdapter';
 import { queryKeys } from '@/lib/queryKeys';
 import { attendManagerRepository } from '@/repositories/attendManagerRepository';
@@ -11,11 +11,12 @@ export const useAttendManagerSummaryQuery = (
   year: number,
   month: number,
   week: number,
+  enabled = true,
 ) =>
   useQuery({
     queryKey: queryKeys.attendManagerSummary(year, month, week),
     queryFn: () => attendManagerRepository.getSummary({ year, month, week }),
-    enabled: Boolean(year && month && week),
+    enabled: enabled && Boolean(year && month && week),
     retry: false,
   });
 
@@ -23,34 +24,53 @@ export const useAttendManagerOperationConfirmStatusQuery = (
   year: number,
   month: number,
   week: number,
+  enabled = true,
 ) =>
   useQuery({
     queryKey: queryKeys.attendManagerOperationConfirmStatus(year, month, week),
     queryFn: () =>
       attendManagerRepository.getOperationConfirmStatus({ year, month, week }),
-    enabled: Boolean(year && month && week),
+    enabled: enabled && Boolean(year && month && week),
     retry: false,
   });
 
-export const useAttendManagerShiftConfirmStatusQuery = (
+export const useAttendManagerShiftMonthQuery = (
   year: number,
   month: number,
   week: number,
+  enabled = true,
 ) =>
   useQuery({
-    queryKey: queryKeys.attendManagerShiftConfirmStatus(year, month, week),
-    queryFn: () => attendManagerRepository.getShiftConfirmStatus({ year, month, week }),
-    enabled: Boolean(year && month && week),
+    queryKey: queryKeys.attendManagerShiftMonth(year, month, week),
+    queryFn: () => attendManagerRepository.getShiftMonth({ year, month, week }),
+    enabled: enabled && Boolean(year && month && week),
     retry: false,
+  });
+export const useAttendManagerShiftMonthWeeksQuery = (
+  year: number,
+  month: number,
+  weeks: Array<{ week: number }>,
+  enabled = true,
+) => {
+  const results = useQueries({
+    queries: weeks.map((item) => ({
+      queryKey: queryKeys.attendManagerShiftMonth(year, month, item.week),
+      queryFn: () => attendManagerRepository.getShiftMonth({
+        year,
+        month,
+        week: item.week,
+      }),
+      enabled: enabled && Boolean(year && month && item.week),
+      retry: false,
+    })),
   });
 
-export const useAttendManagerShiftMonthQuery = (year: number, month: number) =>
-  useQuery({
-    queryKey: queryKeys.attendManagerShiftMonth(year, month),
-    queryFn: () => attendManagerRepository.getShiftMonth({ year, month }),
-    enabled: Boolean(year && month),
-    retry: false,
-  });
+  return {
+    data: results.flatMap((result) => result.data ?? []),
+    isError: results.some((result) => result.isError),
+    isLoading: results.some((result) => result.isLoading),
+  };
+};
 
 export const useSaveAttendManagerShiftsMutation = () => {
   const queryClient = useQueryClient();
@@ -58,6 +78,16 @@ export const useSaveAttendManagerShiftsMutation = () => {
   return useMutation({
     mutationFn: (shifts: ShiftSchedule[]) =>
       attendManagerRepository.saveShift(shifts.map(adaptShiftScheduleToAttendManagerDto)),
+    onSuccess: () => invalidateAttendManagerQueries(queryClient),
+  });
+};
+
+export const useModifyAttendManagerShiftMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (shift: ShiftSchedule) =>
+      attendManagerRepository.modifyShift(adaptShiftScheduleToAttendManagerDto(shift)),
     onSuccess: () => invalidateAttendManagerQueries(queryClient),
   });
 };
@@ -92,22 +122,4 @@ export const useCancelAttendManagerOperationWeekMutation = () => {
   });
 };
 
-export const useConfirmAttendManagerShiftWeekMutation = () => {
-  const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: (params: { year: number; month: number; week: number }) =>
-      attendManagerRepository.confirmShiftWeek(params),
-    onSuccess: () => invalidateAttendManagerQueries(queryClient),
-  });
-};
-
-export const useCancelAttendManagerShiftWeekMutation = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (params: { year: number; month: number; week: number }) =>
-      attendManagerRepository.cancelShiftWeek(params),
-    onSuccess: () => invalidateAttendManagerQueries(queryClient),
-  });
-};

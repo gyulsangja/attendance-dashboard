@@ -20,13 +20,8 @@ type AttendanceCodeState = {
 
 export type { WorkTimePolicy } from '@/types/domain';
 
-const codeCreationDetail = (code: AttendanceCode) =>
-  code.isSchedulable ? '운영관리에서 일정 입력 가능' : '출퇴근 기록으로 자동 판정';
-
 const codePolicyDetail = (code: AttendanceCode) =>
-  `운영관리 입력 ${code.isSchedulable ? '가능' : '불가'}, 특이근태 ${
-    code.isExceptional ? '표시' : '미표시'
-  }`;
+  `특이근태 ${code.isExceptional ? '표시' : '미표시'}`;
 
 const initialState: AttendanceCodeState = {
   workTimePolicy: {
@@ -46,7 +41,7 @@ const initialState: AttendanceCodeState = {
     codeLabel: code.label,
     effectiveDate: code.startDate,
     changeType: '코드 생성',
-    detail: codeCreationDetail(code),
+    detail: codePolicyDetail(code),
   })),
 };
 
@@ -65,7 +60,7 @@ const attendanceCodeSlice = createSlice({
         codeLabel: action.payload.label,
         effectiveDate: action.payload.startDate,
         changeType: '코드 생성',
-        detail: codeCreationDetail(action.payload),
+        detail: codePolicyDetail(action.payload),
       });
     },
     updateAttendanceCode(
