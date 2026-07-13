@@ -18,9 +18,14 @@ import {
   invalidateAttendManagerQueries,
   invalidateAttendanceRecordQueries,
 } from '@/hooks/useQueryInvalidation';
+import { buildAttendanceWeekKey } from '@/lib/attendance/attendancePeriodKey';
+import { queryKeys } from '@/lib/queryKeys';
 import { isApiDataSource } from '@/repositories/config';
 import { useAppDispatch } from '@/store/hooks';
-import { uploadDeviceRecords } from '@/store/slices/managementSlice';
+import {
+  clearDeviceUpload,
+  uploadDeviceRecords,
+} from '@/store/slices/managementSlice';
 import type { RootState } from '@/store/store';
 
 type Week = {
@@ -66,7 +71,9 @@ export const useDeviceUpload = ({
 
     if (isApiDataSource) {
       const uploadResult = await attendanceApi.uploadDeviceFile(file, { year, month, week: weekNumber });
-      invalidateAttendanceRecordQueries(queryClient);
+      const weekKey = buildAttendanceWeekKey(year, month, weekNumber);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.attendanceRecordsBase });
+      await queryClient.refetchQueries({ queryKey: queryKeys.attendanceRecords(weekKey) });
       invalidateAttendManagerQueries(queryClient);
       const apiSummary = adaptUploadResultToSummary(uploadResult, {
         fileName: file.name,
@@ -132,6 +139,23 @@ export const useDeviceUpload = ({
     return summary;
   };
 
-  return { handleDeviceUpload };
+  const deleteDeviceUpload = async () => {
+    if (isApiDataSource) {
+      await attendanceApi.deleteByWeek(year, month, weekNumber);
+      invalidateAttendanceRecordQueries(queryClient);
+      invalidateAttendManagerQueries(queryClient);
+      return;
+    }
+
+    dispatch(clearDeviceUpload({
+      startDate: week.startDate,
+      endDate: week.endDate,
+    }));
+  };
+
+  return {
+    deleteDeviceUpload,
+    handleDeviceUpload,
+  };
 };
 

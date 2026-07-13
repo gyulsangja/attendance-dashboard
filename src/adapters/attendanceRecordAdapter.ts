@@ -14,7 +14,7 @@ const isNumericValue = (value: unknown) =>
   value !== undefined && value !== null && Number.isFinite(Number(value));
 
 const getEmployeeKey = (dto: AttendanceManagerDto) =>
-  String(dto.emp_no ?? dto.empNo ?? dto.emo_no ?? '');
+  String(dto.attend_card_no ?? dto.attendCardNo ?? dto.emp_no ?? dto.empNo ?? dto.emo_no ?? '');
 
 const getRecordId = (dto: AttendanceManagerDto) =>
   Number(dto.id ?? dto.idx)
@@ -26,6 +26,7 @@ const getEmployeeId = (dto: AttendanceManagerDto) =>
 const getEmployeeName = (dto: AttendanceManagerDto) => {
   const fallbackName = dto.emp_no ?? dto.empNo ?? dto.emo_no ?? '';
   if (dto.emp_name ?? dto.empName) return dto.emp_name ?? dto.empName ?? '-';
+  if (dto.attend_card_no ?? dto.attendCardNo) return String(fallbackName || '-');
   return isNumericValue(fallbackName) ? '-' : String(fallbackName || '-');
 };
 

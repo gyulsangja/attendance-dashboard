@@ -3,6 +3,7 @@ import type {
   AttendanceManagerDto,
   AttendanceManagerListResponseDto,
   AttendanceUploadResultDto,
+  AttendanceUploadStatusDto,
 } from './dto/attendance.dto';
 
 const getAttendanceRows = (
@@ -11,6 +12,8 @@ const getAttendanceRows = (
   if (Array.isArray(response)) return response;
 
   return (
+    response.attendinfo ??
+    response.attendInfo ??
     response.attendanceList ??
     response.attendancelist ??
     response.attendweeklist ??
@@ -47,6 +50,17 @@ const getSelectPath = (periodKey: string) => {
   return `/api/attend/manager/select/${periodKey}`;
 };
 
+const toQueryString = (payload: Record<string, unknown>) => {
+  const params = new URLSearchParams();
+
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return;
+    params.set(key, Array.isArray(value) ? value.join(',') : String(value));
+  });
+
+  return params.toString();
+};
+
 export const attendanceApi = {
   uploadDeviceFile(
     file: File,
@@ -69,6 +83,16 @@ export const attendanceApi = {
     });
   },
 
+  getUploadStatus(year: number | string, month: number | string, week: number | string) {
+    const params = new URLSearchParams({
+      year: String(year),
+      month: String(month),
+      week: String(week),
+    });
+
+    return apiClient<AttendanceUploadStatusDto>(`/api/attend/manager/upload/status?${params.toString()}`);
+  },
+
   async selectByPeriod(periodKey: string) {
     const response = await apiClient<
       AttendanceManagerDto[] | AttendanceManagerListResponseDto
@@ -78,16 +102,12 @@ export const attendanceApi = {
   },
 
   modify(payload: AttendanceManagerDto) {
-    return apiClient<string>('/api/attend/manager/modify', {
-      method: 'POST',
-      body: payload,
-    });
+    const query = toQueryString(payload as Record<string, unknown>);
+    return apiClient<string>(`/api/attend/manager/modify${query ? `?${query}` : ''}`);
   },
 
-  deleteByEmployee(empNo: number | string) {
-    return apiClient<string>(`/api/attend/manager/delete/${empNo}`, {
-      method: 'POST',
-    });
+  deleteByEmployee(idx: number | string) {
+    return apiClient<string>(`/api/attend/manager/delete/emp_no/${idx}`);
   },
 
   deleteByWeek(year: number | string, month: number | string, week: number | string) {
@@ -115,9 +135,7 @@ export const attendanceApi = {
       week: String(week),
     });
 
-    return apiClient<string>(`/api/attend/manager/delete/emp_no?${params.toString()}`, {
-      method: 'POST',
-    });
+    return apiClient<string>(`/api/attend/manager/delete/emp_no/${empNo}?${params.toString()}`);
   },
 };
 

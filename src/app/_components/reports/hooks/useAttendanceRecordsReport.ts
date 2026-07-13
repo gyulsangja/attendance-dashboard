@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { useAttendanceCodesQuery } from '@/hooks/useAttendanceCodeQueries';
+import { useHolidaysQuery } from '@/hooks/useHolidayQueries';
 import { useStatisticsMonthlyAttendanceRecordsQuery } from '@/hooks/useStatisticsQueries';
 import { getKoreanPublicHoliday } from '@/lib/date';
 import { isApiDataSource } from '@/repositories/config';
@@ -55,6 +56,7 @@ export function useAttendanceRecordsReport() {
   const displayMonth = month === 'all' ? Number(startDate.slice(5, 7)) : month;
   const apiRecordsQuery = useStatisticsMonthlyAttendanceRecordsQuery(year, displayMonth);
   const apiAttendanceCodesQuery = useAttendanceCodesQuery();
+  const apiHolidaysQuery = useHolidaysQuery(year);
   const attendanceCodes = useMemo(
     () => (isApiDataSource ? apiAttendanceCodesQuery.data ?? [] : storeAttendanceCodes),
     [apiAttendanceCodesQuery.data, storeAttendanceCodes],
@@ -75,8 +77,18 @@ export function useAttendanceRecordsReport() {
       }
     });
 
+    if (isApiDataSource) {
+      (apiHolidaysQuery.data ?? []).forEach((holiday) => {
+        holidays.set(holiday.date, {
+          date: holiday.date,
+          name: holiday.name,
+          type: holiday.type,
+        });
+      });
+    }
+
     return holidays;
-  }, [attendanceRecords]);
+  }, [apiHolidaysQuery.data, attendanceRecords]);
 
   const handleYearChange = (value: number) => {
     dispatch(setYear(value));

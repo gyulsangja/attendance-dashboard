@@ -1,6 +1,8 @@
 ﻿export type AttendanceManagerDto = {
   id?: number | string;
   idx?: number | string;
+  attend_card_no?: number | string;
+  attendCardNo?: number | string;
   emp_no?: number | string;
   empNo?: number | string;
   emo_no?: number | string;
@@ -49,6 +51,8 @@
 };
 
 export type AttendanceManagerListResponseDto = {
+  attendinfo?: AttendanceManagerDto[];
+  attendInfo?: AttendanceManagerDto[];
   employeelist?: AttendanceManagerDto[];
   attendanceList?: AttendanceManagerDto[];
   attendancelist?: AttendanceManagerDto[];
@@ -85,8 +89,8 @@ export type AttendanceUploadFailedRowDto = {
 };
 
 export type AttendanceUploadResultDto = {
-  attendinfo?: AttendanceUploadResultDto[];
-  attendInfo?: AttendanceUploadResultDto[];
+  attendinfo?: AttendanceUploadResultDto | AttendanceUploadResultDto[];
+  attendInfo?: AttendanceUploadResultDto | AttendanceUploadResultDto[];
   upload_id?: number | string;
   uploadId?: number | string;
   total_count?: number | string;
@@ -106,5 +110,24 @@ export type AttendanceUploadResultDto = {
   result?: AttendanceUploadResultDto;
   upload_result?: AttendanceUploadResultDto;
   uploadResult?: AttendanceUploadResultDto;
+};
+
+export type AttendanceUploadStatusDto = {
+  uploaded?: boolean | string;
+  is_uploaded?: boolean | string;
+  isUploaded?: boolean | string;
+  exists?: boolean | string;
+  upload_id?: number | string;
+  uploadId?: number | string;
+  total_count?: number | string;
+  totalCount?: number | string;
+  success_count?: number | string;
+  successCount?: number | string;
+  uploaded_at?: string;
+  uploadedAt?: string;
+  file_name?: string;
+  fileName?: string;
+  message?: string;
+  status?: string;
 };
 

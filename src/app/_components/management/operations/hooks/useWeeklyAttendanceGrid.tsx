@@ -39,6 +39,13 @@ const getDayClassName = (
   return '';
 };
 
+const getDateLabel = (date: string) => {
+  const [, month, day] = date.split('-');
+  if (!month || !day) return date;
+
+  return `${Number(month)}/${Number(day)}`;
+};
+
 export function useWeeklyAttendanceGrid({
   days,
   employees = [],
@@ -87,6 +94,18 @@ export function useWeeklyAttendanceGrid({
     (employee) => department === 'all' || employee.department === department,
   );
 
+  const displayDays = [...new Map([
+    ...days.map((day) => [day.date, day] as const),
+    ...records.map((record) => [
+      record.date,
+      { date: record.date, label: getDateLabel(record.date) },
+    ] as const),
+    ...schedules.map((schedule) => [
+      schedule.date,
+      { date: schedule.date, label: getDateLabel(schedule.date) },
+    ] as const),
+  ]).values()].sort((a, b) => a.date.localeCompare(b.date));
+
   const columns: GridColDef[] = [
     {
       field: 'department',
@@ -104,7 +123,7 @@ export function useWeeklyAttendanceGrid({
       align: 'center',
       headerAlign: 'center',
     },
-    ...days.map((day) => ({
+    ...displayDays.map((day) => ({
       field: day.date,
       headerName: day.label,
       headerClassName: getDayClassName(day.date, 'header', records),

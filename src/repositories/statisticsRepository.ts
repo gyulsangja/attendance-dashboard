@@ -1,6 +1,7 @@
-import { statisticsApi, type StatisticsMonthlyParams, type StatisticsPeriodParams } from '@/api/statisticsApi';
+import { attendanceApi } from '@/api/attendanceApi';
+import type { StatisticsMonthlyParams, StatisticsPeriodParams } from '@/api/statisticsApi';
+import { adaptAttendanceManagerDtoToRecord } from '@/adapters/attendanceRecordAdapter';
 import {
-  adaptStatisticsRecordToAttendanceRecord,
   adaptStatisticsRecordsToEmployees,
 } from '@/adapters/statisticsAdapter';
 import type { AttendanceRecord, ReportEmployee } from '@/types/domain';
@@ -29,19 +30,35 @@ const mockStatisticsRepository: StatisticsRepository = {
   },
 };
 
+const getPeriodKey = (params: StatisticsPeriodParams | StatisticsMonthlyParams) => {
+  if ('periodType' in params) {
+    if (params.periodType === 'WEEK' && params.month && params.week) {
+      return `${params.year}-${params.month}-${params.week}`;
+    }
+    if (params.periodType === 'MONTH' && params.month) {
+      return `${params.year}-${params.month}`;
+    }
+  }
+
+  if ('month' in params && params.month) return `${params.year}-${params.month}`;
+  return String(params.year);
+};
+
 const apiStatisticsRepository: StatisticsRepository = {
   async getAttendance(params) {
-    const records = await statisticsApi.getAttendance(params);
-    return records.map(adaptStatisticsRecordToAttendanceRecord);
+    const records = await attendanceApi.selectByPeriod(getPeriodKey(params));
+    return records.map(adaptAttendanceManagerDtoToRecord);
   },
   async getEmployeeAttendance(empNo, params) {
-    const response = await statisticsApi.getEmployeeAttendance(empNo, params);
-    const records = response.records.map(adaptStatisticsRecordToAttendanceRecord);
+    const records = (await attendanceApi.selectByPeriod(getPeriodKey(params)))
+      .map(adaptAttendanceManagerDtoToRecord)
+      .filter((record) => String(record.employeeId) === String(empNo));
+
     return { records, employees: adaptStatisticsRecordsToEmployees(records) };
   },
   async getMonthlyAttendanceRecords(params) {
-    const records = (await statisticsApi.getMonthlyAttendanceRecords(params))
-      .map(adaptStatisticsRecordToAttendanceRecord);
+    const records = (await attendanceApi.selectByPeriod(getPeriodKey(params)))
+      .map(adaptAttendanceManagerDtoToRecord);
     return { records, employees: adaptStatisticsRecordsToEmployees(records) };
   },
 };

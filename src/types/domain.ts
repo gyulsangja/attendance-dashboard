@@ -57,6 +57,7 @@ export type Holiday = {
   name: string;
   type: HolidayType;
   isActive: boolean;
+  etc?: string;
 };
 
 export type ReportEmployee = {

@@ -14,29 +14,28 @@ const unwrapHolidayList = (response: HolidayDto[] | HolidayListResponseDto) => {
 
 export const holidayApi = {
   async select(year: number) {
-    const response = await apiClient<HolidayDto[] | HolidayListResponseDto>(`/api/holiday/select/${year}`);
+    const response = await apiClient<HolidayDto[] | HolidayListResponseDto>(`/api/attend/manager/holiday/select/${year}`);
     return unwrapHolidayList(response);
   },
 
   insert(payload: HolidayDto) {
-    return apiClient<string>('/api/holiday/insert', {
+    return apiClient<string>('/api/attend/manager/holiday/insert', {
       method: 'POST',
       body: {
         holidayinfo: payload,
-        userinfo: payload,
       },
     });
   },
 
   modify(payload: HolidayDto) {
-    return apiClient<string>('/api/holiday/modify', {
+    return apiClient<string>('/api/attend/manager/holiday/modify', {
       method: 'POST',
       body: { holidayinfo: payload },
     });
   },
 
   delete(holidayId: string) {
-    return apiClient<string>(`/api/holiday/delete/${holidayId}`, {
+    return apiClient<string>(`/api/attend/manager/holiday/delete/${holidayId}`, {
       method: 'POST',
     });
   },

@@ -11,6 +11,7 @@ export type HolidayDto = {
   holiday_type?: string;
   holidayType?: string;
   type?: string;
+  etc?: string;
   use_status?: string;
   useStatus?: string;
   is_active?: boolean | string;

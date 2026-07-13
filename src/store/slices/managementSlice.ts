@@ -153,6 +153,23 @@ const managementSlice = createSlice({
       state.deviceUpload = summary;
       markCurrentWeekDirty(state);
     },
+    clearDeviceUpload(
+      state,
+      action: PayloadAction<{
+        startDate: string;
+        endDate: string;
+      }>,
+    ) {
+      if (state.confirmed) return;
+
+      const { startDate, endDate } = action.payload;
+      state.deviceRecords = state.deviceRecords.filter(
+        (record) => record.date < startDate || record.date > endDate,
+      );
+      state.csvUploaded = false;
+      state.deviceUpload = null;
+      markCurrentWeekDirty(state);
+    },
     saveDeviceRecord(state, action: PayloadAction<DeviceRecordPayload>) {
       if (state.confirmed) return;
 
@@ -218,6 +235,7 @@ export const {
   deletePendingShift,
   setCsvUploaded,
   uploadDeviceRecords,
+  clearDeviceUpload,
   saveDeviceRecord,
   deleteDeviceRecord,
   toggleManagementConfirmed,

@@ -174,6 +174,7 @@ export default function OperationManagementSection({
               }
               apiError={deviceRecordsApiError}
               onUpload={actions.handleDeviceUpload}
+              onDeleteUpload={actions.deleteDeviceUpload}
               templateEmployees={templateEmployees}
               days={weekDays}
               records={deviceRecords}

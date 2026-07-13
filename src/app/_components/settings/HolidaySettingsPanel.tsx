@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -7,6 +6,7 @@ import {
   Alert,
   Button,
   FormControl,
+  IconButton,
   InputLabel,
   MenuItem,
   Paper,
@@ -14,7 +14,6 @@ import {
   Stack,
   TextField,
   Tooltip,
-  IconButton,
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { koKR } from '@mui/x-data-grid/locales';
@@ -24,18 +23,15 @@ import {
   useInsertHolidayMutation,
   useModifyHolidayMutation,
 } from '@/hooks/useHolidayQueries';
-import type { Holiday, HolidayType } from '@/types/domain';
+import type { Holiday } from '@/types/domain';
 
 const TEXT = {
   title: '공휴일 설정',
-  description: '임시공휴일, 선거일, 회사 지정 휴일을 관리합니다.',
+  description: '연도별 공휴일을 조회하고 필요한 휴일을 추가, 수정, 삭제합니다.',
   year: '연도',
   date: '날짜',
   name: '공휴일명',
-  type: '유형',
-  status: '상태',
-  active: '사용',
-  inactive: '중지',
+  etc: '비고',
   manage: '관리',
   add: '추가',
   update: '수정 저장',
@@ -48,22 +44,13 @@ const TEXT = {
   emptyDate: '날짜를 선택해 주세요.',
 };
 
-const HOLIDAY_TYPE_LABELS: Record<HolidayType, string> = {
-  PUBLIC: '법정공휴일',
-  SUBSTITUTE: '대체공휴일',
-  TEMPORARY: '임시공휴일',
-  ELECTION: '선거일',
-  COMPANY: '회사지정휴일',
-};
-
-const holidayTypes = Object.keys(HOLIDAY_TYPE_LABELS) as HolidayType[];
-
 const createEmptyHoliday = (year: number): Holiday => ({
   id: '',
   date: `${year}-01-01`,
   name: '',
-  type: 'TEMPORARY',
+  type: 'PUBLIC',
   isActive: true,
+  etc: '',
 });
 
 const gridSx = {
@@ -128,6 +115,7 @@ export default function HolidaySettingsPanel() {
       ...form,
       id: editingId ?? (form.id || form.date),
       name: form.name.trim(),
+      etc: form.etc?.trim() ?? '',
     };
 
     const mutation = editingId ? modifyHolidayMutation : insertHolidayMutation;
@@ -137,20 +125,7 @@ export default function HolidaySettingsPanel() {
   const columns: GridColDef<Holiday>[] = [
     { field: 'date', headerName: TEXT.date, minWidth: 130, flex: 0.8 },
     { field: 'name', headerName: TEXT.name, minWidth: 180, flex: 1.2 },
-    {
-      field: 'type',
-      headerName: TEXT.type,
-      minWidth: 150,
-      flex: 0.9,
-      valueFormatter: (value: HolidayType) => HOLIDAY_TYPE_LABELS[value] ?? value,
-    },
-    {
-      field: 'isActive',
-      headerName: TEXT.status,
-      minWidth: 100,
-      flex: 0.6,
-      valueFormatter: (value: boolean) => (value ? TEXT.active : TEXT.inactive),
-    },
+    { field: 'etc', headerName: TEXT.etc, minWidth: 180, flex: 1.2 },
     {
       field: 'actions',
       headerName: TEXT.manage,
@@ -214,19 +189,13 @@ export default function HolidaySettingsPanel() {
             onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
             sx={{ minWidth: 220 }}
           />
-          <FormControl size="small" sx={{ minWidth: 170 }}>
-            <InputLabel id="holiday-type-label">{TEXT.type}</InputLabel>
-            <Select
-              labelId="holiday-type-label"
-              label={TEXT.type}
-              value={form.type}
-              onChange={(event) => setForm((prev) => ({ ...prev, type: event.target.value as HolidayType }))}
-            >
-              {holidayTypes.map((type) => (
-                <MenuItem key={type} value={type}>{HOLIDAY_TYPE_LABELS[type]}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <TextField
+            size="small"
+            label={TEXT.etc}
+            value={form.etc ?? ''}
+            onChange={(event) => setForm((prev) => ({ ...prev, etc: event.target.value }))}
+            sx={{ minWidth: 220 }}
+          />
           <Button variant="contained" startIcon={editingId ? <Save /> : <Add />} onClick={handleSave} disabled={isSaving}>
             {editingId ? TEXT.update : TEXT.add}
           </Button>

@@ -28,6 +28,7 @@ export const adaptHolidayDtoToHoliday = (dto: HolidayDto): Holiday => {
     name: dto.holiday_name ?? dto.holidayName ?? dto.name ?? '',
     type: toHolidayType(dto.holiday_type ?? dto.holidayType ?? dto.type),
     isActive: toBoolean(dto.use_status ?? dto.useStatus ?? dto.is_active ?? dto.isActive),
+    etc: dto.etc ?? '',
   };
 };
 
@@ -35,6 +36,5 @@ export const adaptHolidayToDto = (holiday: Holiday): HolidayDto => ({
   holiday_id: holiday.id,
   holiday_date: holiday.date,
   holiday_name: holiday.name,
-  holiday_type: holiday.type,
-  use_status: holiday.isActive ? 'Y' : 'N',
+  etc: holiday.etc ?? '',
 });

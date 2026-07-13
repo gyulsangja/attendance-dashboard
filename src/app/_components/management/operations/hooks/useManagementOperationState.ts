@@ -111,8 +111,8 @@ export const useManagementOperationState = () => {
     buildAttendanceWeekKey(management.year, management.month, management.weekNumber),
   );
   const apiWeekRecords = useMemo(
-    () => filterItemsByPeriod(apiRecordsQuery.data ?? [], week),
-    [apiRecordsQuery.data, week],
+    () => apiRecordsQuery.data ?? [],
+    [apiRecordsQuery.data],
   );
   const apiSummary = useMemo(
     () => adaptAttendManagerSummary(apiSummaryQuery.data),
@@ -159,7 +159,9 @@ export const useManagementOperationState = () => {
       shiftWorker: employee.shiftWorker,
     }))
     : templateEmployees;
-  const effectiveWeekTerminalRecords = filterItemsByPeriod(effectiveDeviceRecords, week)
+  const effectiveWeekTerminalRecords = (isApiDataSource
+    ? effectiveDeviceRecords
+    : filterItemsByPeriod(effectiveDeviceRecords, week))
     .filter((item) => Boolean(item.checkIn || item.checkOut));
   const effectiveWeekCsvUploaded = effectiveWeekTerminalRecords.length > 0;
   const effectiveSteps = steps.map((step, index) => {

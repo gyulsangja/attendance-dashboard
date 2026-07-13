@@ -2,7 +2,7 @@
 
 import { useState, type ChangeEvent, type DragEvent } from 'react';
 import { Alert, Button, CircularProgress } from '@mui/material';
-import { CloudDownload, CloudUpload } from '@mui/icons-material';
+import { CloudDownload, CloudUpload, Delete } from '@mui/icons-material';
 import { ApiError } from '@/api/client';
 import {
   type AttendanceRecord,
@@ -16,6 +16,7 @@ type DevicePanelProps = {
   uploaded: boolean;
   uploadSummary: DeviceUploadSummary | null;
   onUpload: (file: File) => Promise<DeviceUploadSummary>;
+  onDeleteUpload: () => Promise<void>;
   templateEmployees: Array<{
     employeeId: number;
     employeeName: string;
@@ -36,6 +37,7 @@ export default function DevicePanel({
   uploaded,
   uploadSummary,
   onUpload,
+  onDeleteUpload,
   templateEmployees,
   days,
   records,
@@ -45,13 +47,16 @@ export default function DevicePanel({
   recordsReadOnly = false,
 }: DevicePanelProps) {
   const [processing, setProcessing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [result, setResult] = useState<DeviceUploadSummary | null>(uploadSummary);
   const [fileError, setFileError] = useState('');
+  const [existingUploadBlocked, setExistingUploadBlocked] = useState(false);
 
   const handleFile = async (file?: File) => {
-    if (!file || locked) return;
+    if (!file || locked || uploaded || existingUploadBlocked) return;
     setFileError('');
+    setExistingUploadBlocked(false);
     const lowerFileName = file.name.toLowerCase();
     if (!lowerFileName.endsWith('.csv') && !lowerFileName.endsWith('.xlsx')) {
       setFileError('CSV 또는 XLSX 파일만 업로드할 수 있습니다.');
@@ -67,12 +72,40 @@ export default function DevicePanel({
       setResult(await onUpload(file));
     } catch (error) {
       if (error instanceof ApiError) {
-        setFileError(`업로드 API 호출에 실패했습니다. (${error.status}) ${error.message}`);
+        const isExistingUpload =
+          error.message.includes('Existed Attendance Information')
+          || String(error.payload).includes('Existed Attendance Information');
+
+        if (isExistingUpload) {
+          setExistingUploadBlocked(true);
+          setFileError('이미 해당 주차에 업로드된 출퇴근 기록이 있습니다. 기존 업로드를 삭제한 뒤 다시 업로드하세요.');
+        } else {
+          setFileError(`업로드 API 호출에 실패했습니다. (${error.status}) ${error.message}`);
+        }
       } else {
         setFileError('파일을 읽는 중 오류가 발생했습니다.');
       }
     } finally {
       setProcessing(false);
+    }
+  };
+
+  const handleDeleteUpload = async () => {
+    if (locked) return;
+    setFileError('');
+    setDeleting(true);
+    try {
+      await onDeleteUpload();
+      setResult(null);
+      setExistingUploadBlocked(false);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setFileError(`업로드 파일 삭제에 실패했습니다. (${error.status}) ${error.message}`);
+      } else {
+        setFileError('업로드 파일을 삭제하는 중 오류가 발생했습니다.');
+      }
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -149,6 +182,9 @@ export default function DevicePanel({
     : summary?.errorRows
       ? '일부 행만 반영되었습니다. 오류 내용을 확인해 주세요.'
       : '모든 출퇴근 데이터가 정상적으로 반영되었습니다.';
+  const uploadedByCurrentAction = Boolean(resultMatchesPeriod && summary && summary.validRows > 0);
+  const hasUploadedData = uploaded || existingUploadBlocked || uploadedByCurrentAction;
+  const showRecordsGrid = uploaded || uploadedByCurrentAction;
 
   return (
     <>
@@ -156,10 +192,10 @@ export default function DevicePanel({
         <div>
           <h2 className="font-bold">단말기 출퇴근 데이터</h2>
           <p className="mt-1 text-sm text-slate-500">
-            출입통제 파일 업로드 후 근태 일정과 출퇴근 시간을 함께 검토하고 수정합니다.
+            출입통제 파일을 업로드해 주차별 출퇴근 기록을 확인합니다.
           </p>
           <p className="mt-1 text-xs text-slate-400">
-            소장님이 전달한 출입통제 파일 컬럼 기준으로 업로드합니다.
+            이미 업로드된 주차는 기존 업로드를 삭제한 뒤 다시 업로드할 수 있습니다.
           </p>
         </div>
 
@@ -167,16 +203,28 @@ export default function DevicePanel({
           <Button variant="text" startIcon={<CloudDownload />} onClick={downloadTemplate}>
             출입통제 CSV 양식 받기
           </Button>
-          <Button
-            component="label"
-            variant={uploaded ? 'outlined' : 'contained'}
-            startIcon={<CloudUpload />}
-            disabled={processing || locked}
-            sx={uploaded ? undefined : { bgcolor: '#0f172a' }}
-          >
-            {uploaded ? '파일 다시 업로드' : '파일 업로드'}
-            <input hidden type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={handleChange} />
-          </Button>
+          {hasUploadedData ? (
+            <Button
+              color="error"
+              variant="outlined"
+              startIcon={deleting ? <CircularProgress size={16} /> : <Delete />}
+              disabled={deleting || locked}
+              onClick={handleDeleteUpload}
+            >
+              업로드 파일 삭제
+            </Button>
+          ) : (
+            <Button
+              component="label"
+              variant="contained"
+              startIcon={<CloudUpload />}
+              disabled={processing || locked}
+              sx={{ bgcolor: '#0f172a' }}
+            >
+              파일 업로드
+              <input hidden type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={handleChange} />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -205,7 +253,7 @@ export default function DevicePanel({
         </Alert>
       )}
 
-      {!uploaded && (
+      {!hasUploadedData && (
         <div
           className={`mt-6 rounded-xl border-2 border-dashed p-6 text-center transition ${dragging ? 'border-blue-500 bg-blue-50' : 'border-slate-300 bg-slate-50'}`}
           onDragOver={(event) => { event.preventDefault(); setDragging(true); }}
@@ -215,19 +263,26 @@ export default function DevicePanel({
           {processing ? <CircularProgress size={36} /> : <CloudUpload sx={{ fontSize: 36, color: '#64748b' }} />}
           <p className="mt-2 font-bold">CSV 또는 XLSX 파일을 선택하거나 이곳에 놓아주세요</p>
           <p className="mt-1 text-xs text-slate-500">
-            파일 업로드 없이도 아래 표에서 날짜 셀을 클릭해 직접 입력할 수 있습니다.
+            출퇴근 기록은 파일 업로드 후 조회된 내용 기준으로 관리합니다.
           </p>
         </div>
       )}
 
-      <WeeklyAttendanceGrid
-        days={days}
-        employees={templateEmployees}
-        records={records}
-        schedules={schedules}
-        onEdit={onEdit}
-        readOnly={locked || recordsReadOnly}
-      />
+      {showRecordsGrid && (
+        records.length > 0 ? (
+          <WeeklyAttendanceGrid
+            days={days}
+            records={records}
+            schedules={schedules}
+            onEdit={onEdit}
+            readOnly={locked || recordsReadOnly}
+          />
+        ) : (
+          <Alert severity="info" sx={{ mt: 3 }}>
+            업로드가 처리되었습니다. 출퇴근 기록 조회 결과가 준비되면 표에 표시됩니다.
+          </Alert>
+        )
+      )}
     </>
   );
 }

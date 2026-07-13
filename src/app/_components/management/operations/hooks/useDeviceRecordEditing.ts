@@ -112,7 +112,21 @@ export const useDeviceRecordEditing = ({
   const deleteDeviceTime = () => {
     if (!editingTime) return;
 
-    if (isApiDataSource) return;
+    if (isApiDataSource) {
+      void modifyRecordMutation.mutateAsync({
+        id: Number(`${editingTime.employeeId}${editingTime.date.replaceAll('-', '')}`),
+        employeeId: editingTime.employeeId,
+        employeeName: editingTime.employeeName ?? '-',
+        department: editingTime.department ?? '-',
+        position: editingTime.position ?? '-',
+        date: editingTime.date,
+        checkIn: '',
+        checkOut: '',
+        events: [],
+        memo: '',
+      }).then(() => setEditingTime(null));
+      return;
+    }
 
     dispatch(deleteDeviceRecord({
       employeeId: editingTime.employeeId,

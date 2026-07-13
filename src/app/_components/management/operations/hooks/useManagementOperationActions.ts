@@ -131,6 +131,7 @@ export const useManagementOperationActions = ({
       }
       dispatch(deleteSchedule(id));
     },
+    deleteDeviceUpload: deviceUpload.deleteDeviceUpload,
     handleDeviceUpload: deviceUpload.handleDeviceUpload,
     openTimeEditor: deviceEditing.openTimeEditor,
     saveDeviceTime: deviceEditing.saveDeviceTime,
