@@ -1,7 +1,9 @@
+import type { HolidayType } from '@/types/domain';
+
 export type KoreanPublicHoliday = {
   date: string;
   name: string;
-  type: 'PUBLIC' | 'SUBSTITUTE' | 'TEMPORARY' | 'ELECTION';
+  type: HolidayType;
 };
 
 // 프론트 목 환경에서 사용하는 대한민국 공휴일 달력입니다.
