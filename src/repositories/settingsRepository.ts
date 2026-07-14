@@ -92,7 +92,7 @@ const apiSettingsRepository: SettingsRepository = {
   },
 
   async updateWorkTimePolicy(policy) {
-    await settingsApi.modify(adaptPolicyToSettingDto(policy));
+    await settingsApi.saveAttendanceBase(adaptPolicyToSettingDto(policy));
   },
 };
 

@@ -21,7 +21,7 @@ type AttendanceCodeSettingsGridProps = {
 
 const TEXT = {
   label: '근태코드명',
-  exceptional: '특이근태',
+  exceptional: '특이근태 표시',
   show: '표시',
   hide: '미표시',
   startDate: '사용 시작일',
@@ -59,7 +59,7 @@ export default function AttendanceCodeSettingsGrid({
     {
       field: 'isExceptional',
       headerName: TEXT.exceptional,
-      minWidth: 120,
+      minWidth: 130,
       flex: 0.8,
       renderCell: ({ value }) => (
         <Chip size="small" label={value ? TEXT.show : TEXT.hide} color={value ? 'warning' : 'default'} />
@@ -69,12 +69,12 @@ export default function AttendanceCodeSettingsGrid({
     {
       field: 'actions',
       headerName: TEXT.manage,
-      minWidth: 100,
+      minWidth: 110,
       sortable: false,
       align: 'center',
       headerAlign: 'center',
       renderCell: ({ row }) => (
-        <div className="flex h-full items-center">
+        <div className="flex h-full items-center justify-center">
           <Tooltip title={actionsDisabled ? TEXT.apiPending : TEXT.edit}>
             <span>
               <IconButton size="small" disabled={actionsDisabled} onClick={() => onEdit(row)}>
@@ -110,8 +110,8 @@ export default function AttendanceCodeSettingsGrid({
   };
 
   return (
-    <Paper elevation={0} className="border border-slate-200">
-      <div className="flex items-center justify-between gap-4 px-5 py-3">
+    <Paper elevation={0} className="border border-slate-200 bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-3">
         <Tabs value={tab} onChange={(_event, value) => onTabChange(value)}>
           <Tab label={TEXT.codeTab} />
           <Tab label={TEXT.historyTab} />
@@ -140,4 +140,3 @@ export default function AttendanceCodeSettingsGrid({
     </Paper>
   );
 }
-

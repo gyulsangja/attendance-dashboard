@@ -32,15 +32,17 @@ export const invalidateWorkTimePolicyQueries = (queryClient: QueryClient) => {
 };
 
 export const invalidateAttendManagerQueries = (queryClient: QueryClient) => {
-  void queryClient.invalidateQueries({ queryKey: ['attend-manager-summary'] });
-  void queryClient.invalidateQueries({ queryKey: ['attend-manager-operation-confirm-status'] });
-  void queryClient.invalidateQueries({ queryKey: ['attend-manager-shift-month'] });
-  void queryClient.invalidateQueries({ queryKey: ['dashboard-weekly'] });
-  void queryClient.invalidateQueries({ queryKey: ['dashboard-block'] });
-  void queryClient.invalidateQueries({ queryKey: ['weekly-report'] });
-  void queryClient.invalidateQueries({ queryKey: ['statistics-attendance'] });
-  void queryClient.invalidateQueries({ queryKey: ['statistics-employee-attendance'] });
-  void queryClient.invalidateQueries({ queryKey: ['statistics-attendance-records-monthly'] });
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['attend-manager-summary'] }),
+    queryClient.invalidateQueries({ queryKey: ['attend-manager-operation-confirm-status'] }),
+    queryClient.invalidateQueries({ queryKey: ['attend-manager-shift-month'] }),
+    queryClient.invalidateQueries({ queryKey: ['dashboard-weekly'] }),
+    queryClient.invalidateQueries({ queryKey: ['dashboard-block'] }),
+    queryClient.invalidateQueries({ queryKey: ['weekly-report'] }),
+    queryClient.invalidateQueries({ queryKey: ['statistics-attendance'] }),
+    queryClient.invalidateQueries({ queryKey: ['statistics-employee-attendance'] }),
+    queryClient.invalidateQueries({ queryKey: ['statistics-attendance-records-monthly'] }),
+  ]);
 };
 
 export const invalidateHolidayQueries = (queryClient: QueryClient, year?: number) => {

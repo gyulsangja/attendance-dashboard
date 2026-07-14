@@ -19,15 +19,6 @@ export type AttendManagerMonthParams = {
   week: number;
 };
 
-
-const toParams = (params: Record<string, number | string>) =>
-  new URLSearchParams(
-    Object.entries(params).reduce<Record<string, string>>((result, [key, value]) => {
-      result[key] = String(value);
-      return result;
-    }, {}),
-  ).toString();
-
 const getShiftRows = (
   response: AttendManagerShiftScheduleDto[] | AttendManagerShiftScheduleListResponseDto,
 ) => {
@@ -55,12 +46,34 @@ const getShiftRows = (
 };
 
 const getSummary = (response: AttendManagerSummaryDto) =>
-  response.data ?? response.summary ?? response.operation_summary ?? response.operationSummary ?? response;
+  response.data
+  ?? response.summary
+  ?? response.operationalstatisticsinfo
+  ?? response.operationalStatisticsInfo
+  ?? response.operation_summary
+  ?? response.operationSummary
+  ?? response;
 
 const getConfirmStatus = (response: AttendManagerConfirmStatusDto) => {
   const nestedStatus = typeof response.status === 'object' ? response.status : undefined;
-  return response.data ?? nestedStatus ?? response.confirm_status ?? response.confirmStatus ?? response;
+  return response.data
+    ?? nestedStatus
+    ?? response.operationconfirm
+    ?? response.operationConfirm
+    ?? response.confirmstatus
+    ?? response.confirmStatusResult
+    ?? response.confirm_status
+    ?? response.confirmStatus
+    ?? response;
 };
+
+const buildWeekRequestBody = (params: AttendManagerWeekParams) => ({
+  confirmstatusinfo: {
+    year: String(params.year),
+    month: String(params.month),
+    week: String(params.week),
+  },
+});
 
 const buildShiftRequestBody = (schedule: AttendManagerShiftScheduleDto) => {
   const payload = {
@@ -104,7 +117,11 @@ export const attendManagerApi = {
 
   async getOperationConfirmStatus(params: AttendManagerWeekParams) {
     const response = await apiClient<AttendManagerConfirmStatusDto>(
-      `/api/attend/manager/confirm/status?${toParams(params)}`,
+      '/api/attend/manager/confirm/status',
+      {
+        method: 'POST',
+        body: buildWeekRequestBody(params),
+      },
     );
     return getConfirmStatus(response);
   },
@@ -150,16 +167,16 @@ export const attendManagerApi = {
   },
 
   confirmOperationWeek(params: AttendManagerWeekParams) {
-    return apiClient<string>('/api/attend/manager/confirm', {
+    return apiClient<string>('/api/attend/manager/confirm/submit', {
       method: 'POST',
-      body: params,
+      body: buildWeekRequestBody(params),
     });
   },
 
   cancelOperationWeek(params: AttendManagerWeekParams) {
     return apiClient<string>('/api/attend/manager/confirm/cancel', {
       method: 'POST',
-      body: params,
+      body: buildWeekRequestBody(params),
     });
   },
 

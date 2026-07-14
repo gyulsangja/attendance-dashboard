@@ -114,7 +114,6 @@ export const useManagementOperationActions = ({
 
       dispatch(addShifts(items));
     },
-    deleteDeviceTime: deviceEditing.deleteDeviceTime,
     deletePendingShift: async (id: number) => {
       if (isApiDataSource) {
         await deleteShiftMutation.mutateAsync(id);

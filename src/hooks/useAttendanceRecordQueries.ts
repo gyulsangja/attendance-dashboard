@@ -28,3 +28,15 @@ export const useModifyAttendanceRecordMutation = () => {
     },
   });
 };
+
+export const useDeleteAttendanceRecordMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (recordId: number) => attendanceRecordRepository.delete(recordId),
+    onSuccess: () => {
+      invalidateAttendanceRecordQueries(queryClient);
+      invalidateAttendManagerQueries(queryClient);
+    },
+  });
+};

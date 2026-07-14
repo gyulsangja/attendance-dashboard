@@ -1,10 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Add, Delete, Edit, Save } from '@mui/icons-material';
+import { Add, Delete, Edit } from '@mui/icons-material';
 import {
   Alert,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
   IconButton,
   InputLabel,
@@ -27,12 +31,13 @@ import type { Holiday } from '@/types/domain';
 
 const TEXT = {
   title: '공휴일 설정',
-  description: '연도별 공휴일을 조회하고 필요한 휴일을 추가, 수정, 삭제합니다.',
+  description: '연도별 공휴일을 조회하고 회사 지정 휴일이나 임시공휴일을 추가로 관리합니다.',
   year: '연도',
   date: '날짜',
   name: '공휴일명',
   etc: '비고',
   manage: '관리',
+  addHoliday: '공휴일 추가',
   add: '추가',
   update: '수정 저장',
   cancel: '취소',
@@ -69,6 +74,7 @@ export default function HolidaySettingsPanel() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Holiday>(() => createEmptyHoliday(currentYear));
   const [validationMessage, setValidationMessage] = useState('');
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const holidaysQuery = useHolidaysQuery(year);
   const insertHolidayMutation = useInsertHolidayMutation(year);
@@ -81,10 +87,18 @@ export default function HolidaySettingsPanel() {
     || modifyHolidayMutation.isError
     || deleteHolidayMutation.isError;
 
-  const resetForm = () => {
+  const closeDialog = () => {
     setEditingId(null);
     setForm(createEmptyHoliday(year));
     setValidationMessage('');
+    setDialogOpen(false);
+  };
+
+  const openAddDialog = () => {
+    setEditingId(null);
+    setForm(createEmptyHoliday(year));
+    setValidationMessage('');
+    setDialogOpen(true);
   };
 
   const handleYearChange = (nextYear: number) => {
@@ -92,12 +106,14 @@ export default function HolidaySettingsPanel() {
     setEditingId(null);
     setForm(createEmptyHoliday(nextYear));
     setValidationMessage('');
+    setDialogOpen(false);
   };
 
   const handleEdit = (holiday: Holiday) => {
     setEditingId(holiday.id);
     setForm({ ...holiday });
     setValidationMessage('');
+    setDialogOpen(true);
   };
 
   const handleSave = () => {
@@ -119,7 +135,7 @@ export default function HolidaySettingsPanel() {
     };
 
     const mutation = editingId ? modifyHolidayMutation : insertHolidayMutation;
-    mutation.mutate(nextHoliday, { onSuccess: resetForm });
+    mutation.mutate(nextHoliday, { onSuccess: closeDialog });
   };
 
   const columns: GridColDef<Holiday>[] = [
@@ -152,62 +168,37 @@ export default function HolidaySettingsPanel() {
 
   return (
     <section className="mt-5 space-y-4">
-      <Paper elevation={0} className="border border-slate-200 p-5">
+      <Paper elevation={0} className="border border-slate-200 bg-white p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-bold">{TEXT.title}</h2>
             <p className="mt-1 text-sm text-slate-500">{TEXT.description}</p>
           </div>
-          <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel id="holiday-year-label">{TEXT.year}</InputLabel>
-            <Select
-              labelId="holiday-year-label"
-              label={TEXT.year}
-              value={year}
-              onChange={(event) => handleYearChange(Number(event.target.value))}
-            >
-              {yearOptions.map((option) => (
-                <MenuItem key={option} value={option}>{option}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <div className="flex flex-wrap items-center gap-2">
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel id="holiday-year-label">{TEXT.year}</InputLabel>
+              <Select
+                labelId="holiday-year-label"
+                label={TEXT.year}
+                value={year}
+                onChange={(event) => handleYearChange(Number(event.target.value))}
+              >
+                {yearOptions.map((option) => (
+                  <MenuItem key={option} value={option}>{option}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Button variant="contained" startIcon={<Add />} onClick={openAddDialog}>
+              {TEXT.addHoliday}
+            </Button>
+          </div>
         </div>
 
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mt: 3, alignItems: 'center' }}>
-          <TextField
-            size="small"
-            type="date"
-            label={TEXT.date}
-            value={form.date}
-            onChange={(event) => setForm((prev) => ({ ...prev, date: event.target.value }))}
-            slotProps={{ inputLabel: { shrink: true } }}
-          />
-          <TextField
-            size="small"
-            label={TEXT.name}
-            value={form.name}
-            onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-            sx={{ minWidth: 220 }}
-          />
-          <TextField
-            size="small"
-            label={TEXT.etc}
-            value={form.etc ?? ''}
-            onChange={(event) => setForm((prev) => ({ ...prev, etc: event.target.value }))}
-            sx={{ minWidth: 220 }}
-          />
-          <Button variant="contained" startIcon={editingId ? <Save /> : <Add />} onClick={handleSave} disabled={isSaving}>
-            {editingId ? TEXT.update : TEXT.add}
-          </Button>
-          {editingId ? <Button onClick={resetForm}>{TEXT.cancel}</Button> : null}
-        </Stack>
-
-        {validationMessage && <Alert severity="warning" sx={{ mt: 2 }}>{validationMessage}</Alert>}
         {holidaysQuery.isError && <Alert severity="warning" sx={{ mt: 2 }}>{TEXT.loadError}</Alert>}
         {hasMutationError && <Alert severity="error" sx={{ mt: 2 }}>{TEXT.saveError}</Alert>}
       </Paper>
 
-      <Paper elevation={0} className="border border-slate-200 p-5">
+      <Paper elevation={0} className="border border-slate-200 bg-white p-5">
         <div className="h-[520px]">
           <DataGrid
             rows={holidays}
@@ -221,6 +212,41 @@ export default function HolidaySettingsPanel() {
           />
         </div>
       </Paper>
+
+      <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
+        <DialogTitle>{editingId ? TEXT.edit : TEXT.addHoliday}</DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <Stack spacing={2}>
+            <TextField
+              fullWidth
+              type="date"
+              label={TEXT.date}
+              value={form.date}
+              onChange={(event) => setForm((prev) => ({ ...prev, date: event.target.value }))}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+            <TextField
+              fullWidth
+              label={TEXT.name}
+              value={form.name}
+              onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+            />
+            <TextField
+              fullWidth
+              label={TEXT.etc}
+              value={form.etc ?? ''}
+              onChange={(event) => setForm((prev) => ({ ...prev, etc: event.target.value }))}
+            />
+            {validationMessage && <Alert severity="warning">{validationMessage}</Alert>}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button onClick={closeDialog}>{TEXT.cancel}</Button>
+          <Button variant="contained" disabled={isSaving} onClick={handleSave}>
+            {editingId ? TEXT.update : TEXT.add}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </section>
   );
 }

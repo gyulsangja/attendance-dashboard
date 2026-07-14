@@ -77,13 +77,13 @@ export const useManagementOperationState = () => {
     management.year,
     management.month,
     management.weekNumber,
-    false,
+    isApiDataSource,
   );
   const apiOperationConfirmStatusQuery = useAttendManagerOperationConfirmStatusQuery(
     management.year,
     management.month,
     management.weekNumber,
-    false,
+    isApiDataSource,
   );
   const apiShiftMonthQuery = useAttendManagerShiftMonthWeeksQuery(
     management.year,
@@ -118,17 +118,23 @@ export const useManagementOperationState = () => {
     () => adaptAttendManagerSummary(apiSummaryQuery.data),
     [apiSummaryQuery.data],
   );
+  const apiOperationConfirmed = useMemo(
+    () => (
+      apiOperationConfirmStatusQuery.data
+        ? adaptAttendManagerConfirmStatus(apiOperationConfirmStatusQuery.data, false)
+        : undefined
+    ),
+    [apiOperationConfirmStatusQuery.data],
+  );
   const apiMonthShifts = useMemo(() => {
     const schedules = (apiShiftMonthQuery.data ?? []).map(adaptAttendManagerShiftDtoToSchedule);
     return [...new Map(schedules.map((item) => [item.id, item])).values()];
   }, [apiShiftMonthQuery.data]);
   const effectiveConfirmed = isApiDataSource
     ? (
-      apiSummary?.operationConfirmed
-      ?? adaptAttendManagerConfirmStatus(
-        apiOperationConfirmStatusQuery.data,
-        false,
-      )
+      apiOperationConfirmed
+      ?? apiSummary?.operationConfirmed
+      ?? false
     )
     : management.confirmed;
   const effectiveDeviceRecords = isApiDataSource

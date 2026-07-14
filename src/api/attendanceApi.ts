@@ -107,7 +107,7 @@ export const attendanceApi = {
   },
 
   deleteByEmployee(idx: number | string) {
-    return apiClient<string>(`/api/attend/manager/delete/emp_no/${idx}`);
+    return apiClient<string>(`/api/attend/manager/delete/emp_no/${idx}?idx=${encodeURIComponent(String(idx))}`);
   },
 
   deleteByWeek(year: number | string, month: number | string, week: number | string) {
@@ -119,6 +119,8 @@ export const attendanceApi = {
 
     return apiClient<string>(`/api/attend/manager/delete/week?${params.toString()}`, {
       method: 'POST',
+      headers: { Accept: 'text/plain' },
+      body: '',
     });
   },
 

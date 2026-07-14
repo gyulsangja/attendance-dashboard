@@ -18,6 +18,8 @@ export type AttendManagerSummaryDto = {
   canModify?: boolean | string;
   data?: AttendManagerSummaryDto;
   summary?: AttendManagerSummaryDto;
+  operationalstatisticsinfo?: AttendManagerSummaryDto;
+  operationalStatisticsInfo?: AttendManagerSummaryDto;
   operation_summary?: AttendManagerSummaryDto;
   operationSummary?: AttendManagerSummaryDto;
 };
@@ -33,6 +35,10 @@ export type AttendManagerConfirmStatusDto = {
   canModify?: boolean | string;
   data?: AttendManagerConfirmStatusDto;
   status?: AttendManagerConfirmStatusDto | string;
+  operationconfirm?: AttendManagerConfirmStatusDto;
+  operationConfirm?: AttendManagerConfirmStatusDto;
+  confirmstatus?: AttendManagerConfirmStatusDto;
+  confirmStatusResult?: AttendManagerConfirmStatusDto;
   confirm_status?: AttendManagerConfirmStatusDto;
   confirmStatus?: AttendManagerConfirmStatusDto;
 };

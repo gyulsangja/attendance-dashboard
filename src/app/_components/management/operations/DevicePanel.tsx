@@ -211,7 +211,7 @@ export default function DevicePanel({
               disabled={deleting || locked}
               onClick={handleDeleteUpload}
             >
-              업로드 파일 삭제
+              선택 주차 근태정보 삭제
             </Button>
           ) : (
             <Button

@@ -136,6 +136,8 @@ export type DashboardWeeklyDto = {
   directLeaveCount?: number | string;
   data?: DashboardWeeklyDto;
   result?: DashboardWeeklyDto;
+  dashboardinfo?: DashboardWeeklyDto;
+  dashboardInfo?: DashboardWeeklyDto;
   dashboard?: DashboardWeeklyDto;
   weekly_dashboard?: DashboardWeeklyDto;
   weeklyDashboard?: DashboardWeeklyDto;

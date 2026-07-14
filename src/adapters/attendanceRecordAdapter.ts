@@ -43,9 +43,29 @@ export const adaptAttendanceManagerDtoToRecord = (
   dto: AttendanceManagerDto,
 ): AttendanceRecord => {
   const codeId =
-    dto.attend_code ?? dto.attendCode ?? dto.detail_code ?? dto.detailCode;
+    dto.attend_status
+    ?? dto.attendStatus
+    ?? dto.attend_code
+    ?? dto.attendCode
+    ?? dto.attendance_code
+    ?? dto.attendanceCode
+    ?? dto.detail_code
+    ?? dto.detailCode
+    ?? dto.attendance_name
+    ?? dto.attendanceName;
   const detail =
-    dto.attend_code_name ?? dto.attendCodeName ?? dto.attend_reason ?? dto.attendReason ?? dto.remark ?? dto.memo ?? dto.etc ?? '';
+    dto.attend_status_name
+    ?? dto.attendStatusName
+    ?? dto.attend_code_name
+    ?? dto.attendCodeName
+    ?? dto.attendance_name
+    ?? dto.attendanceName
+    ?? dto.attend_reason
+    ?? dto.attendReason
+    ?? dto.remark
+    ?? dto.memo
+    ?? dto.etc
+    ?? '';
 
   return {
     id: getRecordId(dto),
@@ -64,6 +84,8 @@ export const adaptAttendanceRecordToManagerDto = (
   record: AttendanceRecord,
 ): AttendanceManagerDto => ({
   id: record.id,
+  idx: record.id,
+  attend_card_no: record.employeeId,
   emp_no: record.employeeId,
   emp_name: record.employeeName,
   dept_name: record.department,
@@ -72,7 +94,12 @@ export const adaptAttendanceRecordToManagerDto = (
   attend_record_date: record.date,
   check_in: record.checkIn,
   check_out: record.checkOut,
+  attendance_time: record.checkIn,
+  leave_working_time: record.checkOut,
+  attend_status: record.events[0]?.codeId ?? '',
   attend_code: record.events[0]?.codeId ?? '',
+  attendance_code: record.events[0]?.codeId ?? '',
+  ttendance_code: record.events[0]?.codeId ?? '',
   detail_code: record.events[0]?.codeId ?? '',
   attend_reason: record.events.map((event) => event.detail).filter(Boolean).join(', '),
   attend_codes: record.events.map((event) => event.codeId),

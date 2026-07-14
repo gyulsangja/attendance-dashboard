@@ -47,20 +47,38 @@ const TEXT = {
   noAccess: '권한으로는 설정을 관리할 수 없습니다.',
   endDatePrompt: '사용 종료일을 입력하세요.',
   title: '설정',
-  description: '직원 정보 항목, 근태코드, 출퇴근 기준시간, 공휴일을 업무별로 관리합니다.',
-  apiInfo: 'API 모드에서는 설정한 항목들을 백엔드 API에 저장합니다. 저장 후 목록에 반영되지 않으면 백엔드 저장 필드 확인이 필요합니다.',
-  codeLoadError: '근태코드 API를 불러오지 못했습니다.',
-  codeMutationError: '근태코드 저장 중 오류가 발생했습니다. 백엔드 공통코드 저장 DTO 확인이 필요합니다.',
-  policyLoadError: '시스템 설정 API를 불러오지 못했습니다.',
-  policyMutationError: '기준시간 저장 중 오류가 발생했습니다. 백엔드 시스템 설정 API 구현 여부 확인이 필요합니다.',
-  employeeOptionsTab: '직원 정보 항목',
+  description: '직원 관리, 근태 관리, 근무시간, 공휴일에 필요한 기준값을 관리합니다.',
+  codeLoadError: '근태코드 목록을 불러오지 못했습니다.',
+  codeMutationError: '근태코드 저장 중 오류가 발생했습니다.',
+  policyLoadError: '근무시간 설정을 불러오지 못했습니다.',
+  policyMutationError: '근무시간 저장 중 오류가 발생했습니다.',
+  employeeOptionsTab: '직원 항목',
   attendanceCodeTab: '근태코드',
   workTimeTab: '근무시간',
   holidayTab: '공휴일',
   attendanceTitle: '근태코드 관리',
-  attendanceDescription: '지각, 조퇴, 결근, 연차 등 운영관리와 대시보드에서 사용할 근태코드를 관리합니다.',
+  attendanceDescription: '지각, 조퇴, 결근, 연차 등 운영관리와 상세보기에서 사용할 근태코드를 관리합니다.',
   addAttendanceCode: '근태코드 추가',
 };
+
+const settingsTabs = [
+  {
+    label: TEXT.employeeOptionsTab,
+    description: '직원 등록과 수정 화면에서 사용하는 직급, 근무유형, 재직상태를 관리합니다.',
+  },
+  {
+    label: TEXT.attendanceCodeTab,
+    description: '근태 일정과 자동판정 결과에 표시되는 근태코드를 관리합니다.',
+  },
+  {
+    label: TEXT.workTimeTab,
+    description: '일반근무와 반차의 출퇴근 기준시간을 관리합니다.',
+  },
+  {
+    label: TEXT.holidayTab,
+    description: '연도별 공휴일과 회사 지정 휴일을 관리합니다.',
+  },
+];
 
 export default function Page() {
   const access = useAccess();
@@ -158,8 +176,6 @@ export default function Page() {
         <p className="mt-1 text-sm text-slate-500">{TEXT.description}</p>
       </div>
 
-      {isApiDataSource && <Alert severity="info" sx={{ mt: 3 }}>{TEXT.apiInfo}</Alert>}
-
       {attendanceCodesQuery.isError && (
         <Alert severity="warning" sx={{ mt: 2 }}>{TEXT.codeLoadError}</Alert>
       )}
@@ -178,12 +194,14 @@ export default function Page() {
 
       <Paper elevation={0} className="mt-5 border border-slate-200 px-5">
         <Tabs value={settingsTab} onChange={(_event, value) => setSettingsTab(value)} variant="scrollable" scrollButtons="auto">
-          <Tab label={TEXT.employeeOptionsTab} />
-          <Tab label={TEXT.attendanceCodeTab} />
-          <Tab label={TEXT.workTimeTab} />
-          <Tab label={TEXT.holidayTab} />
+          {settingsTabs.map((tab) => <Tab key={tab.label} label={tab.label} />)}
         </Tabs>
       </Paper>
+
+      <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-5 py-4">
+        <p className="text-sm font-semibold text-slate-800">{settingsTabs[settingsTab].label}</p>
+        <p className="mt-1 text-sm text-slate-500">{settingsTabs[settingsTab].description}</p>
+      </div>
 
       {settingsTab === 0 && <EmployeeInfoOptionPanel />}
 

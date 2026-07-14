@@ -16,7 +16,7 @@ export default function ReportsPeriodSelector() {
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="mr-2 text-2xl font-bold">근태 현황</span>
+        <span className="mr-2 text-2xl font-bold">근태 상세보기</span>
         <FormControl variant="standard">
           <Select
             value={String(year)}

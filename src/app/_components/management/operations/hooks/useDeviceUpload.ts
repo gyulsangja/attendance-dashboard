@@ -16,7 +16,6 @@ import {
 } from '@/lib/csv/parseAttendanceCsv';
 import {
   invalidateAttendManagerQueries,
-  invalidateAttendanceRecordQueries,
 } from '@/hooks/useQueryInvalidation';
 import { buildAttendanceWeekKey } from '@/lib/attendance/attendancePeriodKey';
 import { queryKeys } from '@/lib/queryKeys';
@@ -141,9 +140,13 @@ export const useDeviceUpload = ({
 
   const deleteDeviceUpload = async () => {
     if (isApiDataSource) {
+      const weekKey = buildAttendanceWeekKey(year, month, weekNumber);
       await attendanceApi.deleteByWeek(year, month, weekNumber);
-      invalidateAttendanceRecordQueries(queryClient);
-      invalidateAttendManagerQueries(queryClient);
+      queryClient.setQueryData(queryKeys.attendanceRecords(weekKey), []);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.attendanceRecordsBase }),
+        invalidateAttendManagerQueries(queryClient),
+      ]);
       return;
     }
 

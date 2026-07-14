@@ -23,8 +23,9 @@ const isApiDebugEnabled = process.env.NEXT_PUBLIC_API_DEBUG === 'true';
 const SESSION_EXPIRED_MESSAGE = '로그인 시간이 만료되었습니다. 다시 로그인해 주세요.';
 
 const getBody = (body: unknown) => {
-  if (!body) return undefined;
+  if (body === undefined || body === null) return undefined;
   if (body instanceof FormData) return body;
+  if (typeof body === 'string') return body;
   return JSON.stringify(body);
 };
 

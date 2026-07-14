@@ -24,8 +24,8 @@ const TEXT = {
   editTitle: '근태코드 수정',
   addTitle: '근태코드 추가',
   label: '근태코드명',
-  labelPlaceholder: '예: 병가',
-  exceptional: '대시보드에 특이근태로 표시',
+  labelPlaceholder: '예: 병가, 연차, 결근',
+  exceptional: '상세보기와 대시보드에 특이근태로 표시',
   effectiveDate: '변경 적용일',
   startDate: '사용 시작일',
   cancel: '취소',
@@ -98,5 +98,3 @@ export default function AttendanceCodeDialog({ open, code, onClose, onSave }: Pr
     </Dialog>
   );
 }
-
-

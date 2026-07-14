@@ -3,13 +3,14 @@
 import {
   Alert,
   Button,
-  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControlLabel,
-  FormGroup,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   TextField,
 } from '@mui/material';
@@ -20,6 +21,7 @@ import { getAttendanceCodesAtDate } from '@/store/slices/attendanceCodeSlice';
 import { getOrganizationSnapshot } from '@/store/slices/organizationSlice';
 
 export type EditingTime = {
+  recordId?: number;
   employeeId: number;
   date: string;
   checkIn: string;
@@ -32,18 +34,14 @@ export type EditingTime = {
 
 type Props = {
   value: EditingTime | null;
-  canDelete: boolean;
   onChange: (value: EditingTime | null) => void;
   onSave: () => void;
-  onDelete: () => void;
 };
 
 export default function TimeEditDialog({
   value,
-  canDelete,
   onChange,
   onSave,
-  onDelete,
 }: Props) {
   const organization = useAppSelector((state) => state.organization);
   const codeMaster = useAppSelector((state) => state.attendanceCode);
@@ -99,47 +97,40 @@ export default function TimeEditDialog({
             slotProps={{ inputLabel: { shrink: true } }}
           />
           <Alert severity="info">
-            해당 일자에 사용 가능한 전체 근태코드를 직접 추가하거나 해제할 수 있습니다.
+            출퇴근 시간과 최종 근태 결과를 함께 수정할 수 있습니다.
           </Alert>
-          {isApiDataSource && (
-            <Alert severity="warning">
-              출퇴근 기록 삭제는 백엔드의 날짜+직원 기준 삭제 API가 확정된 뒤 사용할 수 있습니다.
-            </Alert>
+          {isApiDataSource && apiAttendanceCodesQuery.isLoading && (
+            <Alert severity="info">근태코드를 불러오는 중입니다.</Alert>
           )}
-          <FormGroup>
-            {isApiDataSource && apiAttendanceCodesQuery.isLoading && (
-              <Alert severity="info">근태코드를 불러오는 중입니다.</Alert>
-            )}
-            {isApiDataSource && apiAttendanceCodesQuery.isError && (
-              <Alert severity="warning">근태코드 API를 불러오지 못했습니다.</Alert>
-            )}
-            {attendanceCodes.map((code) => (
-              <FormControlLabel
-                key={code.id}
-                label={code.label}
-                control={(
-                  <Checkbox
-                    checked={value?.attendanceCodeIds.includes(code.id) ?? false}
-                    onChange={(event) => {
-                      if (!value) return;
-                      onChange({
-                        ...value,
-                        attendanceCodeIds: event.target.checked
-                          ? [...value.attendanceCodeIds, code.id]
-                          : value.attendanceCodeIds.filter((item) => item !== code.id),
-                      });
-                    }}
-                  />
-                )}
-              />
-            ))}
-          </FormGroup>
+          {isApiDataSource && apiAttendanceCodesQuery.isError && (
+            <Alert severity="warning">근태코드 API를 불러오지 못했습니다.</Alert>
+          )}
+          <FormControl fullWidth>
+            <InputLabel id="attendance-result-label">근태 결과</InputLabel>
+            <Select
+              labelId="attendance-result-label"
+              label="근태 결과"
+              value={value?.attendanceCodeIds[0] ?? ''}
+              onChange={(event) => {
+                if (!value) return;
+                const codeId = event.target.value;
+                onChange({
+                  ...value,
+                  attendanceCodeIds: codeId ? [codeId] : [],
+                });
+              }}
+            >
+              <MenuItem value="">선택 안 함</MenuItem>
+              {attendanceCodes.map((code) => (
+                <MenuItem key={code.id} value={code.id}>
+                  {code.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Stack>
       </DialogContent>
-      <DialogActions sx={{ justifyContent: 'space-between' }}>
-        <Button color="error" disabled={!canDelete} onClick={onDelete}>
-          출퇴근 기록 삭제
-        </Button>
+      <DialogActions>
         <Stack direction="row" spacing={1}>
           <Button onClick={() => onChange(null)}>취소</Button>
           <Button variant="contained" onClick={onSave}>수정 저장</Button>

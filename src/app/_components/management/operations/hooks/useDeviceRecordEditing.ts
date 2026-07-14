@@ -8,10 +8,7 @@ import type { AttendanceRecord } from '@/types/domain';
 import type { EditingTime } from '@/app/_components/management/operations/dialogs/TimeEditDialog';
 import { useAppDispatch } from '@/store/hooks';
 import { getAttendanceCodesAtDate } from '@/store/slices/attendanceCodeSlice';
-import {
-  deleteDeviceRecord,
-  saveDeviceRecord,
-} from '@/store/slices/managementSlice';
+import { saveDeviceRecord } from '@/store/slices/managementSlice';
 import {
   getOrganizationSnapshot,
   UNASSIGNED_TEAM_ID,
@@ -57,6 +54,7 @@ export const useDeviceRecordEditing = ({
     );
 
     setEditingTime({
+      recordId: record?.id,
       employeeId,
       date,
       checkIn: record?.checkIn ?? '',
@@ -89,7 +87,7 @@ export const useDeviceRecordEditing = ({
 
     if (isApiDataSource) {
       void modifyRecordMutation.mutateAsync({
-        id: Number(`${editingTime.employeeId}${editingTime.date.replaceAll('-', '')}`),
+        id: editingTime.recordId ?? Number(`${editingTime.employeeId}${editingTime.date.replaceAll('-', '')}`),
         employeeId: editingTime.employeeId,
         employeeName: editingTime.employeeName ?? '-',
         department: editingTime.department ?? '-',
@@ -109,38 +107,11 @@ export const useDeviceRecordEditing = ({
     setEditingTime(null);
   };
 
-  const deleteDeviceTime = () => {
-    if (!editingTime) return;
-
-    if (isApiDataSource) {
-      void modifyRecordMutation.mutateAsync({
-        id: Number(`${editingTime.employeeId}${editingTime.date.replaceAll('-', '')}`),
-        employeeId: editingTime.employeeId,
-        employeeName: editingTime.employeeName ?? '-',
-        department: editingTime.department ?? '-',
-        position: editingTime.position ?? '-',
-        date: editingTime.date,
-        checkIn: '',
-        checkOut: '',
-        events: [],
-        memo: '',
-      }).then(() => setEditingTime(null));
-      return;
-    }
-
-    dispatch(deleteDeviceRecord({
-      employeeId: editingTime.employeeId,
-      date: editingTime.date,
-    }));
-    setEditingTime(null);
-  };
-
   return {
     editingTime,
     setEditingTime,
     openTimeEditor,
     saveDeviceTime,
-    deleteDeviceTime,
     isSaving: modifyRecordMutation.isPending,
     isError: modifyRecordMutation.isError,
   };

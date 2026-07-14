@@ -10,6 +10,8 @@ export type DashboardWeeklyParams = {
 const unwrapDashboardWeekly = (response: DashboardWeeklyDto) =>
   response.data
   ?? response.result
+  ?? response.dashboardinfo
+  ?? response.dashboardInfo
   ?? response.dashboard
   ?? response.weekly_dashboard
   ?? response.weeklyDashboard
@@ -68,7 +70,7 @@ const getStatsDash = async (params: DashboardWeeklyParams) => {
 };
 
 export const dashboardApi = {
-  async getWeekly(params: DashboardWeeklyParams) {
+  getWeekly(params: DashboardWeeklyParams) {
     return getStatsDash(params);
   },
   getWeeklySummary(params: DashboardWeeklyParams) {
@@ -91,10 +93,12 @@ export const dashboardApi = {
       {
         method: 'POST',
         body: {
-          select_type: '3',
-          year: params.year,
-          month: params.month,
-          week: params.week,
+          shiftselectinfo: {
+            select_type: '3',
+            year: String(params.year),
+            month: String(params.month),
+            week: String(params.week),
+          },
         },
       },
     );

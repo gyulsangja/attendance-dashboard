@@ -10,6 +10,7 @@ import { isApiDataSource } from './config';
 export type AttendanceRecordRepository = {
   selectByWeek: (week: string) => Promise<AttendanceRecord[]>;
   modify: (record: AttendanceRecord) => Promise<void>;
+  delete: (recordId: number) => Promise<void>;
 };
 
 const mockAttendanceRecordRepository: AttendanceRecordRepository = {
@@ -20,6 +21,7 @@ const mockAttendanceRecordRepository: AttendanceRecordRepository = {
     }));
   },
   async modify() {},
+  async delete() {},
 };
 
 const overwriteDuplicateRecords = (records: AttendanceRecord[]) => {
@@ -39,6 +41,9 @@ const apiAttendanceRecordRepository: AttendanceRecordRepository = {
   },
   async modify(record) {
     await attendanceApi.modify(adaptAttendanceRecordToManagerDto(record));
+  },
+  async delete(recordId) {
+    await attendanceApi.deleteByEmployee(recordId);
   },
 };
 

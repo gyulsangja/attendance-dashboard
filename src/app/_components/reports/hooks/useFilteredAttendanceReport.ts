@@ -58,11 +58,13 @@ export function useFilteredAttendanceReport() {
     });
     return [...ids];
   }, [attendanceCodes, attendanceRecords]);
+
   useEffect(() => {
     if (initializedCodes.current || availableCodeIds.length === 0) return;
     setSelectedCodes(availableCodeIds);
     initializedCodes.current = true;
   }, [availableCodeIds]);
+
   const effectiveSelectedCodes = useMemo(
     () => selectedCodes.filter((id) => availableCodeIds.includes(id)),
     [availableCodeIds, selectedCodes],
@@ -105,8 +107,3 @@ export function useFilteredAttendanceReport() {
 }
 
 export { WEEKDAYS };
-
-
-
-
-

@@ -15,7 +15,6 @@ export default function ManagementDialogs({
   state,
 }: Props) {
   const {
-    deviceRecords,
     schedules,
     shifts,
     week,
@@ -60,14 +59,8 @@ export default function ManagementDialogs({
       />
       <TimeEditDialog
         value={dialogs.editingTime}
-        canDelete={deviceRecords.some(
-          (item) =>
-            item.employeeId === dialogs.editingTime?.employeeId
-            && item.date === dialogs.editingTime?.date,
-        )}
         onChange={dialogs.setEditingTime}
         onSave={actions.saveDeviceTime}
-        onDelete={actions.deleteDeviceTime}
       />
     </>
   );
