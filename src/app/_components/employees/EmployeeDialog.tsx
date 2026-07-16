@@ -60,6 +60,7 @@ const TEXT = {
   cancel: '취소',
   save: '저장',
   missingOptions: '직원 등록에 필요한 공통코드 선택값이 없습니다. 부서/직급/근무유형/재직상태 코드를 먼저 등록해 주세요.',
+  missingRetireDate: '퇴사 상태에서는 퇴사일을 입력해 주세요.',
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -74,6 +75,15 @@ const fallbackHoldStatuses: EmployeeDialogOption[] = [
 
 const toOptions = (values: string[]): EmployeeDialogOption[] =>
   values.map((value) => ({ value, label: value }));
+
+const isRetiredStatus = (code = '', label = '') => {
+  const normalizedCode = code.trim().toUpperCase();
+  const normalizedLabel = label.trim();
+  return normalizedCode === 'HOLD_RETIRED'
+    || normalizedCode.includes('RETIRED')
+    || normalizedLabel.includes('퇴사')
+    || normalizedLabel.includes('퇴직');
+};
 
 const emptyEmployee = (
   id: number,
@@ -149,8 +159,13 @@ function EmployeeDialogContent({
   const [form, setForm] = useState<OrganizationEmployee>(
     () => employee ?? emptyEmployee(nextId, defaultTeamId, defaultPosition, defaultHoldStatus),
   );
+  const [validationMessage, setValidationMessage] = useState('');
   const getOptionLabel = (options: EmployeeDialogOption[], value: string) =>
     options.find((option) => option.value === value)?.label ?? value;
+  const retired = isRetiredStatus(
+    form.backendHoldStatusCode ?? '',
+    form.backendHoldStatusName ?? getOptionLabel(resolvedHoldStatusOptions, form.backendHoldStatusCode ?? ''),
+  );
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -268,10 +283,13 @@ function EmployeeDialogContent({
                 value={form.backendHoldStatusCode ?? defaultHoldStatus}
                 onChange={(event) => {
                   const value = event.target.value;
+                  const label = getOptionLabel(resolvedHoldStatusOptions, value);
+                  const nextRetired = isRetiredStatus(value, label);
                   setForm({
                     ...form,
                     backendHoldStatusCode: value,
-                    backendHoldStatusName: getOptionLabel(resolvedHoldStatusOptions, value),
+                    backendHoldStatusName: label,
+                    endDate: nextRetired ? form.endDate : '',
                   });
                 }}
               >
@@ -307,16 +325,15 @@ function EmployeeDialogContent({
             slotProps={{ inputLabel: { shrink: true } }}
           />
 
-          {employee && (
-            <TextField
-              fullWidth
-              type="date"
-              label={TEXT.retireDate}
-              value={form.endDate ?? ''}
-              onChange={(event) => setForm({ ...form, endDate: event.target.value })}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-          )}
+          <TextField
+            fullWidth
+            type="date"
+            label={TEXT.retireDate}
+            value={retired ? form.endDate ?? '' : ''}
+            disabled={!retired}
+            onChange={(event) => setForm({ ...form, endDate: event.target.value })}
+            slotProps={{ inputLabel: { shrink: true } }}
+          />
 
           <TextField
             fullWidth
@@ -326,6 +343,7 @@ function EmployeeDialogContent({
             value={form.etc ?? ''}
             onChange={(event) => setForm({ ...form, etc: event.target.value })}
           />
+          {validationMessage && <Alert severity="warning">{validationMessage}</Alert>}
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 3 }}>
@@ -344,8 +362,14 @@ function EmployeeDialogContent({
               !form.backendHoldStatusCode
             ))
           }
-          onClick={() => onSave(
-            {
+          onClick={() => {
+            if (retired && !form.endDate) {
+              setValidationMessage(TEXT.missingRetireDate);
+              return;
+            }
+
+            setValidationMessage('');
+            onSave({
               ...form,
               employeeNo: form.employeeNo?.trim() ?? '',
               empCompany: form.empCompany?.trim() ?? '',
@@ -353,10 +377,10 @@ function EmployeeDialogContent({
               email: form.email?.trim() ?? '',
               phoneNo: form.phoneNo?.trim() ?? '',
               jobTitle: form.jobTitle.trim(),
+              endDate: retired ? form.endDate : '',
               etc: form.etc?.trim() ?? '',
-            },
-            form.startDate,
-          )}
+            }, form.startDate);
+          }}
         >
           {TEXT.save}
         </Button>

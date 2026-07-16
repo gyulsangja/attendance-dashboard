@@ -38,6 +38,8 @@ const normalizeEmployeePayload = (payload: EmployeeDto): EmployeeDto => ({
   phone_no: payload.phone_no ?? payload.phoneNo ?? '',
   hire_date: payload.hire_date ?? payload.hireDate ?? '',
   retire_date: payload.retire_date ?? payload.retireDate ?? '',
+  reg_date: payload.reg_date ?? payload.regDate ?? '',
+  modify_date: payload.modify_date ?? payload.modifyDate ?? '',
   etc: payload.etc ?? '',
 });
 

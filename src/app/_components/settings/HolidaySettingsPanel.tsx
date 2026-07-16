@@ -31,7 +31,7 @@ import type { Holiday } from '@/types/domain';
 
 const TEXT = {
   title: '공휴일 설정',
-  description: '연도별 공휴일을 조회하고 회사 지정 휴일이나 임시공휴일을 추가로 관리합니다.',
+  description: '연도별 공휴일과 회사 지정 휴일을 조회하고 개별로 추가, 수정, 삭제합니다.',
   year: '연도',
   date: '날짜',
   name: '공휴일명',
@@ -67,7 +67,7 @@ const gridSx = {
 export default function HolidaySettingsPanel() {
   const currentYear = new Date().getFullYear();
   const yearOptions = useMemo(
-    () => Array.from({ length: 5 }, (_item, index) => currentYear - 2 + index),
+    () => Array.from({ length: 5 }, (_item, index) => currentYear - 4 + index),
     [currentYear],
   );
   const [year, setYear] = useState(currentYear);

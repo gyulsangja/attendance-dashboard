@@ -47,6 +47,7 @@ const fallbackLookup: CommonCodeLookup = {
   getLabel: (_detailCode, fallback = '-') => fallback,
   getLabelInGroup: (_groupCode, _detailCode, fallback = '-') => fallback,
 };
+const DEFAULT_EMPTY_RETIRE_DATE = '0000-00-00';
 
 export const adaptEmployeeDtoToReportEmployee = (
   dto: EmployeeDto,
@@ -77,6 +78,8 @@ export const adaptEmployeeDtoToOrganizationEmployee = (
   shiftWorker: isShiftWorker(dto),
   startDate: dto.hire_date ?? dto.hireDate ?? '2024-01-01',
   endDate: dto.retire_date ?? dto.retireDate,
+  backendRegDate: dto.reg_date ?? dto.regDate ?? '',
+  backendModifyDate: dto.modify_date ?? dto.modifyDate ?? '',
   backendDeptCode: getDepartment(dto),
   backendDeptName: getDepartmentLabel(dto, lookup),
   backendRankCode: getPosition(dto),
@@ -101,7 +104,9 @@ export const adaptOrganizationEmployeeToEmployeeDto = (
   email: employee.email ?? '',
   phone_no: employee.phoneNo ?? '',
   hire_date: employee.startDate,
-  retire_date: employee.endDate ?? '',
+  retire_date: employee.endDate || DEFAULT_EMPTY_RETIRE_DATE,
+  reg_date: employee.backendRegDate ?? '',
+  modify_date: employee.backendModifyDate ?? '',
   etc: employee.etc ?? '',
 });
 

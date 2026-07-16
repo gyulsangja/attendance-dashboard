@@ -1,10 +1,12 @@
 import { Save } from '@mui/icons-material';
-import { Button, Paper, TextField } from '@mui/material';
+import { Alert, Button, Paper, TextField } from '@mui/material';
 import type { WorkTimePolicy } from '@/store/slices/attendanceCodeSlice';
 
 type WorkTimePolicyPanelProps = {
   policy: WorkTimePolicy;
   saving?: boolean;
+  saveMessage?: string;
+  errorMessage?: string;
   readOnly?: boolean;
   onPolicyChange: (policy: WorkTimePolicy) => void;
   onSave: () => void;
@@ -12,7 +14,7 @@ type WorkTimePolicyPanelProps = {
 
 const TEXT = {
   title: '근무시간 설정',
-  description: '일반근무와 반차의 출퇴근 기준시간을 설정합니다. 저장된 기준시간은 백엔드 자동판정 기준으로 사용됩니다.',
+  description: '일반근무와 반차 출퇴근 기준시간을 설정합니다. 저장된 기준시간은 백엔드 자동판정 기준으로 사용됩니다.',
   basicWork: '일반근무',
   halfAm: '오전반차',
   halfPm: '오후반차',
@@ -46,6 +48,8 @@ const workTimeGroups = [
 export default function WorkTimePolicyPanel({
   policy,
   saving = false,
+  saveMessage = '',
+  errorMessage = '',
   readOnly = false,
   onPolicyChange,
   onSave,
@@ -62,6 +66,8 @@ export default function WorkTimePolicyPanel({
             {saving ? TEXT.saving : TEXT.save}
           </Button>
         </div>
+        {saveMessage && <Alert severity="success" sx={{ mt: 2 }}>{saveMessage}</Alert>}
+        {errorMessage && <Alert severity="error" sx={{ mt: 2 }}>{errorMessage}</Alert>}
       </Paper>
 
       <div className="grid gap-4 md:grid-cols-3">

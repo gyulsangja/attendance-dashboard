@@ -43,6 +43,7 @@ const TEXT = {
   codeMutationError: '근태코드 저장 중 오류가 발생했습니다.',
   policyLoadError: '근무시간 설정을 불러오지 못했습니다.',
   policyMutationError: '근무시간 저장 중 오류가 발생했습니다.',
+  policyMutationSuccess: '근무시간 설정이 저장되었습니다.',
   employeeOptionsTab: '직원 항목',
   attendanceCodeTab: '근태코드',
   workTimeTab: '근무시간',
@@ -78,6 +79,7 @@ export default function Page() {
   const [settingsTab, setSettingsTab] = useState(0);
   const [editingCode, setEditingCode] = useState<AttendanceCode | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [policySaveMessage, setPolicySaveMessage] = useState('');
 
   const visibleCodes = useMemo(
     () => sourceCodes,
@@ -118,8 +120,12 @@ export default function Page() {
     || TEXT.codeMutationError;
 
   const savePolicy = () => {
+    setPolicySaveMessage('');
     updatePolicyMutation.mutate(effectivePolicy, {
-      onSuccess: () => dispatch(updateWorkTimePolicy(effectivePolicy)),
+      onSuccess: () => {
+        dispatch(updateWorkTimePolicy(effectivePolicy));
+        setPolicySaveMessage(TEXT.policyMutationSuccess);
+      },
     });
   };
 
@@ -140,10 +146,6 @@ export default function Page() {
 
       {workTimePolicyQuery.isError && (
         <Alert severity="warning" sx={{ mt: 2 }}>{TEXT.policyLoadError}</Alert>
-      )}
-
-      {updatePolicyMutation.isError && (
-        <Alert severity="error" sx={{ mt: 2 }}>{TEXT.policyMutationError}</Alert>
       )}
 
       <Paper elevation={0} className="mt-5 border border-slate-200 px-5">
@@ -178,10 +180,15 @@ export default function Page() {
         <WorkTimePolicyPanel
           policy={effectivePolicy}
           saving={updatePolicyMutation.isPending}
+          saveMessage={policySaveMessage}
+          errorMessage={updatePolicyMutation.isError
+            ? getErrorMessage(updatePolicyMutation.error) || TEXT.policyMutationError
+            : ''}
           readOnly={false}
           onPolicyChange={(nextPolicy) => {
             setPolicyTouched(true);
             setPolicy(nextPolicy);
+            setPolicySaveMessage('');
           }}
           onSave={savePolicy}
         />

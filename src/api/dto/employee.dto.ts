@@ -37,6 +37,10 @@
   hireDate?: string;
   retire_date?: string;
   retireDate?: string;
+  reg_date?: string;
+  regDate?: string;
+  modify_date?: string;
+  modifyDate?: string;
   shift_yn?: string;
   shiftYn?: string;
   etc?: string;

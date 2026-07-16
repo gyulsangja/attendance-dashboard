@@ -151,6 +151,8 @@ export type OrganizationEmployee = {
   shiftWorker: boolean;
   startDate: string;
   endDate?: string;
+  backendRegDate?: string;
+  backendModifyDate?: string;
   backendDeptCode?: string;
   backendDeptName?: string;
   backendRankCode?: string;
