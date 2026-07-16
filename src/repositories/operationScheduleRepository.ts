@@ -4,7 +4,6 @@ import {
   adaptOperationScheduleToEmployeeAttendDto,
 } from '@/adapters/operationScheduleAdapter';
 import type { OperationSchedule } from '@/types/domain';
-import { isApiDataSource } from './config';
 
 export type OperationScheduleSaveFailure = {
   schedule: OperationSchedule;
@@ -33,22 +32,6 @@ export type OperationScheduleRepository = {
   insertMany: (schedules: OperationSchedule[]) => Promise<OperationScheduleSaveResult>;
   modify: (schedule: OperationSchedule) => Promise<void>;
   delete: (schedule: OperationSchedule) => Promise<void>;
-};
-
-const mockOperationScheduleRepository: OperationScheduleRepository = {
-  async selectByPeriod() {
-    return [];
-  },
-  async insertMany(schedules) {
-    return {
-      totalCount: schedules.length,
-      successCount: schedules.length,
-      failureCount: 0,
-      failures: [],
-    };
-  },
-  async modify() {},
-  async delete() {},
 };
 
 const apiOperationScheduleRepository: OperationScheduleRepository = {
@@ -126,11 +109,9 @@ const apiOperationScheduleRepository: OperationScheduleRepository = {
   async modify(schedule) {
     await employeeApi.modifyAttend(adaptOperationScheduleToEmployeeAttendDto(schedule, { includeId: true }));
   },
-  async delete() {
-    throw new Error('근태일정 개별 삭제 API가 필요합니다. 현재 Swagger의 /api/employee/attend/delete/{emp_no}는 특정 일정 1건 삭제 기준으로 사용하기 어렵습니다.');
+  async delete(schedule) {
+    await employeeApi.deleteAttend(schedule.id);
   },
 };
 
-export const operationScheduleRepository = isApiDataSource
-  ? apiOperationScheduleRepository
-  : mockOperationScheduleRepository;
+export const operationScheduleRepository = apiOperationScheduleRepository;

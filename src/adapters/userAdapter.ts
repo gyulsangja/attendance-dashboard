@@ -1,6 +1,7 @@
 import type { UserInfoDto } from '@/api/dto/user.dto';
-import { applyDevelopmentAccessOverride, normalizeUserRole } from '@/adapters/authAdapter';
+import { normalizeUserRole } from '@/adapters/authAdapter';
 import type { CommonCodeLookup } from '@/adapters/commonCodeAdapter';
+import { getDefaultBackendRoleCode } from '@/constants/roles';
 import type { SystemUser, UserRole } from '@/types/domain';
 
 const toNumericUserId = (identifier: string) => {
@@ -25,7 +26,7 @@ export const adaptUserInfoDtoToSystemUser = (
   const backendRoleName = dto.role_name ?? dto.roleName ?? dto.auth_name ?? dto.authName
     ?? lookup?.getLabelInGroup('G_USER_LEVEL', backendRoleCode, backendRoleCode);
 
-  return applyDevelopmentAccessOverride({
+  return {
     id: toNumericUserId(identifier),
     username,
     password: dto.password ?? dto.user_pw ?? dto.userPw ?? '',
@@ -34,23 +35,23 @@ export const adaptUserInfoDtoToSystemUser = (
     empNo: dto.emp_no ?? dto.empNo,
     backendRoleCode,
     backendRoleName,
-  });
+  };
 };
 
 const backendRoleByFrontendRole: Record<UserRole, string> = {
-  ADMIN: 'ROLE_ADMIN',
-  EXECUTIVE: 'ROLE_EXECUTIVE',
-  ORGANIZATION_MANAGER: 'ROLE_ORGANIZATION_MANAGER',
-  SHIFT_MANAGER: 'ROLE_SHIFT_MANAGER',
-  GENERAL: 'ROLE_GENERAL',
+  ADMIN: getDefaultBackendRoleCode('ADMIN'),
+  EXECUTIVE: getDefaultBackendRoleCode('EXECUTIVE'),
+  ORGANIZATION_MANAGER: getDefaultBackendRoleCode('ORGANIZATION_MANAGER'),
+  SHIFT_MANAGER: getDefaultBackendRoleCode('SHIFT_MANAGER'),
+  GENERAL: getDefaultBackendRoleCode('GENERAL'),
 };
 
 export const adaptSystemUserToUserInfoDto = (user: SystemUser): UserInfoDto => ({
-  user_id: user.username,
-  password: user.password,
-  emp_no: user.empNo ?? '00000000',
-  user_name: user.name,
-  role_code: user.backendRoleCode || backendRoleByFrontendRole[user.role],
-  acc_stat_code: 'ACC01',
+  user_id: user.username.trim(),
+  password: user.password.trim(),
+  emp_no: user.empNo?.trim() ?? '',
+  user_name: user.name.trim(),
+  role_code: (user.backendRoleCode || backendRoleByFrontendRole[user.role]).trim(),
+  acct_stat_code: 'ACC01',
   etc: '',
 });

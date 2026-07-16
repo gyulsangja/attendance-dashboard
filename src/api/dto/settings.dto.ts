@@ -32,6 +32,8 @@ export type SystemSettingDto = {
   settinginfo?: SystemSettingDto;
   systemsetting?: SystemSettingDto;
   systemSetting?: SystemSettingDto;
+  attendbaseinfo?: SystemSettingDto;
+  attendBaseInfo?: SystemSettingDto;
   data?: SystemSettingDto;
   [key: string]: unknown;
 };

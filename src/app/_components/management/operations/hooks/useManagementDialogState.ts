@@ -40,6 +40,8 @@ export const useManagementDialogState = ({
       editingSchedule: scheduleEditing.editingSchedule,
       editingShift,
       editingTime: deviceEditing.editingTime,
+      hasDeviceTimeError: deviceEditing.isError,
+      isSavingDeviceTime: deviceEditing.isSaving,
       scheduleOpen,
       shiftOpen,
       setEditingSchedule: scheduleEditing.setEditingSchedule,

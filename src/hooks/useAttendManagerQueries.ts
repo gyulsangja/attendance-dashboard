@@ -34,6 +34,19 @@ export const useAttendManagerOperationConfirmStatusQuery = (
     retry: false,
   });
 
+export const useAttendManagerOperationConfirmStatusListQuery = (
+  year: number,
+  month: number,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: queryKeys.attendManagerOperationConfirmStatusList(year, month),
+    queryFn: () =>
+      attendManagerRepository.getOperationConfirmStatusList({ year, month, week: 1 }),
+    enabled: enabled && Boolean(year && month),
+    retry: false,
+  });
+
 export const useAttendManagerShiftMonthQuery = (
   year: number,
   month: number,
@@ -49,18 +62,60 @@ export const useAttendManagerShiftMonthQuery = (
 export const useAttendManagerShiftMonthWeeksQuery = (
   year: number,
   month: number,
-  weeks: Array<{ week: number }>,
+  weeks: Array<{ week: number; startDate?: string; endDate?: string }>,
   enabled = true,
 ) => {
+  const getLegacyWeekByDate = (dateKey: string) => {
+    const [targetYear, targetMonth, targetDay] = dateKey.split('-').map(Number);
+    const lastDay = new Date(targetYear, targetMonth, 0).getDate();
+    let currentDay = 1;
+    let week = 1;
+
+    while (currentDay <= lastDay) {
+      const currentDate = new Date(targetYear, targetMonth - 1, currentDay);
+      const endDay = Math.min(currentDay + (6 - currentDate.getDay()), lastDay);
+
+      if (targetDay >= currentDay && targetDay <= endDay) {
+        return { year: targetYear, month: targetMonth, week };
+      }
+
+      currentDay = endDay + 1;
+      week += 1;
+    }
+
+    return { year: targetYear, month: targetMonth, week: 1 };
+  };
+
+  const queryTargets = [
+    ...new Map(
+      weeks
+        .flatMap((item) => {
+          const targets = [{ year, month, week: item.week }];
+          const startMonth = item.startDate ? Number(item.startDate.slice(5, 7)) : month;
+          const endMonth = item.endDate ? Number(item.endDate.slice(5, 7)) : month;
+
+          if (item.startDate && startMonth !== month) {
+            targets.push(getLegacyWeekByDate(item.startDate));
+          }
+          if (item.endDate && endMonth !== month) {
+            targets.push(getLegacyWeekByDate(item.endDate));
+          }
+
+          return targets;
+        })
+        .map((item) => [`${item.year}-${item.month}-${item.week}`, item]),
+    ).values(),
+  ];
+
   const results = useQueries({
-    queries: weeks.map((item) => ({
-      queryKey: queryKeys.attendManagerShiftMonth(year, month, item.week),
+    queries: queryTargets.map((item) => ({
+      queryKey: queryKeys.attendManagerShiftMonth(item.year, item.month, item.week),
       queryFn: () => attendManagerRepository.getShiftMonth({
-        year,
-        month,
+        year: item.year,
+        month: item.month,
         week: item.week,
       }),
-      enabled: enabled && Boolean(year && month && item.week),
+      enabled: enabled && Boolean(item.year && item.month && item.week),
       retry: false,
     })),
   });

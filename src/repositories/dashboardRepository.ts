@@ -1,6 +1,5 @@
 import { dashboardApi, type DashboardWeeklyParams } from '@/api/dashboardApi';
 import type { DashboardWeeklyDto } from '@/api/dto/dashboard.dto';
-import { isApiDataSource } from './config';
 
 export type DashboardRepository = {
   getWeekly: (params: DashboardWeeklyParams) => Promise<DashboardWeeklyDto | null>;
@@ -9,15 +8,6 @@ export type DashboardRepository = {
   getWeeklyExceptionalRecords: (params: DashboardWeeklyParams) => Promise<DashboardWeeklyDto | null>;
   getWeeklyPlans: (params: DashboardWeeklyParams) => Promise<DashboardWeeklyDto | null>;
   getWeeklyShiftSchedules: (params: DashboardWeeklyParams) => Promise<DashboardWeeklyDto | null>;
-};
-
-const mockDashboardRepository: DashboardRepository = {
-  async getWeekly() { return null; },
-  async getWeeklySummary() { return null; },
-  async getWeeklyAttendanceCodeCounts() { return null; },
-  async getWeeklyExceptionalRecords() { return null; },
-  async getWeeklyPlans() { return null; },
-  async getWeeklyShiftSchedules() { return null; },
 };
 
 const apiDashboardRepository: DashboardRepository = {
@@ -41,6 +31,4 @@ const apiDashboardRepository: DashboardRepository = {
   },
 };
 
-export const dashboardRepository = isApiDataSource
-  ? apiDashboardRepository
-  : mockDashboardRepository;
+export const dashboardRepository = apiDashboardRepository;

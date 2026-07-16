@@ -25,6 +25,7 @@ export default function OperationManagementSection({
   const {
     attendManagerApiError,
     attendManagerApiLoading,
+    attendanceCodes,
     confirmed,
     deviceRecords,
     deviceRecordsApiError,
@@ -179,6 +180,7 @@ export default function OperationManagementSection({
               days={weekDays}
               records={deviceRecords}
               schedules={displayedWeekSchedules}
+              attendanceCodes={attendanceCodes}
               onEdit={actions.openTimeEditor}
               locked={confirmed}
               recordsReadOnly={false}

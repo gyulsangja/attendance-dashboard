@@ -1,40 +1,28 @@
 'use client';
 
-import { Edit, StopCircle } from '@mui/icons-material';
-import { Chip, IconButton, Paper, Tab, Tabs, TextField, Tooltip } from '@mui/material';
+import { Edit } from '@mui/icons-material';
+import { Chip, IconButton, Paper, Tooltip } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { koKR } from '@mui/x-data-grid/locales';
-import type { AttendanceCodeHistory } from '@/store/slices/attendanceCodeSlice';
 import type { AttendanceCode } from '@/types/domain';
 
 type AttendanceCodeSettingsGridProps = {
-  tab: number;
-  asOfDate: string;
   visibleCodes: AttendanceCode[];
-  history: AttendanceCodeHistory[];
-  onTabChange: (tab: number) => void;
-  onDateChange: (date: string) => void;
   onEdit: (code: AttendanceCode) => void;
-  onEnd: (code: AttendanceCode) => void;
   actionsDisabled?: boolean;
 };
 
 const TEXT = {
+  code: '관리코드',
   label: '근태코드명',
-  exceptional: '특이근태 표시',
-  show: '표시',
-  hide: '미표시',
-  startDate: '사용 시작일',
+  active: '사용 여부',
+  activeUse: '사용',
+  inactive: '미사용',
+  sortOrder: '표시 순서',
+  etc: '비고',
   manage: '관리',
   edit: '수정',
-  endUse: '사용 종료',
-  apiPending: 'API 수정 미구현',
-  codeTab: '근태코드',
-  historyTab: '변경 이력',
-  baseDate: '기준일',
-  effectiveDate: '적용일',
-  changeType: '변경 유형',
-  detail: '변경 내용',
+  apiPending: 'API 처리 중',
 };
 
 const gridSx = {
@@ -44,32 +32,48 @@ const gridSx = {
 };
 
 export default function AttendanceCodeSettingsGrid({
-  tab,
-  asOfDate,
   visibleCodes,
-  history,
-  onTabChange,
-  onDateChange,
   onEdit,
-  onEnd,
   actionsDisabled = false,
 }: AttendanceCodeSettingsGridProps) {
   const codeColumns: GridColDef<AttendanceCode>[] = [
-    { field: 'label', headerName: TEXT.label, minWidth: 150, flex: 1 },
+    { field: 'id', headerName: TEXT.code, minWidth: 120, flex: 0.7 },
+    { field: 'label', headerName: TEXT.label, minWidth: 160, flex: 1 },
     {
-      field: 'isExceptional',
-      headerName: TEXT.exceptional,
-      minWidth: 130,
-      flex: 0.8,
+      field: 'isActive',
+      headerName: TEXT.active,
+      minWidth: 110,
+      flex: 0.6,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: ({ value }) => (
-        <Chip size="small" label={value ? TEXT.show : TEXT.hide} color={value ? 'warning' : 'default'} />
+        <Chip
+          size="small"
+          label={value ? TEXT.activeUse : TEXT.inactive}
+          color={value ? 'success' : 'default'}
+        />
       ),
     },
-    { field: 'startDate', headerName: TEXT.startDate, minWidth: 130, flex: 0.9 },
+    {
+      field: 'sortOrder',
+      headerName: TEXT.sortOrder,
+      minWidth: 110,
+      flex: 0.6,
+      align: 'center',
+      headerAlign: 'center',
+      valueGetter: (_value, row) => row.sortOrder ?? 99,
+    },
+    {
+      field: 'etc',
+      headerName: TEXT.etc,
+      minWidth: 200,
+      flex: 1.3,
+      valueGetter: (_value, row) => row.etc || '-',
+    },
     {
       field: 'actions',
       headerName: TEXT.manage,
-      minWidth: 110,
+      minWidth: 90,
       sortable: false,
       align: 'center',
       headerAlign: 'center',
@@ -82,60 +86,24 @@ export default function AttendanceCodeSettingsGrid({
               </IconButton>
             </span>
           </Tooltip>
-          <Tooltip title={actionsDisabled ? TEXT.apiPending : TEXT.endUse}>
-            <span>
-              <IconButton size="small" color="error" disabled={actionsDisabled} onClick={() => onEnd(row)}>
-                <StopCircle fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
         </div>
       ),
     },
   ];
 
-  const historyColumns: GridColDef<AttendanceCodeHistory>[] = [
-    { field: 'effectiveDate', headerName: TEXT.effectiveDate, minWidth: 130, flex: 0.8 },
-    { field: 'codeLabel', headerName: TEXT.label, minWidth: 140, flex: 0.8 },
-    { field: 'changeType', headerName: TEXT.changeType, minWidth: 120, flex: 0.8 },
-    { field: 'detail', headerName: TEXT.detail, minWidth: 260, flex: 2 },
-  ];
-
-  const gridProps = {
-    pageSizeOptions: [10, 20],
-    initialState: { pagination: { paginationModel: { page: 0, pageSize: 10 } } },
-    disableRowSelectionOnClick: true,
-    localeText: koKR.components.MuiDataGrid.defaultProps.localeText,
-    sx: gridSx,
-  };
-
   return (
     <Paper elevation={0} className="border border-slate-200 bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-3">
-        <Tabs value={tab} onChange={(_event, value) => onTabChange(value)}>
-          <Tab label={TEXT.codeTab} />
-          <Tab label={TEXT.historyTab} />
-        </Tabs>
-        <TextField
-          size="small"
-          type="date"
-          label={TEXT.baseDate}
-          value={asOfDate}
-          onChange={(event) => onDateChange(event.target.value)}
-          slotProps={{ inputLabel: { shrink: true } }}
+      <div className="h-[590px] p-5">
+        <DataGrid
+          rows={[...visibleCodes].sort((a, b) =>
+            (a.sortOrder ?? 99) - (b.sortOrder ?? 99) || a.label.localeCompare(b.label, 'ko'))}
+          columns={codeColumns}
+          pageSizeOptions={[10, 20]}
+          initialState={{ pagination: { paginationModel: { page: 0, pageSize: 10 } } }}
+          disableRowSelectionOnClick
+          localeText={koKR.components.MuiDataGrid.defaultProps.localeText}
+          sx={gridSx}
         />
-      </div>
-
-      <div className="h-[590px] p-5 pt-3">
-        {tab === 0 ? (
-          <DataGrid rows={visibleCodes} columns={codeColumns} {...gridProps} />
-        ) : (
-          <DataGrid
-            rows={[...history].sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate))}
-            columns={historyColumns}
-            {...gridProps}
-          />
-        )}
       </div>
     </Paper>
   );

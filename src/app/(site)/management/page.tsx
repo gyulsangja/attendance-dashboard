@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { Alert } from '@mui/material';
 import {
   ManagementDialogs,
@@ -9,9 +10,23 @@ import {
   useManagementOperations,
 } from '@/app/_components';
 
+const tabByQuery: Record<string, number> = {
+  schedule: 0,
+  device: 1,
+  shift: 2,
+  confirm: 3,
+};
+
 export default function Page() {
   const operations = useManagementOperations();
-  const { access, actions, state } = operations;
+  const { access, actions, setTab, state } = operations;
+
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab');
+    if (tab && tabByQuery[tab] !== undefined) {
+      setTab(tabByQuery[tab]);
+    }
+  }, [setTab]);
 
   return (
     <main className="mx-auto max-w-[1600px]">

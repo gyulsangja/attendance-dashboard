@@ -3,6 +3,11 @@ import {
   ReportsSummaryBox,
   ReportsSubNav
 } from '@/app/_components';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '상세보기 | 엘엑스',
+};
 
 export default function Layout({
   children,

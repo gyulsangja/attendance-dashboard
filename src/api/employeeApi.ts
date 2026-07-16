@@ -8,11 +8,53 @@ import type {
   EmployeeResponseDto,
 } from './dto/employee.dto';
 
+const normalizeAttendSelectPayload = (payload: EmployeeAttendItemSelectRequestDto = {}) => ({
+  select_type: payload.select_type ?? payload.selectType ?? '',
+  year: payload.year === undefined || payload.year === null ? '' : String(payload.year),
+  month: payload.month === undefined || payload.month === null ? '' : String(payload.month),
+  week: payload.week === undefined || payload.week === null ? '' : String(payload.week),
+});
+
+const normalizeAttendanceItemsPayload = (payload: EmployeeAttendItemSelectRequestDto) => ({
+  select_type: payload.select_type ?? payload.selectType ?? '',
+  emp_no: payload.emp_no ?? payload.empNo ?? '',
+  attend_code: payload.attend_code ?? payload.attendCode ?? payload.detail_code ?? payload.detailCode ?? '',
+  year: payload.year === undefined || payload.year === null ? '' : String(payload.year),
+  month: payload.month === undefined || payload.month === null ? '' : String(payload.month),
+  week: payload.week === undefined || payload.week === null ? '' : String(payload.week),
+  start_date: payload.start_date ?? payload.startDate ?? payload.attend_date ?? payload.attendDate ?? '',
+  end_date: payload.end_date ?? payload.endDate ?? payload.attend_date ?? payload.attendDate ?? '',
+});
+
+const normalizeEmployeePayload = (payload: EmployeeDto): EmployeeDto => ({
+  emp_company: payload.emp_company ?? payload.empCompany ?? '',
+  emp_no: payload.emp_no ?? payload.empNo ?? '',
+  emp_name: payload.emp_name ?? payload.empName ?? payload.name ?? '',
+  dept_code: payload.dept_code ?? payload.deptCode ?? '',
+  rank_code: payload.rank_code ?? payload.rankCode ?? '',
+  work_type_code: payload.work_type_code ?? payload.workTypeCode ?? '',
+  hold_stat_code: payload.hold_stat_code ?? payload.holdStatCode ?? '',
+  email: payload.email ?? '',
+  phone_no: payload.phone_no ?? payload.phoneNo ?? '',
+  hire_date: payload.hire_date ?? payload.hireDate ?? '',
+  retire_date: payload.retire_date ?? payload.retireDate ?? '',
+  etc: payload.etc ?? '',
+});
+
+const normalizeEmployeeAttendPayload = (payload: EmployeeAttendDto): EmployeeAttendDto => ({
+  idx: payload.idx ?? payload.id ?? '',
+  attend_date: payload.attend_date ?? payload.attendDate ?? '',
+  emp_no: payload.emp_no ?? payload.empNo ?? '',
+  detail_code: payload.detail_code ?? payload.detailCode ?? payload.attend_code ?? payload.attendCode ?? '',
+  attend_reason: payload.attend_reason ?? payload.attendReason ?? payload.attend_name ?? payload.attendName ?? '',
+  etc: payload.etc ?? payload.memo ?? payload.remark ?? '',
+});
+
 export const employeeApi = {
   insert(payload: EmployeeDto) {
     return apiClient<string>('/api/employee/insert', {
       method: 'POST',
-      body: { newemployeeinfo: payload },
+      body: { newemployeeinfo: normalizeEmployeePayload(payload) },
     });
   },
 
@@ -32,7 +74,7 @@ export const employeeApi = {
   modify(payload: EmployeeDto) {
     return apiClient<string>('/api/employee/modify', {
       method: 'POST',
-      body: { employeeinfo: payload },
+      body: { employeedetailinfo: normalizeEmployeePayload(payload) },
     });
   },
 
@@ -45,14 +87,14 @@ export const employeeApi = {
   insertAttend(payload: EmployeeAttendDto) {
     return apiClient<string>('/api/employee/attend/insert', {
       method: 'POST',
-      body: { newattendanceinfo: payload },
+      body: { newattendanceinfo: normalizeEmployeeAttendPayload(payload) },
     });
   },
 
   async selectAttendAll(payload: EmployeeAttendItemSelectRequestDto = { select_type: '3' }) {
     const response = await apiClient<EmployeeAttendDto[] | EmployeeAttendListResponseDto>('/api/employee/attend/select', {
       method: 'POST',
-      body: { attendselectinfo: payload },
+      body: { attendselectinfo: normalizeAttendSelectPayload(payload) },
     });
     if (Array.isArray(response)) return response;
     return response.attendancelist
@@ -89,7 +131,7 @@ export const employeeApi = {
   async selectAttendByItems(payload: EmployeeAttendItemSelectRequestDto) {
     const response = await apiClient<EmployeeAttendDto[] | EmployeeAttendListResponseDto>('/api/employee/attend/select/items', {
       method: 'POST',
-      body: { attendanceitems: payload },
+      body: { attendanceitems: normalizeAttendanceItemsPayload(payload) },
     });
     if (Array.isArray(response)) return response;
     return response.attendancelist
@@ -108,12 +150,12 @@ export const employeeApi = {
   modifyAttend(payload: EmployeeAttendDto) {
     return apiClient<string>('/api/employee/attend/modify', {
       method: 'POST',
-      body: { attendanceinfo: payload },
+      body: { attendanceinfo: normalizeEmployeeAttendPayload(payload) },
     });
   },
 
-  deleteAttend(empNo: number | string) {
-    return apiClient<string>(`/api/employee/attend/delete/${empNo}`, {
+  deleteAttend(idx: number | string) {
+    return apiClient<string>(`/api/employee/attend/delete/${idx}`, {
       method: 'POST',
     });
   },

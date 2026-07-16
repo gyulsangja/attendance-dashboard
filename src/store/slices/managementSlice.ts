@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { getReportEmployeesForDate } from '@/mocks/reports/reportData';
 import {
   addScheduleEventToRecords,
   deleteDeviceRecordTimes,
@@ -29,10 +28,7 @@ import type { DeviceRecordPayload } from '@/types/management';
 
 const initialState = buildInitialManagementState();
 
-const getEmployeePosition = (schedule: OperationSchedule) =>
-  getReportEmployeesForDate(schedule.date).find(
-    (employee) => employee.id === schedule.employeeId,
-  )?.position ?? '-';
+const getEmployeePosition = (schedule: OperationSchedule) => schedule.type || '-';
 
 const managementSlice = createSlice({
   name: 'management',
@@ -174,13 +170,9 @@ const managementSlice = createSlice({
       if (state.confirmed) return;
 
       const payload = action.payload;
-      const employee = getReportEmployeesForDate(payload.date).find(
-        (item) => item.id === payload.employeeId,
-      );
       state.deviceRecords = saveDeviceRecordToRecords(
         state.deviceRecords,
         payload,
-        employee,
       );
       markCurrentWeekDirty(state);
     },

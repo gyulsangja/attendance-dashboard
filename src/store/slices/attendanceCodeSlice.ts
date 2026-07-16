@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { attendanceCodes, type AttendanceCode } from '@/mocks';
-import type { WorkTimePolicy } from '@/types/domain';
+import type { AttendanceCode, WorkTimePolicy } from '@/types/domain';
 
 export type AttendanceCodeHistory = {
   id: string;
@@ -21,7 +20,7 @@ type AttendanceCodeState = {
 export type { WorkTimePolicy } from '@/types/domain';
 
 const codePolicyDetail = (code: AttendanceCode) =>
-  `특이근태 ${code.isExceptional ? '표시' : '미표시'}`;
+  `${code.label} 코드 ${code.isActive ? '사용' : '미사용'}`;
 
 const initialState: AttendanceCodeState = {
   workTimePolicy: {
@@ -34,15 +33,8 @@ const initialState: AttendanceCodeState = {
     lateGraceMinutes: 0,
     earlyLeaveGraceMinutes: 0,
   },
-  codes: attendanceCodes.map((code) => ({ ...code })),
-  history: attendanceCodes.map((code, index) => ({
-    id: `code-history-${index}`,
-    codeId: code.id,
-    codeLabel: code.label,
-    effectiveDate: code.startDate,
-    changeType: '코드 생성',
-    detail: codePolicyDetail(code),
-  })),
+  codes: [],
+  history: [],
 };
 
 const attendanceCodeSlice = createSlice({
@@ -98,7 +90,7 @@ const attendanceCodeSlice = createSlice({
         codeLabel: code.label,
         effectiveDate: action.payload.effectiveDate,
         changeType: '코드 종료',
-        detail: `${action.payload.effectiveDate}부터 신규 입력 중단`,
+        detail: `${action.payload.effectiveDate}부터 사용 중지`,
         before,
       });
     },

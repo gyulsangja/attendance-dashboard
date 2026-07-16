@@ -17,10 +17,6 @@ import { useLoginMutation } from '@/hooks/useAuthMutations';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { login, setApiSession } from '@/store/slices/authSlice';
 
-const isApiLoginMode = process.env.NEXT_PUBLIC_DATA_SOURCE !== 'mock';
-const defaultUsername = isApiLoginMode ? 'dev1' : 'admin';
-const defaultPassword = isApiLoginMode ? 'password123' : 'admin123';
-
 const getInitialAuthMessage = () => (
   typeof window === 'undefined' ? '' : tokenStorage.getAuthMessage() ?? ''
 );
@@ -32,10 +28,10 @@ export default function Page() {
   const { users, currentUserId } = useAppSelector((state) => state.auth);
   const [username, setUsername] = useState(() => (
     typeof window === 'undefined'
-      ? defaultUsername
-      : window.localStorage.getItem('attendance-saved-id') ?? defaultUsername
+      ? ''
+      : window.localStorage.getItem('attendance-saved-id') ?? ''
   ));
-  const [password, setPassword] = useState(defaultPassword);
+  const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(() => (
     typeof window === 'undefined'
       ? false
@@ -68,8 +64,8 @@ export default function Page() {
           else dispatch(login(user.id));
           router.replace(getDefaultPath(user.role));
         },
-        onError: (error) => {
-          setError(error instanceof Error ? error.message : '로그인에 실패했습니다.');
+        onError: (loginError) => {
+          setError(loginError instanceof Error ? loginError.message : '로그인에 실패했습니다.');
         },
       },
     );
@@ -140,21 +136,6 @@ export default function Page() {
           >
             {loginMutation.isPending ? '로그인 중' : '로그인'}
           </Button>
-
-          <div className="mt-6 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
-            <p className="font-bold">검증용 계정</p>
-            {isApiLoginMode ? (
-              <p className="mt-2">백엔드 테스트: dev1 / password123</p>
-            ) : (
-              <>
-                <p className="mt-2">관리자: admin / admin123</p>
-                <p>경영진: executive / 1234</p>
-                <p>교대 담당: shift / 1234</p>
-                <p>조직 담당: organization / 1234</p>
-                <p>일반 사용자: user / 1234</p>
-              </>
-            )}
-          </div>
         </div>
       </div>
     </div>

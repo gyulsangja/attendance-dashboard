@@ -1,4 +1,5 @@
 import type { StatisticsAttendanceRecordDto } from '@/api/dto/statistics.dto';
+import type { EmployeeAttendDto } from '@/api/dto/employee.dto';
 import type { AttendanceRecord, ReportEmployee } from '@/types/domain';
 
 const toNumber = (value: unknown, fallback = 0) => {
@@ -73,4 +74,44 @@ export const adaptStatisticsRecordsToEmployees = (
 
   return [...employeeMap.values()].sort((a, b) =>
     a.department.localeCompare(b.department, 'ko') || a.name.localeCompare(b.name, 'ko'));
+};
+
+export const adaptEmployeeAttendDtoToAttendanceRecord = (
+  dto: EmployeeAttendDto,
+  index: number,
+): AttendanceRecord => {
+  const empNo = dto.emp_no ?? dto.empNo ?? index + 1;
+  const date = dto.attend_date ?? dto.attendDate ?? '';
+  const codeId = dto.attend_code
+    ?? dto.attendCode
+    ?? dto.detail_code
+    ?? dto.detailCode
+    ?? '';
+  const codeName = dto.attend_code_name
+    ?? dto.attendCodeName
+    ?? dto.attend_name
+    ?? dto.attendName
+    ?? dto.detail_code_name
+    ?? dto.detailCodeName
+    ?? dto.attend_reason
+    ?? dto.attendReason
+    ?? codeId;
+  const detail = dto.memo
+    ?? dto.remark
+    ?? dto.etc
+    ?? codeName
+    ?? '';
+
+  return {
+    id: toNumber(dto.id ?? dto.idx, toIdNumber(`${empNo}-${date}-${codeId}-${index}`, `${empNo}-${date}-${codeId}-${index}`)),
+    employeeId: toIdNumber(empNo, String(empNo)),
+    employeeName: dto.emp_name ?? dto.empName ?? String(empNo),
+    department: dto.dept_name ?? dto.deptName ?? dto.dept_code ?? dto.deptCode ?? '-',
+    position: dto.rank_name ?? dto.rankName ?? dto.rank_code ?? dto.rankCode ?? '-',
+    date,
+    checkIn: dto.start_time ?? dto.startTime,
+    checkOut: dto.end_time ?? dto.endTime,
+    events: codeId ? [{ codeId, detail }] : [],
+    memo: detail,
+  };
 };

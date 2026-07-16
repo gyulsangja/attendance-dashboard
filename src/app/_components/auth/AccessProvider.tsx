@@ -2,12 +2,11 @@
 
 import { useEffect, useMemo } from 'react';
 import { tokenStorage } from '@/api/tokenStorage';
-import { applyDevelopmentAccessOverride } from '@/adapters/authAdapter';
-import { userRoles } from '@/mocks';
+import { userRoles } from '@/constants/roles';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setApiSession } from '@/store/slices/authSlice';
 
-export type { UserRole } from '@/mocks';
+export type { UserRole } from '@/types/domain';
 
 export function AccessProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
@@ -18,7 +17,7 @@ export function AccessProvider({ children }: { children: React.ReactNode }) {
 
     const accessToken = tokenStorage.getAccessToken();
     const user = tokenStorage.getSessionUser();
-    if (accessToken && user) dispatch(setApiSession({ user: applyDevelopmentAccessOverride(user), accessToken }));
+    if (accessToken && user) dispatch(setApiSession({ user, accessToken }));
   }, [currentUserId, dispatch]);
 
   return children;
@@ -27,8 +26,8 @@ export function AccessProvider({ children }: { children: React.ReactNode }) {
 export function useAccess() {
   const { users, currentUserId } = useAppSelector((state) => state.auth);
   const storedCurrentUser = users.find((user) => user.id === currentUserId) ?? null;
-  const currentUser = storedCurrentUser ? applyDevelopmentAccessOverride(storedCurrentUser) : null;
-  const role = currentUser?.role ?? 'EXECUTIVE';
+  const currentUser = storedCurrentUser;
+  const role = currentUser?.role ?? 'GENERAL';
 
   return useMemo(() => {
     const config = userRoles.find((item) => item.id === role) ?? userRoles[0];
@@ -36,7 +35,7 @@ export function useAccess() {
       role,
       currentUser,
       isAuthenticated: Boolean(currentUser),
-      roleLabel: config.label,
+      roleLabel: currentUser?.backendRoleName ?? config.label,
       canViewDashboard: config.canViewDashboard,
       canViewReports: config.canViewReports,
       canManageOperations: config.canManageOperations,

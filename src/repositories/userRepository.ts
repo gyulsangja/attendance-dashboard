@@ -3,25 +3,14 @@ import {
   adaptSystemUserToUserInfoDto,
   adaptUserInfoDtoToSystemUser,
 } from '@/adapters/userAdapter';
-import { systemUsers } from '@/mocks';
 import type { SystemUser } from '@/types/domain';
 import { commonCodeRepository } from './commonCodeRepository';
-import { isApiDataSource } from './config';
 
 export type UserRepository = {
   selectAll: () => Promise<SystemUser[]>;
   insert: (user: SystemUser) => Promise<void>;
   modify: (user: SystemUser) => Promise<void>;
   delete: (user: SystemUser) => Promise<void>;
-};
-
-const mockUserRepository: UserRepository = {
-  async selectAll() {
-    return systemUsers.map((user) => ({ ...user }));
-  },
-  async insert() {},
-  async modify() {},
-  async delete() {},
 };
 
 const apiUserRepository: UserRepository = {
@@ -43,6 +32,4 @@ const apiUserRepository: UserRepository = {
   },
 };
 
-export const userRepository = isApiDataSource
-  ? apiUserRepository
-  : mockUserRepository;
+export const userRepository = apiUserRepository;

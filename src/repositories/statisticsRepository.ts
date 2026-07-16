@@ -1,11 +1,12 @@
 import { attendanceApi } from '@/api/attendanceApi';
+import { employeeApi } from '@/api/employeeApi';
 import type { StatisticsMonthlyParams, StatisticsPeriodParams } from '@/api/statisticsApi';
 import { adaptAttendanceManagerDtoToRecord } from '@/adapters/attendanceRecordAdapter';
 import {
+  adaptEmployeeAttendDtoToAttendanceRecord,
   adaptStatisticsRecordsToEmployees,
 } from '@/adapters/statisticsAdapter';
 import type { AttendanceRecord, ReportEmployee } from '@/types/domain';
-import { isApiDataSource } from './config';
 
 export type StatisticsRepository = {
   getAttendance: (params: StatisticsPeriodParams) => Promise<AttendanceRecord[]>;
@@ -16,18 +17,6 @@ export type StatisticsRepository = {
   getMonthlyAttendanceRecords: (
     params: StatisticsMonthlyParams
   ) => Promise<{ records: AttendanceRecord[]; employees: ReportEmployee[] }>;
-};
-
-const mockStatisticsRepository: StatisticsRepository = {
-  async getAttendance() {
-    return [];
-  },
-  async getEmployeeAttendance() {
-    return { records: [], employees: [] };
-  },
-  async getMonthlyAttendanceRecords() {
-    return { records: [], employees: [] };
-  },
 };
 
 const getPeriodKey = (params: StatisticsPeriodParams | StatisticsMonthlyParams) => {
@@ -44,14 +33,45 @@ const getPeriodKey = (params: StatisticsPeriodParams | StatisticsMonthlyParams) 
   return String(params.year);
 };
 
+const getEmployeeAttendSelectPayload = (params: StatisticsPeriodParams) => {
+  if (params.periodType === 'WEEK' && params.month && params.week) {
+    return {
+      select_type: '2',
+      year: String(params.year),
+      month: String(params.month),
+      week: String(params.week),
+    };
+  }
+
+  if (params.periodType === 'MONTH' && params.month) {
+    return {
+      select_type: '2',
+      year: String(params.year),
+      month: String(params.month),
+      week: '',
+    };
+  }
+
+  return {
+    select_type: '3',
+    year: String(params.year),
+    month: '',
+    week: '',
+  };
+};
+
+const selectEmployeeAttendByPeriod = async (params: StatisticsPeriodParams) => {
+  return employeeApi.selectAttendAll(getEmployeeAttendSelectPayload(params));
+};
+
 const apiStatisticsRepository: StatisticsRepository = {
   async getAttendance(params) {
-    const records = await attendanceApi.selectByPeriod(getPeriodKey(params));
-    return records.map(adaptAttendanceManagerDtoToRecord);
+    const records = await selectEmployeeAttendByPeriod(params);
+    return records.map(adaptEmployeeAttendDtoToAttendanceRecord);
   },
   async getEmployeeAttendance(empNo, params) {
-    const records = (await attendanceApi.selectByPeriod(getPeriodKey(params)))
-      .map(adaptAttendanceManagerDtoToRecord)
+    const records = (await selectEmployeeAttendByPeriod(params))
+      .map(adaptEmployeeAttendDtoToAttendanceRecord)
       .filter((record) => String(record.employeeId) === String(empNo));
 
     return { records, employees: adaptStatisticsRecordsToEmployees(records) };
@@ -63,6 +83,4 @@ const apiStatisticsRepository: StatisticsRepository = {
   },
 };
 
-export const statisticsRepository = isApiDataSource
-  ? apiStatisticsRepository
-  : mockStatisticsRepository;
+export const statisticsRepository = apiStatisticsRepository;

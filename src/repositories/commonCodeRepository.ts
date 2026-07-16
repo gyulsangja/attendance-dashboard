@@ -8,7 +8,6 @@ import {
   type CommonCodeLookup,
   type CommonGroup,
 } from '@/adapters/commonCodeAdapter';
-import { isApiDataSource } from './config';
 
 export type CommonCodeRepository = {
   selectCodes: () => Promise<CommonCode[]>;
@@ -17,23 +16,6 @@ export type CommonCodeRepository = {
   insertCode: (code: CommonCode) => Promise<void>;
   modifyCode: (code: CommonCode) => Promise<void>;
   deleteCode: (detailCode: string) => Promise<void>;
-};
-
-const emptyLookup = buildCommonCodeLookup([]);
-
-const mockCommonCodeRepository: CommonCodeRepository = {
-  async selectCodes() {
-    return [];
-  },
-  async selectGroups() {
-    return [];
-  },
-  async selectLookup() {
-    return emptyLookup;
-  },
-  async insertCode() {},
-  async modifyCode() {},
-  async deleteCode() {},
 };
 
 const selectApiCodes = async () => {
@@ -62,6 +44,4 @@ const apiCommonCodeRepository: CommonCodeRepository = {
   },
 };
 
-export const commonCodeRepository = isApiDataSource
-  ? apiCommonCodeRepository
-  : mockCommonCodeRepository;
+export const commonCodeRepository = apiCommonCodeRepository;

@@ -1,4 +1,4 @@
-import { getWeeksInMonth } from '@/lib/date';
+import { getWeekInMonthByDate, getWeeksInMonth } from '@/lib/date';
 import type { AttendanceRecord } from '@/types/domain';
 
 export type OperationWeekPeriod = {
@@ -36,14 +36,11 @@ export const getOperationWeekPeriod = (
 };
 
 export const getOperationWeekPeriodByDate = (date: string) => {
-  const [year, month] = date.split('-').map(Number);
-  const week = getWeeksInMonth(year, month).find(
-    (item) => date >= item.startDate && date <= item.endDate,
-  );
+  const week = getWeekInMonthByDate(date);
 
   if (!week) return null;
 
-  return getOperationWeekPeriod(year, month, week.week);
+  return getOperationWeekPeriod(week.year, week.month, week.week);
 };
 
 export const getOperationWeekKeyByDate = (date: string) =>

@@ -1,11 +1,16 @@
 'use client';
 
 import { Delete } from '@mui/icons-material';
-import { Chip, IconButton, MenuItem, Select, Tooltip } from '@mui/material';
+import { IconButton, MenuItem, Select, Tooltip } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { koKR } from '@mui/x-data-grid/locales';
+import { normalizeUserRole } from '@/adapters/authAdapter';
 import type { CommonCode } from '@/adapters/commonCodeAdapter';
-import { userRoles, type UserRole } from '@/mocks';
+import {
+  getDefaultBackendRoleCode,
+  normalizeBackendRoleCode,
+  userRoles,
+} from '@/constants/roles';
 import type { SystemUser } from '@/types/domain';
 
 type UserGridProps = {
@@ -13,14 +18,20 @@ type UserGridProps = {
   currentUserId: number | null;
   backendRoleCodes?: CommonCode[];
   roleChangeDisabled?: boolean;
-  onRoleChange: (userId: number, role: UserRole) => void;
+  onRoleChange: (user: SystemUser, roleCode: string) => void;
   onDelete: (user: SystemUser) => void;
 };
 
-const getBackendRoleLabel = (codes: CommonCode[], code?: string, name?: string) => {
+const getRoleLabel = (codes: CommonCode[], code?: string, name?: string) => {
   if (name) return name;
   if (!code) return '-';
-  return codes.find((item) => item.detailCode === code)?.label ?? code;
+  const normalizedCode = normalizeBackendRoleCode(code);
+  return codes.find((item) => normalizeBackendRoleCode(item.detailCode) === normalizedCode)?.label ?? code;
+};
+
+const getRoleDescription = (roleCode?: string) => {
+  const frontendRole = normalizeUserRole(roleCode);
+  return userRoles.find((role) => role.id === frontendRole)?.description ?? '-';
 };
 
 export default function UserGrid({
@@ -31,48 +42,53 @@ export default function UserGrid({
   onRoleChange,
   onDelete,
 }: UserGridProps) {
+  const roleOptions = backendRoleCodes
+    .filter((code) => code.isActive && code.detailCode)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+
   const columns: GridColDef<SystemUser>[] = [
     { field: 'username', headerName: '아이디', minWidth: 140, flex: 1 },
     { field: 'name', headerName: '이름', minWidth: 140, flex: 1 },
+    { field: 'empNo', headerName: '사번', minWidth: 130, flex: 0.8 },
     {
       field: 'backendRoleCode',
-      headerName: '백엔드 권한',
-      minWidth: 150,
-      flex: 1,
-      renderCell: ({ row }) => (
-        <Chip
-          size="small"
-          label={getBackendRoleLabel(backendRoleCodes, row.backendRoleCode, row.backendRoleName)}
-          variant="outlined"
-        />
-      ),
-    },
-    {
-      field: 'role',
-      headerName: '프론트 권한',
-      minWidth: 210,
+      headerName: '권한',
+      minWidth: 230,
       flex: 1.4,
       renderCell: ({ row }) => (
         <Select
           size="small"
           fullWidth
-          value={row.role}
-          disabled={row.id === currentUserId || roleChangeDisabled}
-          onChange={(event) => onRoleChange(row.id, event.target.value as UserRole)}
+          value={normalizeBackendRoleCode(row.backendRoleCode) || getDefaultBackendRoleCode(row.role)}
+          disabled={row.id === currentUserId || roleChangeDisabled || roleOptions.length === 0}
+          onChange={(event) => onRoleChange(row, event.target.value)}
           sx={{ my: 0.5 }}
         >
-          {userRoles.map((role) => (
-            <MenuItem key={role.id} value={role.id}>{role.label}</MenuItem>
-          ))}
+          {roleOptions.map((role) => {
+            const roleCode = normalizeBackendRoleCode(role.detailCode);
+            return (
+              <MenuItem key={roleCode} value={roleCode}>
+                {role.label}
+              </MenuItem>
+            );
+          })}
         </Select>
       ),
     },
     {
       field: 'description',
       headerName: '사용 범위',
-      minWidth: 280,
+      minWidth: 320,
       flex: 2,
-      valueGetter: (_value, row) => userRoles.find((role) => role.id === row.role)?.description ?? '-',
+      valueGetter: (_value, row) => getRoleDescription(row.backendRoleCode),
+    },
+    {
+      field: 'roleCodeLabel',
+      headerName: '권한 코드',
+      minWidth: 150,
+      flex: 1,
+      valueGetter: (_value, row) =>
+        `${getRoleLabel(backendRoleCodes, row.backendRoleCode, row.backendRoleName)} (${normalizeBackendRoleCode(row.backendRoleCode) || getDefaultBackendRoleCode(row.role)})`,
     },
     {
       field: 'actions',
@@ -82,7 +98,7 @@ export default function UserGrid({
       align: 'center',
       headerAlign: 'center',
       renderCell: ({ row }) => (
-        <Tooltip title={row.id === currentUserId ? '현재 로그인 계정은 삭제할 수 없습니다.' : '회원 삭제'}>
+        <Tooltip title={row.id === currentUserId ? '현재 로그인 계정은 삭제할 수 없습니다.' : '사용자 삭제'}>
           <span>
             <IconButton
               size="small"

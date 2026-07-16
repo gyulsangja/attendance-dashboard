@@ -1,6 +1,5 @@
 import { settingsApi } from '@/api/settingsApi';
 import type { WorkTimePolicy } from '@/types/domain';
-import { isApiDataSource } from './config';
 
 const defaultPolicy: WorkTimePolicy = {
   regularStart: '09:00',
@@ -14,7 +13,14 @@ const defaultPolicy: WorkTimePolicy = {
 };
 
 const unwrapSettingDto = (dto: import('@/api/dto/settings.dto').SystemSettingDto) =>
-  dto.setting ?? dto.settinginfo ?? dto.systemsetting ?? dto.systemSetting ?? dto.data ?? dto;
+  dto.attendbaseinfo
+  ?? dto.attendBaseInfo
+  ?? dto.setting
+  ?? dto.settinginfo
+  ?? dto.systemsetting
+  ?? dto.systemSetting
+  ?? dto.data
+  ?? dto;
 
 const adaptSettingDtoToPolicy = (
   dto: import('@/api/dto/settings.dto').SystemSettingDto,
@@ -66,23 +72,12 @@ const adaptPolicyToSettingDto = (policy: WorkTimePolicy) => ({
   half_pm_start: policy.halfPmStart,
   afternoon_off_time: policy.halfPmStart,
   half_pm_end: policy.halfPmEnd,
-  woking_late_time: policy.regularStart,
-  working_late_time: policy.regularStart,
   early_leave_time: policy.regularEnd,
 });
 
 export type SettingsRepository = {
   getWorkTimePolicy: () => Promise<WorkTimePolicy>;
   updateWorkTimePolicy: (policy: WorkTimePolicy) => Promise<void>;
-};
-
-const mockSettingsRepository: SettingsRepository = {
-  async getWorkTimePolicy() {
-    return { ...defaultPolicy };
-  },
-
-  async updateWorkTimePolicy() {
-  },
 };
 
 const apiSettingsRepository: SettingsRepository = {
@@ -96,6 +91,4 @@ const apiSettingsRepository: SettingsRepository = {
   },
 };
 
-export const settingsRepository = isApiDataSource
-  ? apiSettingsRepository
-  : mockSettingsRepository;
+export const settingsRepository = apiSettingsRepository;

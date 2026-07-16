@@ -30,28 +30,42 @@ export default function EmployeeGrid({
     {
       field: 'employeeNo',
       headerName: '사번',
-      minWidth: 110,
-      flex: 0.7,
+      minWidth: 100,
+      flex: 0.6,
       valueGetter: (_value, row) => row.employeeNo ?? String(row.id),
     },
-    { field: 'name', headerName: '이름', minWidth: 110, flex: 0.8 },
-    { field: 'email', headerName: '이메일', minWidth: 180, flex: 1.1 },
+    {
+      field: 'empCompany',
+      headerName: '회사명',
+      minWidth: 130,
+      flex: 0.8,
+      valueGetter: (_value, row) => row.empCompany ?? '-',
+    },
+    { field: 'name', headerName: '이름', minWidth: 100, flex: 0.7 },
     {
       field: 'teamId',
-      headerName: '부서',
-      minWidth: 140,
-      flex: 1,
+      headerName: '부서/팀',
+      minWidth: 130,
+      flex: 0.9,
       valueGetter: (_value, row) => row.teamId === UNASSIGNED_TEAM_ID
         ? UNASSIGNED_TEAM_NAME
         : teams.find((team) => team.id === row.teamId)?.name ?? row.teamId,
     },
-    { field: 'position', headerName: '직위', minWidth: 100, flex: 0.7 },
-    { field: 'jobTitle', headerName: '직무', minWidth: 140, flex: 1 },
+    { field: 'position', headerName: '직급', minWidth: 90, flex: 0.6 },
+    { field: 'jobTitle', headerName: '근무유형', minWidth: 120, flex: 0.8 },
+    { field: 'email', headerName: '이메일', minWidth: 170, flex: 1 },
+    {
+      field: 'phoneNo',
+      headerName: '연락처',
+      minWidth: 130,
+      flex: 0.8,
+      valueGetter: (_value, row) => row.phoneNo ?? '-',
+    },
     {
       field: 'shiftWorker',
       headerName: '교대근무',
-      minWidth: 110,
-      flex: 0.7,
+      minWidth: 100,
+      flex: 0.6,
       align: 'center',
       headerAlign: 'center',
       renderCell: ({ value }) => (
@@ -76,7 +90,7 @@ export default function EmployeeGrid({
       headerAlign: 'center',
       renderCell: ({ row }) => (
         <div className="flex h-full items-center justify-center">
-          <Tooltip title={editDisabled ? 'API 수정 미구현' : '수정'}>
+          <Tooltip title={editDisabled ? '수정할 수 없습니다' : '수정'}>
             <span>
               <IconButton size="small" disabled={editDisabled} onClick={() => onEdit(row)}>
                 <Edit fontSize="small" />

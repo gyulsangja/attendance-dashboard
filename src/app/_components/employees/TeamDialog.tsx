@@ -26,8 +26,6 @@ const TEXT = {
   editTitle: '팀 정보 수정',
   addTitle: '팀 추가',
   teamName: '팀 이름',
-  effectiveDate: '변경 적용일',
-  createDate: '팀 생성일',
   memberWarning: '소속 직원이 있는 팀은 삭제할 수 없습니다. 직원을 먼저 다른 부서로 이동해 주세요.',
   deleteTeam: '팀 삭제',
   cancel: '취소',
@@ -38,10 +36,8 @@ export default function TeamDialog({
   open,
   editingTeam,
   teamName,
-  teamEffectiveDate,
   teamHasMembers,
   onNameChange,
-  onDateChange,
   onClose,
   onSave,
   onDelete,
@@ -56,15 +52,6 @@ export default function TeamDialog({
           label={TEXT.teamName}
           value={teamName}
           onChange={(event) => onNameChange(event.target.value)}
-        />
-        <TextField
-          fullWidth
-          type="date"
-          label={editingTeam ? TEXT.effectiveDate : TEXT.createDate}
-          value={teamEffectiveDate}
-          onChange={(event) => onDateChange(event.target.value)}
-          slotProps={{ inputLabel: { shrink: true } }}
-          sx={{ mt: 2 }}
         />
         {teamHasMembers && (
           <Alert severity="info" sx={{ mt: 2 }}>

@@ -1,4 +1,4 @@
-import { getWeeksInMonth } from './getWeeksInMonth';
+import { getWeekInMonthByDate } from './getWeeksInMonth';
 
 const formatDateKey = (date: Date) => [
   date.getFullYear(),
@@ -15,14 +15,11 @@ export const getPreviousWeekPeriod = (baseDate = new Date()) => {
   const year = previousWeekDate.getFullYear();
   const month = previousWeekDate.getMonth() + 1;
   const dateKey = formatDateKey(previousWeekDate);
-  const weeks = getWeeksInMonth(year, month);
-  const week = weeks.find(
-    (item) => dateKey >= item.startDate && dateKey <= item.endDate,
-  ) ?? weeks[0];
+  const week = getWeekInMonthByDate(dateKey);
 
   return {
-    year,
-    month,
+    year: week?.year ?? year,
+    month: week?.month ?? month,
     weekNumber: week?.week ?? 1,
     startDate: week?.startDate ?? dateKey,
     endDate: week?.endDate ?? dateKey,

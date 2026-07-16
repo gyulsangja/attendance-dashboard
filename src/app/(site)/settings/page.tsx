@@ -13,7 +13,6 @@ import {
 } from '@/app/_components';
 import {
   useAttendanceCodesQuery,
-  useEndAttendanceCodeMutation,
   useInsertAttendanceCodeMutation,
   useModifyAttendanceCodeMutation,
 } from '@/hooks/useAttendanceCodeQueries';
@@ -21,23 +20,16 @@ import {
   useUpdateWorkTimePolicyMutation,
   useWorkTimePolicyQuery,
 } from '@/hooks/useSettingsQueries';
-import { isApiDataSource } from '@/repositories/config';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import {
-  addAttendanceCode,
-  endAttendanceCode,
-  getAttendanceCodesAtDate,
-  updateAttendanceCode,
-  updateWorkTimePolicy,
-} from '@/store/slices/attendanceCodeSlice';
+import { updateWorkTimePolicy } from '@/store/slices/attendanceCodeSlice';
 import type { AttendanceCode } from '@/types/domain';
 
 
 const createNextAttendanceCodeId = (codes: AttendanceCode[]) => {
-  const prefix = 'ATT_CUSTOM_';
+  const prefix = 'ATT';
   const maxNumber = codes.reduce((max, code) => {
     if (!code.id.startsWith(prefix)) return max;
-    const numeric = Number(code.id.slice(prefix.length));
+    const numeric = Number(code.id.slice(prefix.length).replace(/\D/g, ''));
     return Number.isFinite(numeric) ? Math.max(max, numeric) : max;
   }, 0);
 
@@ -45,7 +37,6 @@ const createNextAttendanceCodeId = (codes: AttendanceCode[]) => {
 };
 const TEXT = {
   noAccess: '권한으로는 설정을 관리할 수 없습니다.',
-  endDatePrompt: '사용 종료일을 입력하세요.',
   title: '설정',
   description: '직원 관리, 근태 관리, 근무시간, 공휴일에 필요한 기준값을 관리합니다.',
   codeLoadError: '근태코드 목록을 불러오지 못했습니다.',
@@ -62,55 +53,39 @@ const TEXT = {
 };
 
 const settingsTabs = [
-  {
-    label: TEXT.employeeOptionsTab,
-    description: '직원 등록과 수정 화면에서 사용하는 직급, 근무유형, 재직상태를 관리합니다.',
-  },
-  {
-    label: TEXT.attendanceCodeTab,
-    description: '근태 일정과 자동판정 결과에 표시되는 근태코드를 관리합니다.',
-  },
-  {
-    label: TEXT.workTimeTab,
-    description: '일반근무와 반차의 출퇴근 기준시간을 관리합니다.',
-  },
-  {
-    label: TEXT.holidayTab,
-    description: '연도별 공휴일과 회사 지정 휴일을 관리합니다.',
-  },
+  { label: TEXT.employeeOptionsTab },
+  { label: TEXT.attendanceCodeTab },
+  { label: TEXT.workTimeTab },
+  { label: TEXT.holidayTab },
 ];
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : '';
 
 export default function Page() {
   const access = useAccess();
   const dispatch = useAppDispatch();
-  const { codes, history, workTimePolicy } = useAppSelector((state) => state.attendanceCode);
+  const { workTimePolicy } = useAppSelector((state) => state.attendanceCode);
   const attendanceCodesQuery = useAttendanceCodesQuery();
   const insertCodeMutation = useInsertAttendanceCodeMutation();
   const modifyCodeMutation = useModifyAttendanceCodeMutation();
-  const endCodeMutation = useEndAttendanceCodeMutation();
   const workTimePolicyQuery = useWorkTimePolicyQuery();
   const updatePolicyMutation = useUpdateWorkTimePolicyMutation();
   const apiCodes = attendanceCodesQuery.data ?? [];
-  const sourceCodes = isApiDataSource ? apiCodes : codes;
-  const sourceHistory = useMemo(
-    () => (isApiDataSource ? [] : history),
-    [history],
-  );
+  const sourceCodes = apiCodes;
   const [policy, setPolicy] = useState(workTimePolicy);
   const [policyTouched, setPolicyTouched] = useState(false);
   const [settingsTab, setSettingsTab] = useState(0);
-  const [codeTab, setCodeTab] = useState(0);
-  const [asOfDate, setAsOfDate] = useState(new Date().toISOString().slice(0, 10));
   const [editingCode, setEditingCode] = useState<AttendanceCode | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const visibleCodes = useMemo(
-    () => getAttendanceCodesAtDate(sourceCodes, sourceHistory, asOfDate),
-    [sourceCodes, sourceHistory, asOfDate],
+    () => sourceCodes,
+    [sourceCodes],
   );
 
   const effectivePolicy =
-    isApiDataSource && workTimePolicyQuery.data && !policyTouched
+    workTimePolicyQuery.data && !policyTouched
       ? workTimePolicyQuery.data
       : policy;
 
@@ -123,50 +98,29 @@ export default function Page() {
     setDialogOpen(true);
   };
 
-  const endCode = (code: AttendanceCode) => {
-    const date = window.prompt(TEXT.endDatePrompt, asOfDate);
-    if (!date) return;
-
-    if (isApiDataSource) {
-      endCodeMutation.mutate({ code, effectiveDate: date });
-      return;
-    }
-
-    dispatch(endAttendanceCode({ id: code.id, effectiveDate: date }));
-  };
-
   const saveCode = (code: AttendanceCode, effectiveDate: string) => {
     const nextCode = {
       ...code,
       id: editingCode ? code.id : code.id || createNextAttendanceCodeId(sourceCodes),
       label: code.label.trim(),
-      startDate: effectiveDate,
+      startDate: code.startDate || effectiveDate,
     };
 
-    if (isApiDataSource) {
-      const mutation = editingCode ? modifyCodeMutation : insertCodeMutation;
-      mutation.mutate(nextCode, { onSuccess: () => setDialogOpen(false) });
-      return;
-    }
-
-    dispatch(editingCode
-      ? updateAttendanceCode({ code: nextCode, effectiveDate })
-      : addAttendanceCode(nextCode));
-    setDialogOpen(false);
+    const mutation = editingCode ? modifyCodeMutation : insertCodeMutation;
+    mutation.mutate(nextCode, { onSuccess: () => setDialogOpen(false) });
   };
 
   const hasMutationError =
-    insertCodeMutation.isError || modifyCodeMutation.isError || endCodeMutation.isError;
+    insertCodeMutation.isError || modifyCodeMutation.isError;
+  const codeMutationErrorMessage =
+    getErrorMessage(insertCodeMutation.error)
+    || getErrorMessage(modifyCodeMutation.error)
+    || TEXT.codeMutationError;
 
   const savePolicy = () => {
-    if (isApiDataSource) {
-      updatePolicyMutation.mutate(effectivePolicy, {
-        onSuccess: () => dispatch(updateWorkTimePolicy(effectivePolicy)),
-      });
-      return;
-    }
-
-    dispatch(updateWorkTimePolicy(effectivePolicy));
+    updatePolicyMutation.mutate(effectivePolicy, {
+      onSuccess: () => dispatch(updateWorkTimePolicy(effectivePolicy)),
+    });
   };
 
   return (
@@ -181,10 +135,10 @@ export default function Page() {
       )}
 
       {hasMutationError && (
-        <Alert severity="error" sx={{ mt: 2 }}>{TEXT.codeMutationError}</Alert>
+        <Alert severity="error" sx={{ mt: 2 }}>{codeMutationErrorMessage}</Alert>
       )}
 
-      {isApiDataSource && workTimePolicyQuery.isError && (
+      {workTimePolicyQuery.isError && (
         <Alert severity="warning" sx={{ mt: 2 }}>{TEXT.policyLoadError}</Alert>
       )}
 
@@ -197,11 +151,6 @@ export default function Page() {
           {settingsTabs.map((tab) => <Tab key={tab.label} label={tab.label} />)}
         </Tabs>
       </Paper>
-
-      <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-5 py-4">
-        <p className="text-sm font-semibold text-slate-800">{settingsTabs[settingsTab].label}</p>
-        <p className="mt-1 text-sm text-slate-500">{settingsTabs[settingsTab].description}</p>
-      </div>
 
       {settingsTab === 0 && <EmployeeInfoOptionPanel />}
 
@@ -218,15 +167,9 @@ export default function Page() {
           </div>
 
           <AttendanceCodeSettingsGrid
-            tab={codeTab}
-            asOfDate={asOfDate}
             visibleCodes={visibleCodes}
-            history={sourceHistory}
-            onTabChange={setCodeTab}
-            onDateChange={setAsOfDate}
             onEdit={openCodeDialog}
-            onEnd={endCode}
-            actionsDisabled={false}
+            actionsDisabled={insertCodeMutation.isPending || modifyCodeMutation.isPending}
           />
         </section>
       )}

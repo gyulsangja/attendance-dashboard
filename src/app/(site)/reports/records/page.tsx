@@ -2,7 +2,6 @@
 
 import {
   Alert,
-  Chip,
   FormControl,
   InputLabel,
   MenuItem,
@@ -49,12 +48,8 @@ export default function Page() {
             </div>
           </div>
           <p className="mt-2 text-sm text-slate-500">
-            선택한 연도와 월 기준으로 직원별 출퇴근 시간을 조회합니다.
+            선택한 연도와 월 기준으로 직원별 출퇴근 시간과 근태 결과를 조회합니다.
           </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Chip size="small" label="퇴근/반차" sx={{ bgcolor: '#f1f5f9', color: '#475569' }} />
-          <Chip size="small" label="확인 필요" sx={{ bgcolor: '#fef2f2', color: '#b91c1c' }} />
         </div>
       </div>
 

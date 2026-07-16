@@ -5,7 +5,11 @@ import {
   Header,
   SideMenu,
 } from '@/app/_components';
+import type { Metadata } from 'next';
 
+export const metadata: Metadata = {
+  title: '대시보드 | 엘엑스',
+};
 
 export default function layout({
   children,

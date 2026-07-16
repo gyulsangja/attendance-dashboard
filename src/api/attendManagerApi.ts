@@ -1,6 +1,7 @@
 ﻿import { apiClient } from './client';
 import type {
   AttendManagerConfirmStatusDto,
+  AttendManagerConfirmStatusListResponseDto,
   AttendManagerShiftScheduleDto,
   AttendManagerShiftScheduleListResponseDto,
   AttendManagerSummaryDto,
@@ -67,6 +68,20 @@ const getConfirmStatus = (response: AttendManagerConfirmStatusDto) => {
     ?? response;
 };
 
+const getConfirmStatusRows = (
+  response: AttendManagerConfirmStatusDto[] | AttendManagerConfirmStatusListResponseDto,
+) => {
+  if (Array.isArray(response)) return response;
+
+  return response.confirmstatuslist
+    ?? response.confirmStatusList
+    ?? response.items
+    ?? response.rows
+    ?? response.list
+    ?? response.data
+    ?? [];
+};
+
 const buildWeekRequestBody = (params: AttendManagerWeekParams) => ({
   confirmstatusinfo: {
     year: String(params.year),
@@ -77,9 +92,9 @@ const buildWeekRequestBody = (params: AttendManagerWeekParams) => ({
 
 const buildShiftRequestBody = (schedule: AttendManagerShiftScheduleDto) => {
   const payload = {
-    work_date: schedule.work_date ?? schedule.workDate ?? schedule.date,
-    emp_no: schedule.emp_no ?? schedule.empNo,
-    shift_type: schedule.shift_type ?? schedule.shiftType,
+    work_date: schedule.work_date ?? schedule.workDate ?? schedule.date ?? '',
+    emp_no: schedule.emp_no ?? schedule.empNo ?? '',
+    shift_type: schedule.shift_type ?? schedule.shiftType ?? '',
     etc: schedule.etc ?? '',
   };
 
@@ -126,6 +141,19 @@ export const attendManagerApi = {
     return getConfirmStatus(response);
   },
 
+  async getOperationConfirmStatusList(params: AttendManagerMonthParams) {
+    const searchParams = new URLSearchParams({
+      year: String(params.year),
+      month: String(params.month),
+    });
+    const response = await apiClient<
+      AttendManagerConfirmStatusDto[] | AttendManagerConfirmStatusListResponseDto
+    >(`/api/attend/manager/confirm/status/list?${searchParams.toString()}`, {
+      method: 'POST',
+    });
+    return getConfirmStatusRows(response);
+  },
+
   async getShiftMonth(params: AttendManagerMonthParams) {
     const response = await apiClient<
       AttendManagerShiftScheduleDto[] | AttendManagerShiftScheduleListResponseDto
@@ -134,6 +162,8 @@ export const attendManagerApi = {
       body: {
         shiftselectinfo: {
           select_type: '1',
+          emp_no: '',
+          shift_code: '',
           year: String(params.year),
           month: String(params.month),
           week: String(params.week),

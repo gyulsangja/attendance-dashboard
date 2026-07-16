@@ -50,17 +50,6 @@ const getSelectPath = (periodKey: string) => {
   return `/api/attend/manager/select/${periodKey}`;
 };
 
-const toQueryString = (payload: Record<string, unknown>) => {
-  const params = new URLSearchParams();
-
-  Object.entries(payload).forEach(([key, value]) => {
-    if (value === undefined || value === null || value === '') return;
-    params.set(key, Array.isArray(value) ? value.join(',') : String(value));
-  });
-
-  return params.toString();
-};
-
 export const attendanceApi = {
   uploadDeviceFile(
     file: File,
@@ -102,8 +91,10 @@ export const attendanceApi = {
   },
 
   modify(payload: AttendanceManagerDto) {
-    const query = toQueryString(payload as Record<string, unknown>);
-    return apiClient<string>(`/api/attend/manager/modify${query ? `?${query}` : ''}`);
+    return apiClient<string>('/api/attend/manager/modify', {
+      method: 'POST',
+      body: { attendetailinfo: payload },
+    });
   },
 
   deleteByEmployee(idx: number | string) {

@@ -61,6 +61,8 @@ export default function ManagementDialogs({
         value={dialogs.editingTime}
         onChange={dialogs.setEditingTime}
         onSave={actions.saveDeviceTime}
+        saving={dialogs.isSavingDeviceTime}
+        error={dialogs.hasDeviceTimeError}
       />
     </>
   );

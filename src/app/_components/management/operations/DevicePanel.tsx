@@ -5,6 +5,7 @@ import { Alert, Button, CircularProgress } from '@mui/material';
 import { CloudDownload, CloudUpload, Delete } from '@mui/icons-material';
 import { ApiError } from '@/api/client';
 import {
+  type AttendanceCode,
   type AttendanceRecord,
   type DeviceUploadSummary,
   type OperationSchedule,
@@ -27,6 +28,7 @@ type DevicePanelProps = {
   days: { date: string; label: string }[];
   records: AttendanceRecord[];
   schedules: OperationSchedule[];
+  attendanceCodes: AttendanceCode[];
   onEdit: (employeeId: number, date: string) => void;
   locked?: boolean;
   recordsReadOnly?: boolean;
@@ -42,6 +44,7 @@ export default function DevicePanel({
   days,
   records,
   schedules,
+  attendanceCodes,
   onEdit,
   locked = false,
   recordsReadOnly = false,
@@ -274,6 +277,7 @@ export default function DevicePanel({
             days={days}
             records={records}
             schedules={schedules}
+            attendanceCodes={attendanceCodes}
             onEdit={onEdit}
             readOnly={locked || recordsReadOnly}
           />

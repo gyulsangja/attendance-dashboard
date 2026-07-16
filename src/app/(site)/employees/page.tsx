@@ -1,8 +1,8 @@
 ﻿'use client';
 
 import { useMemo } from 'react';
-import { Add, Groups, History, Person, Schedule } from '@mui/icons-material';
-import { Alert, Button, CircularProgress, Paper, Tab, Tabs, TextField } from '@mui/material';
+import { Add, Groups, Person, Schedule } from '@mui/icons-material';
+import { Alert, Button, CircularProgress, Paper, TextField } from '@mui/material';
 import { useAccess } from '@/app/_components';
 import { EmployeeDialog } from '@/app/_components';
 import {
@@ -13,7 +13,6 @@ import {
 } from '@/hooks/useCommonCodeQueries';
 import {
   EmployeeGrid,
-  OrganizationHistoryGrid,
   TeamDialog,
   TeamPanel,
   useOrganizationManagement,
@@ -164,12 +163,6 @@ export default function Page() {
         </Button>
       </div>
 
-      {isApiDataSource && (
-        <Alert severity="info" sx={{ mt: 3 }}>
-          직원 목록과 직원 등록/수정/삭제, 팀 추가/수정/삭제는 백엔드 API 기준으로 처리합니다.
-        </Alert>
-      )}
-
       {organization.isError && (
         <Alert severity="error" sx={{ mt: 2 }}>
           직원 목록을 불러오거나 저장하지 못했습니다.
@@ -186,21 +179,6 @@ export default function Page() {
         </Alert>
       )}
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5">
-        <Tabs value={organization.tab} onChange={(_event, value) => organization.setTab(value)}>
-          <Tab label="기준 조직도" />
-          <Tab label="조직 변경 이력" icon={<History />} iconPosition="start" />
-        </Tabs>
-        <TextField
-          size="small"
-          type="date"
-          label="조직 기준일"
-          value={organization.asOfDate}
-          onChange={(event) => organization.setOrganizationDate(event.target.value)}
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
-      </div>
-
       {organization.isLoading ? (
         <div className="flex min-h-[460px] items-center justify-center">
           <CircularProgress size={32} />
@@ -209,7 +187,7 @@ export default function Page() {
         <div className="flex min-h-[460px] items-center justify-center">
           <CircularProgress size={32} />
         </div>
-      ) : organization.tab === 0 ? (
+      ) : (
         <>
           <div className="mt-5 grid grid-cols-3 gap-4">
             {[
@@ -277,18 +255,6 @@ export default function Page() {
             </section>
           </div>
         </>
-      ) : (
-        <section className="mt-5 h-[590px] rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="mb-4">
-            <h2 className="text-lg font-bold">조직 및 구성원 변경 이력</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              팀 생성/종료, 입사/퇴사, 부서/직무 및 교대근무 변경 시점을 확인합니다.
-            </p>
-          </div>
-          <div className="h-[490px]">
-            <OrganizationHistoryGrid rows={organization.history} />
-          </div>
-        </section>
       )}
 
       <EmployeeDialog

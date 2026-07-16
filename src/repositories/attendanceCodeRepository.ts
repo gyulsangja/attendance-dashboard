@@ -1,11 +1,9 @@
-﻿import { commonCodeApi } from '@/api/commonCodeApi';
+import { commonCodeApi } from '@/api/commonCodeApi';
 import {
   adaptAttendanceCodeToCommonCodeDto,
   adaptCommonCodeDtoToAttendanceCode,
 } from '@/adapters/attendanceCodeAdapter';
-import { attendanceCodes } from '@/mocks';
 import type { AttendanceCode } from '@/types/domain';
-import { isApiDataSource } from './config';
 
 export type AttendanceCodeRepository = {
   selectAll: () => Promise<AttendanceCode[]>;
@@ -29,15 +27,6 @@ const attendanceCodeGroupAliases = new Set([
 const isAttendanceCodeGroup = (groupCode?: string) =>
   Boolean(groupCode && attendanceCodeGroupAliases.has(groupCode.trim().toUpperCase()));
 
-const mockAttendanceCodeRepository: AttendanceCodeRepository = {
-  async selectAll() {
-    return attendanceCodes.map((code) => ({ ...code }));
-  },
-  async insert() {},
-  async modify() {},
-  async end() {},
-};
-
 const apiAttendanceCodeRepository: AttendanceCodeRepository = {
   async selectAll() {
     const codes = await commonCodeApi.selectCodes();
@@ -60,6 +49,4 @@ const apiAttendanceCodeRepository: AttendanceCodeRepository = {
   },
 };
 
-export const attendanceCodeRepository = isApiDataSource
-  ? apiAttendanceCodeRepository
-  : mockAttendanceCodeRepository;
+export const attendanceCodeRepository = apiAttendanceCodeRepository;

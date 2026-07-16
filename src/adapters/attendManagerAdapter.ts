@@ -40,7 +40,17 @@ export const toApiBoolean = (value: unknown, fallback = false) => {
 export const adaptAttendManagerConfirmStatus = (
   dto: AttendManagerConfirmStatusDto | null | undefined,
   fallback: boolean,
-) => toApiBoolean(dto?.is_confirmed ?? dto?.isConfirmed, fallback);
+) => toApiBoolean(
+  dto?.is_confirmed
+  ?? dto?.isConfirmed
+  ?? dto?.attendance_confirm
+  ?? dto?.attendanceConfirm,
+  fallback,
+);
+
+export const getAttendManagerConfirmStatusSuccessCount = (
+  dto: AttendManagerConfirmStatusDto | null | undefined,
+) => toNumber(dto?.success_count ?? dto?.successCount);
 
 export const adaptAttendManagerSummary = (
   dto: AttendManagerSummaryDto | null | undefined,
@@ -50,6 +60,10 @@ export const adaptAttendManagerSummary = (
   return {
     operationConfirmed: toApiBoolean(
       dto.operation_confirmed ?? dto.operationConfirmed,
+      false,
+    ),
+    shiftConfirmed: toApiBoolean(
+      dto.shift_confirmed ?? dto.shiftConfirmed,
       false,
     ),
     attendanceScheduleCount: toNumber(

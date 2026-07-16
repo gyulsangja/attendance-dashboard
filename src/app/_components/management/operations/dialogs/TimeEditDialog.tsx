@@ -36,12 +36,32 @@ type Props = {
   value: EditingTime | null;
   onChange: (value: EditingTime | null) => void;
   onSave: () => void;
+  saving?: boolean;
+  error?: boolean;
+};
+
+const TEXT = {
+  title: '출퇴근 시간 수정',
+  employee: '직원',
+  date: '일자',
+  checkIn: '출근시간',
+  checkOut: '퇴근시간',
+  result: '근태 결과',
+  emptyResult: '선택 안 함',
+  guide: '출퇴근 시간과 최종 근태 결과를 함께 수정할 수 있습니다.',
+  codeLoading: '근태코드를 불러오는 중입니다.',
+  codeError: '근태코드 API를 불러오지 못했습니다.',
+  saveError: '출퇴근 정보 수정에 실패했습니다.',
+  cancel: '취소',
+  save: '수정 저장',
 };
 
 export default function TimeEditDialog({
   value,
   onChange,
   onSave,
+  saving = false,
+  error = false,
 }: Props) {
   const organization = useAppSelector((state) => state.organization);
   const codeMaster = useAppSelector((state) => state.attendanceCode);
@@ -63,11 +83,12 @@ export default function TimeEditDialog({
 
   return (
     <Dialog open={Boolean(value)} onClose={() => onChange(null)} fullWidth maxWidth="xs">
-      <DialogTitle>출퇴근 시간 수정</DialogTitle>
+      <DialogTitle>{TEXT.title}</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
+          {error && <Alert severity="error">{TEXT.saveError}</Alert>}
           <TextField
-            label="직원"
+            label={TEXT.employee}
             value={
               value?.employeeName
               ?? employees.find((item) => item.id === value?.employeeId)?.name
@@ -75,10 +96,10 @@ export default function TimeEditDialog({
             }
             disabled
           />
-          <TextField label="일자" value={value?.date ?? ''} disabled />
+          <TextField label={TEXT.date} value={value?.date ?? ''} disabled />
           <TextField
             type="time"
-            label="출근시간"
+            label={TEXT.checkIn}
             value={value?.checkIn ?? ''}
             onChange={(event) => value && onChange({
               ...value,
@@ -88,7 +109,7 @@ export default function TimeEditDialog({
           />
           <TextField
             type="time"
-            label="퇴근시간"
+            label={TEXT.checkOut}
             value={value?.checkOut ?? ''}
             onChange={(event) => value && onChange({
               ...value,
@@ -96,20 +117,18 @@ export default function TimeEditDialog({
             })}
             slotProps={{ inputLabel: { shrink: true } }}
           />
-          <Alert severity="info">
-            출퇴근 시간과 최종 근태 결과를 함께 수정할 수 있습니다.
-          </Alert>
+          <Alert severity="info">{TEXT.guide}</Alert>
           {isApiDataSource && apiAttendanceCodesQuery.isLoading && (
-            <Alert severity="info">근태코드를 불러오는 중입니다.</Alert>
+            <Alert severity="info">{TEXT.codeLoading}</Alert>
           )}
           {isApiDataSource && apiAttendanceCodesQuery.isError && (
-            <Alert severity="warning">근태코드 API를 불러오지 못했습니다.</Alert>
+            <Alert severity="warning">{TEXT.codeError}</Alert>
           )}
           <FormControl fullWidth>
-            <InputLabel id="attendance-result-label">근태 결과</InputLabel>
+            <InputLabel id="attendance-result-label">{TEXT.result}</InputLabel>
             <Select
               labelId="attendance-result-label"
-              label="근태 결과"
+              label={TEXT.result}
               value={value?.attendanceCodeIds[0] ?? ''}
               onChange={(event) => {
                 if (!value) return;
@@ -120,7 +139,7 @@ export default function TimeEditDialog({
                 });
               }}
             >
-              <MenuItem value="">선택 안 함</MenuItem>
+              <MenuItem value="">{TEXT.emptyResult}</MenuItem>
               {attendanceCodes.map((code) => (
                 <MenuItem key={code.id} value={code.id}>
                   {code.label}
@@ -132,8 +151,10 @@ export default function TimeEditDialog({
       </DialogContent>
       <DialogActions>
         <Stack direction="row" spacing={1}>
-          <Button onClick={() => onChange(null)}>취소</Button>
-          <Button variant="contained" onClick={onSave}>수정 저장</Button>
+          <Button onClick={() => onChange(null)} disabled={saving}>{TEXT.cancel}</Button>
+          <Button variant="contained" onClick={onSave} disabled={saving}>
+            {TEXT.save}
+          </Button>
         </Stack>
       </DialogActions>
     </Dialog>

@@ -38,7 +38,9 @@ export default function DashboardShiftCalendar({
             {startDate} ~ {endDate} 교대근무 일정입니다.
           </p>
         </div>
-        <Button component={Link} href="/management" size="small">교대근무 관리</Button>
+        <Button component={Link} href="/management?tab=shift" size="small">
+          교대근무 관리
+        </Button>
       </div>
       <div className="mt-4 overflow-x-auto">
         <div className="grid min-w-[840px] grid-cols-7 overflow-hidden rounded-xl border border-slate-200">

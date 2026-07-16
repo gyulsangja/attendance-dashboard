@@ -14,11 +14,10 @@ import {
 } from '@/adapters/dashboardAdapter';
 import type { DashboardWeeklyDto } from '@/api/dto/dashboard.dto';
 import {
-  useDashboardWeeklyAttendanceCodeCountsQuery,
   useDashboardWeeklyExceptionalRecordsQuery,
   useDashboardWeeklyPlansQuery,
+  useDashboardWeeklyQuery,
   useDashboardWeeklyShiftSchedulesQuery,
-  useDashboardWeeklySummaryQuery,
 } from '@/hooks/useDashboardQueries';
 import { getPreviousWeekPeriod, getWeeksInMonth } from '@/lib/date';
 import { getOperationWeekPeriod } from '@/lib/management/operationWeek';
@@ -89,22 +88,26 @@ const buildApiDashboardBase = (
   };
 };
 
-const mergeDashboardBlocks = (
-  summary?: DashboardWeeklyDto | null,
-  codeCounts?: DashboardWeeklyDto | null,
-  exceptions?: DashboardWeeklyDto | null,
-  plans?: DashboardWeeklyDto | null,
-  shifts?: DashboardWeeklyDto | null,
-): DashboardWeeklyDto => ({
-  week_start_date: summary?.week_start_date ?? summary?.weekStartDate,
-  weekStartDate: summary?.weekStartDate,
-  week_end_date: summary?.week_end_date ?? summary?.weekEndDate,
-  weekEndDate: summary?.weekEndDate,
+const mergeDashboardBlocks = ({
+  stats,
+  exceptionalRecords,
+  plans,
+  shifts,
+}: {
+  stats?: DashboardWeeklyDto | null;
+  exceptionalRecords?: DashboardWeeklyDto | null;
+  plans?: DashboardWeeklyDto | null;
+  shifts?: DashboardWeeklyDto | null;
+}): DashboardWeeklyDto => ({
+  week_start_date: stats?.week_start_date ?? stats?.weekStartDate,
+  weekStartDate: stats?.weekStartDate,
+  week_end_date: stats?.week_end_date ?? stats?.weekEndDate,
+  weekEndDate: stats?.weekEndDate,
   operation_confirmed: true,
-  summary_cards: summary?.summary_cards ?? summary?.summaryCards ?? [],
-  attendance_code_counts: codeCounts?.attendance_code_counts ?? codeCounts?.attendanceCodeCounts ?? [],
-  exceptional_attendance_records: exceptions?.exceptional_attendance_records
-    ?? exceptions?.exceptionalAttendanceRecords
+  summary_cards: stats?.summary_cards ?? stats?.summaryCards ?? [],
+  attendance_code_counts: stats?.attendance_code_counts ?? stats?.attendanceCodeCounts ?? [],
+  exceptional_attendance_records: exceptionalRecords?.exceptional_attendance_records
+    ?? exceptionalRecords?.exceptionalAttendanceRecords
     ?? [],
   weekly_attendance_plans: plans?.weekly_attendance_plans ?? plans?.weeklyAttendancePlans ?? [],
   shift_weekly_schedules: shifts?.shift_weekly_schedules ?? shifts?.shiftWeeklySchedules ?? [],
@@ -138,20 +141,19 @@ export default function Home() {
   );
   const dashboardBase = isApiDataSource ? apiBaseDashboard : fallbackDashboard;
   const selectedWeekNumber = dashboardBase.selectedWeekNumber;
-  const summaryQuery = useDashboardWeeklySummaryQuery(year, month, selectedWeekNumber);
-  const codeCountsQuery = useDashboardWeeklyAttendanceCodeCountsQuery(year, month, selectedWeekNumber);
-  const exceptionsQuery = useDashboardWeeklyExceptionalRecordsQuery(year, month, selectedWeekNumber);
+  const statsQuery = useDashboardWeeklyQuery(year, month, selectedWeekNumber);
+  const exceptionalRecordsQuery = useDashboardWeeklyExceptionalRecordsQuery(year, month, selectedWeekNumber);
   const plansQuery = useDashboardWeeklyPlansQuery(year, month, selectedWeekNumber);
   const shiftsQuery = useDashboardWeeklyShiftSchedulesQuery(year, month, selectedWeekNumber);
+  const reportHref = `/reports?year=${year}&month=${month}&week=${selectedWeekNumber}`;
   const dashboardDto = useMemo(
-    () => mergeDashboardBlocks(
-      summaryQuery.data,
-      codeCountsQuery.data,
-      exceptionsQuery.data,
-      plansQuery.data,
-      shiftsQuery.data,
-    ),
-    [codeCountsQuery.data, exceptionsQuery.data, plansQuery.data, shiftsQuery.data, summaryQuery.data],
+    () => mergeDashboardBlocks({
+      stats: statsQuery.data,
+      exceptionalRecords: exceptionalRecordsQuery.data,
+      plans: plansQuery.data,
+      shifts: shiftsQuery.data,
+    }),
+    [exceptionalRecordsQuery.data, plansQuery.data, shiftsQuery.data, statsQuery.data],
   );
   const dashboard = useMemo(
     () => (isApiDataSource
@@ -160,16 +162,14 @@ export default function Home() {
     [dashboardBase, dashboardDto],
   );
   const isDashboardLoading = isApiDataSource && (
-    summaryQuery.isLoading
-    || codeCountsQuery.isLoading
-    || exceptionsQuery.isLoading
+    statsQuery.isLoading
+    || exceptionalRecordsQuery.isLoading
     || plansQuery.isLoading
     || shiftsQuery.isLoading
   );
   const isDashboardError = isApiDataSource && (
-    summaryQuery.isError
-    || codeCountsQuery.isError
-    || exceptionsQuery.isError
+    statsQuery.isError
+    || exceptionalRecordsQuery.isError
     || plansQuery.isError
     || shiftsQuery.isError
   );
@@ -194,13 +194,13 @@ export default function Home() {
 
       {isDashboardLoading && (
         <Alert severity="info" sx={{ mt: 3 }}>
-          {'대시보드 데이터를 불러오는 중입니다.'}
+          대시보드 데이터를 불러오는 중입니다.
         </Alert>
       )}
 
       {isDashboardError && (
         <Alert severity="warning" sx={{ mt: 3 }}>
-          {'대시보드 API 일부를 불러오지 못했습니다. 확인된 블록만 표시합니다.'}
+          대시보드 API 일부를 불러오지 못했습니다. 확인된 데이터만 표시합니다.
         </Alert>
       )}
 
@@ -210,17 +210,18 @@ export default function Home() {
         summaryCards={dashboard.summaryCards}
         detailAttendanceCodes={dashboard.detailAttendanceCodes}
         eventCounts={dashboard.eventCounts}
+        reportHref={reportHref}
       />
 
       <div className="mt-5 grid gap-5 2xl:grid-cols-2">
         <DashboardEventGrid
-          title={'주간 근태 특이사항'}
-          description={'선택 주차의 지각, 조퇴, 결근 등 확인이 필요한 근태 이력입니다.'}
+          title="주간 근태 특이사항"
+          description="출퇴근 정보에서 정상출근을 제외한 자동판정 결과를 표시합니다."
           rows={dashboard.exceptionRows}
         />
         <DashboardEventGrid
-          title={'주간 계획/특별 근태'}
-          description={'선택 주차의 연차, 반차, 병가, 재택근무 등 일반 근태코드입니다.'}
+          title="주간 계획/특별 근태"
+          description="운영관리 근태일정 입력에서 등록한 주간 근태 일정을 표시합니다."
           rows={dashboard.vacationRows}
           showDetail={false}
         />

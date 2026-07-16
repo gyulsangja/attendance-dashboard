@@ -55,6 +55,8 @@ export const adaptCommonCodeDtoToAttendanceCode = (dto: CommonCodeDto): Attendan
     isExceptional: exceptional ?? exceptionalCodeIds.has(id),
     startDate: metadata.startDate ?? dto.start_date ?? dto.startDate ?? '2024-01-01',
     endDate: metadata.endDate ?? dto.end_date ?? dto.endDate,
+    sortOrder: Number(dto.sort_order ?? dto.sortOrder ?? 99),
+    etc: dto.etc ?? dto.remark ?? '',
   };
 };
 
@@ -64,8 +66,9 @@ export const adaptAttendanceCodeToCommonCodeDto = (
   group_code: 'G_ATTE_CODE',
   detail_code: code.id,
   detail_code_name: code.label,
-  sort_order: 99,
+  sort_order: code.sortOrder ?? 99,
   use_status: code.isActive ? 'Y' : 'N',
-  reg_val2: code.isExceptional ? 'Y' : 'N',
-  etc: '',
+  ref_val1: '',
+  ref_val2: '',
+  etc: code.etc ?? '',
 });

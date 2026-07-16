@@ -34,13 +34,13 @@ import {
 } from '@/hooks/useCommonCodeQueries';
 
 const TEXT = {
-  title: '직원 항목 관리',
-  description: '직원 등록과 수정 화면에서 선택하는 직급, 근무유형, 재직상태 항목을 관리합니다.',
-  note: '항목을 추가하거나 이름을 변경하면 직원 관리 화면의 선택지에 반영됩니다.',
+  title: '직원 정보 항목 관리',
   error: '항목 저장 중 오류가 발생했습니다.',
   addItem: '항목 추가',
   active: '사용',
   inactive: '미사용',
+  code: '관리코드',
+  sortOrder: '표시순서',
   memo: '비고',
   memoPlaceholder: '관리 참고용 메모를 입력합니다.',
   insert: '추가',
@@ -61,8 +61,8 @@ const categories = [
     title: '직급',
     fieldLabel: '직급명',
     fieldPlaceholder: '예: 사원, 주임, 대리',
-    addHelp: '직원 등록 시 선택할 회사 직급을 관리합니다.',
     codePrefix: 'RANK',
+    codeSeparator: '',
   },
   {
     groupCode: 'G_WORK_TYPE',
@@ -70,8 +70,8 @@ const categories = [
     title: '근무유형',
     fieldLabel: '근무유형명',
     fieldPlaceholder: '예: 일반근무, 교대근무',
-    addHelp: '일반근무와 교대근무 등 직원의 근무 방식을 구분합니다.',
     codePrefix: 'WORK',
+    codeSeparator: '_',
   },
   {
     groupCode: 'G_HOLD_STATUS',
@@ -79,8 +79,8 @@ const categories = [
     title: '재직상태',
     fieldLabel: '재직상태명',
     fieldPlaceholder: '예: 재직, 휴직, 퇴사',
-    addHelp: '직원의 현재 재직 상태를 구분합니다.',
     codePrefix: 'HOLD',
+    codeSeparator: '_',
   },
 ] as const;
 
@@ -95,18 +95,21 @@ const emptyForm = (groupCode: string = categories[0].groupCode): CommonCode => (
   etc: '',
 });
 
-const createNextCode = (prefix: string, rows: CommonCode[]) => {
+const createNextCode = (prefix: string, separator: string, rows: CommonCode[]) => {
   const maxNumber = rows.reduce((max, row) => {
-    const match = row.detailCode.match(new RegExp(`^${prefix}_(\\d+)$`));
+    const match = row.detailCode.match(new RegExp(`^${prefix}_?(\\d+)$`));
     if (!match) return max;
     return Math.max(max, Number(match[1]));
   }, 0);
 
-  return `${prefix}_${String(maxNumber + 1).padStart(2, '0')}`;
+  return `${prefix}${separator}${String(maxNumber + 1).padStart(2, '0')}`;
 };
 
 const createNextSortOrder = (rows: CommonCode[]) =>
   rows.reduce((max, row) => Math.max(max, Number(row.sortOrder) || 0), 0) + 1;
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : '';
 
 export default function EmployeeInfoOptionPanel() {
   const codesQuery = useCommonCodesQuery();
@@ -128,6 +131,13 @@ export default function EmployeeInfoOptionPanel() {
     [codes, category.groupCode],
   );
 
+  const nextDetailCode = useMemo(
+    () => createNextCode(category.codePrefix, category.codeSeparator, rows),
+    [category.codePrefix, category.codeSeparator, rows],
+  );
+  const nextSortOrder = useMemo(() => createNextSortOrder(rows), [rows]);
+  const displayDetailCode = (editingDetailCode ?? form.detailCode) || nextDetailCode;
+
   const closeDialog = () => {
     setEditingDetailCode(null);
     setForm(emptyForm(category.groupCode));
@@ -136,7 +146,11 @@ export default function EmployeeInfoOptionPanel() {
 
   const openAddDialog = () => {
     setEditingDetailCode(null);
-    setForm(emptyForm(category.groupCode));
+    setForm({
+      ...emptyForm(category.groupCode),
+      detailCode: nextDetailCode,
+      sortOrder: nextSortOrder,
+    });
     setDialogOpen(true);
   };
 
@@ -154,15 +168,19 @@ export default function EmployeeInfoOptionPanel() {
   };
 
   const saveCode = () => {
+    const isEditing = Boolean(editingDetailCode);
     const payload = {
       ...form,
       groupCode: category.groupCode,
-      detailCode: editingDetailCode ?? createNextCode(category.codePrefix, rows),
+      detailCode: (editingDetailCode ?? form.detailCode.trim().toUpperCase()) || nextDetailCode,
       label: form.label.trim(),
-      sortOrder: editingDetailCode ? form.sortOrder : createNextSortOrder(rows),
+      sortOrder: Number(form.sortOrder) || nextSortOrder,
+      refVal1: form.refVal1.trim(),
+      refVal2: form.refVal2.trim(),
+      etc: form.etc.trim(),
     };
 
-    const mutation = editingDetailCode ? modifyMutation : insertMutation;
+    const mutation = isEditing ? modifyMutation : insertMutation;
     mutation.mutate(payload, { onSuccess: closeDialog });
   };
 
@@ -172,24 +190,28 @@ export default function EmployeeInfoOptionPanel() {
   };
 
   const isSaving = insertMutation.isPending || modifyMutation.isPending || deleteMutation.isPending;
-  const hasError = codesQuery.isError || insertMutation.isError || modifyMutation.isError || deleteMutation.isError;
+  const errorMessage =
+    getErrorMessage(insertMutation.error)
+    || getErrorMessage(modifyMutation.error)
+    || getErrorMessage(deleteMutation.error);
+  const hasError = codesQuery.isError || Boolean(errorMessage);
 
   return (
     <section className="mt-5 space-y-4">
       <Paper elevation={0} className="border border-slate-200 bg-white p-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 700 }}>{TEXT.title}</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {TEXT.description}
-            </Typography>
           </Box>
           <Button variant="contained" startIcon={<Add />} onClick={openAddDialog}>
             {category.title} {TEXT.addItem}
           </Button>
         </div>
-        <Alert severity="info" sx={{ mt: 2 }}>{TEXT.note}</Alert>
-        {hasError && <Alert severity="warning" sx={{ mt: 2 }}>{TEXT.error}</Alert>}
+        {hasError && (
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            {errorMessage || TEXT.error}
+          </Alert>
+        )}
       </Paper>
 
       <Paper elevation={0} className="border border-slate-200 bg-white">
@@ -199,15 +221,12 @@ export default function EmployeeInfoOptionPanel() {
       </Paper>
 
       <Paper elevation={0} className="border border-slate-200 bg-white p-5">
-        <div className="mb-4">
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{category.title}</Typography>
-          <Typography variant="body2" color="text.secondary">{category.addHelp}</Typography>
-        </div>
-
         <TableContainer>
           <Table size="small">
             <TableHead>
               <TableRow>
+                <TableCell>{TEXT.sortOrder}</TableCell>
+                <TableCell>{TEXT.code}</TableCell>
                 <TableCell>{category.fieldLabel}</TableCell>
                 <TableCell>{TEXT.status}</TableCell>
                 <TableCell>{TEXT.memo}</TableCell>
@@ -217,6 +236,8 @@ export default function EmployeeInfoOptionPanel() {
             <TableBody>
               {rows.map((code) => (
                 <TableRow key={`${code.groupCode}-${code.detailCode}`} hover>
+                  <TableCell>{code.sortOrder}</TableCell>
+                  <TableCell className="font-mono text-xs text-slate-600">{code.detailCode}</TableCell>
                   <TableCell>{code.label}</TableCell>
                   <TableCell>
                     <Chip
@@ -235,7 +256,7 @@ export default function EmployeeInfoOptionPanel() {
               ))}
               {rows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4, color: 'text.secondary' }}>
                     {TEXT.empty}
                   </TableCell>
                 </TableRow>
@@ -247,13 +268,35 @@ export default function EmployeeInfoOptionPanel() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>{category.title} {editingDetailCode ? TEXT.edit : TEXT.insert}</DialogTitle>
-        <DialogContent className="space-y-4 pt-3!">
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: '12px !important' }}>
+          <TextField
+            fullWidth
+            label={TEXT.code}
+            value={displayDetailCode}
+            disabled={Boolean(editingDetailCode)}
+            onChange={(event) => setForm({ ...form, detailCode: event.target.value.trim().toUpperCase() })}
+          />
           <TextField
             fullWidth
             label={category.fieldLabel}
             placeholder={category.fieldPlaceholder}
             value={form.label}
             onChange={(event) => setForm({ ...form, label: event.target.value })}
+          />
+          <TextField
+            fullWidth
+            type="number"
+            label={TEXT.sortOrder}
+            value={form.sortOrder}
+            onChange={(event) => setForm({ ...form, sortOrder: Number(event.target.value) || 0 })}
+            slotProps={{ htmlInput: { min: 1 } }}
+          />
+          <TextField
+            fullWidth
+            label={TEXT.memo}
+            placeholder={TEXT.memoPlaceholder}
+            value={form.etc}
+            onChange={(event) => setForm({ ...form, etc: event.target.value })}
           />
           <FormControlLabel
             control={(
@@ -264,19 +307,12 @@ export default function EmployeeInfoOptionPanel() {
             )}
             label={TEXT.active}
           />
-          <TextField
-            fullWidth
-            label={TEXT.memo}
-            placeholder={TEXT.memoPlaceholder}
-            value={form.etc}
-            onChange={(event) => setForm({ ...form, etc: event.target.value })}
-          />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3 }}>
           <Button onClick={closeDialog}>{TEXT.cancel}</Button>
           <Button
             variant="contained"
-            disabled={!form.label.trim() || isSaving}
+            disabled={!form.label.trim() || !displayDetailCode.trim() || isSaving}
             onClick={saveCode}
           >
             {editingDetailCode ? TEXT.modify : TEXT.insert}

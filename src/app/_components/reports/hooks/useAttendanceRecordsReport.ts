@@ -47,6 +47,8 @@ export const attendanceCellStyles: Record<AttendanceCellStatus, string> = {
 const hasAnyCode = (record: AttendanceRecord, codeIds: string[]) =>
   record.events.some((event) => codeIds.includes(event.codeId));
 
+const getTimeText = (label: string, value?: string) => `${label} ${value || '-'}`;
+
 export function useAttendanceRecordsReport() {
   const dispatch = useAppDispatch();
   const { year, month, startDate } = useAppSelector(selectReportPeriod);
@@ -137,66 +139,28 @@ export function useAttendanceRecordsReport() {
     );
     if (!record) return undefined;
 
-    const labels = record.events.map(
-      (event) => attendanceCodes.find((code) => code.id === event.codeId)?.label ?? event.codeId,
-    );
+    const labels = record.events
+      .map((event) => attendanceCodes.find((code) => code.id === event.codeId)?.label ?? event.detail ?? event.codeId)
+      .filter(Boolean);
+    const labelText = labels.join(', ');
+    const timeText = `${record.checkIn ?? '-'} ~ ${record.checkOut ?? '-'}`;
 
-    const checkInText = record.checkIn ? `출근 ${record.checkIn}` : '출근 미기록';
-    const checkOutText = record.checkOut ? `퇴근 ${record.checkOut}` : '퇴근 미기록';
+    if (hasAnyCode(record, ['ABSENT', 'ATT04'])) {
+      return { top: labelText || '결근', bottom: timeText, status: 'normal' };
+    }
+    if (hasAnyCode(record, ['ANNUAL', 'SICK', 'ATT05', 'HALF_PM', 'HALF_AM', 'ATT06', 'REMOTE_WORK'])) {
+      return { top: labelText || '근태코드', bottom: timeText, status: 'leave' };
+    }
+    if (hasAnyCode(record, ['EARLY_LEAVE', 'ATT03', 'LATE', 'ATT02'])) {
+      return { top: labelText || '근태코드', bottom: timeText, status: 'normal' };
+    }
+    if (labelText) {
+      return { top: labelText, bottom: timeText, status: 'normal' };
+    }
 
-    if (hasAnyCode(record, ['ABSENT', 'ATT04'])) return { top: '결근', status: 'warning' };
-    if (hasAnyCode(record, ['ANNUAL', 'SICK', 'ATT05'])) {
-      return { top: labels.join(', '), status: 'leave' };
-    }
-    if (hasAnyCode(record, ['HALF_PM', 'ATT06'])) {
-      return {
-        top: record.checkIn
-          ? `${hasAnyCode(record, ['LATE', 'ATT02']) ? '지각' : '출근'} ${record.checkIn}`
-          : '출근 미기록',
-        bottom: checkOutText,
-        status: 'leave',
-      };
-    }
-    if (hasAnyCode(record, ['HALF_AM'])) {
-      return {
-        top: record.checkIn ? `반차출근 ${record.checkIn}` : '출근 미기록',
-        bottom: checkOutText,
-        status: 'leave',
-      };
-    }
-    if (hasAnyCode(record, ['REMOTE_WORK'])) {
-      return {
-        top: record.checkIn ? `재택 ${record.checkIn}` : '출근 미기록',
-        bottom: checkOutText,
-        status: 'normal',
-      };
-    }
-    if (hasAnyCode(record, ['EARLY_LEAVE', 'ATT03'])) {
-      return {
-        top: checkInText,
-        bottom: record.checkOut ? `조퇴 ${record.checkOut}` : '퇴근 미기록',
-        status: 'warning',
-      };
-    }
-    if (hasAnyCode(record, ['LATE', 'ATT02'])) {
-      return {
-        top: record.checkIn ? `지각 ${record.checkIn}` : '출근 미기록',
-        bottom: checkOutText,
-        status: 'late',
-      };
-    }
-    if (labels.length > 0) {
-      return {
-        top: labels.join(', '),
-        bottom: record.checkIn || record.checkOut
-          ? `${record.checkIn ?? '-'} ~ ${record.checkOut ?? '-'}`
-          : undefined,
-        status: 'leave',
-      };
-    }
     return {
-      top: checkInText,
-      bottom: checkOutText,
+      top: getTimeText('출근', record.checkIn),
+      bottom: getTimeText('퇴근', record.checkOut),
       status: 'normal',
     };
   };
@@ -214,4 +178,3 @@ export function useAttendanceRecordsReport() {
     handleYearChange,
   };
 }
-

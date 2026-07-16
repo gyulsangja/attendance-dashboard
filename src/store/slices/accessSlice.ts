@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { initialUserRole, type UserRole } from '@/mocks';
+import { initialUserRole } from '@/constants/roles';
+import type { UserRole } from '@/types/domain';
 
 type AccessState = { role: UserRole };
 

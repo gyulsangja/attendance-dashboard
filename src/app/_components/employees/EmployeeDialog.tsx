@@ -44,6 +44,7 @@ type EmployeeDialogProps = {
 const TEXT = {
   editTitle: '직원 정보 수정',
   addTitle: '직원 등록',
+  company: '회사명',
   employeeNo: '사번',
   name: '이름',
   email: '이메일',
@@ -53,15 +54,16 @@ const TEXT = {
   workType: '근무유형',
   holdStatus: '재직상태',
   select: '선택',
-  effectiveDate: '변경 적용일',
   hireDate: '입사일',
   retireDate: '퇴사일',
+  etc: '비고',
   cancel: '취소',
   save: '저장',
   missingOptions: '직원 등록에 필요한 공통코드 선택값이 없습니다. 부서/직급/근무유형/재직상태 코드를 먼저 등록해 주세요.',
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
+const DEFAULT_COMPANY_NAME = '(주)엘엑스';
 
 const fallbackPositions = ['사원', '주임', '대리', '과장', '차장', '부장'];
 const fallbackHoldStatuses: EmployeeDialogOption[] = [
@@ -81,6 +83,7 @@ const emptyEmployee = (
 ): OrganizationEmployee => ({
   id,
   employeeNo: '',
+  empCompany: DEFAULT_COMPANY_NAME,
   name: '',
   email: '',
   phoneNo: '',
@@ -91,6 +94,7 @@ const emptyEmployee = (
   startDate: today(),
   endDate: '',
   backendHoldStatusCode: defaultHoldStatus,
+  etc: '',
 });
 
 export default function EmployeeDialog({
@@ -145,8 +149,6 @@ function EmployeeDialogContent({
   const [form, setForm] = useState<OrganizationEmployee>(
     () => employee ?? emptyEmployee(nextId, defaultTeamId, defaultPosition, defaultHoldStatus),
   );
-  const [effectiveDate, setEffectiveDate] = useState(today);
-  const dateValue = employee ? effectiveDate : form.startDate;
   const getOptionLabel = (options: EmployeeDialogOption[], value: string) =>
     options.find((option) => option.value === value)?.label ?? value;
 
@@ -171,17 +173,24 @@ function EmployeeDialogContent({
             onChange={(event) => setForm({ ...form, name: event.target.value })}
           />
 
-          <TextField
-            fullWidth
-            label={TEXT.employeeNo}
-            value={form.employeeNo ?? ''}
-            disabled={Boolean(employee)}
-            onChange={(event) => setForm({
-              ...form,
-              employeeNo: event.target.value,
-            })}
-          />
-
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <TextField
+              fullWidth
+              label={TEXT.company}
+              value={form.empCompany ?? ''}
+              onChange={(event) => setForm({ ...form, empCompany: event.target.value })}
+            />
+            <TextField
+              fullWidth
+              label={TEXT.employeeNo}
+              value={form.employeeNo ?? ''}
+              disabled={Boolean(employee)}
+              onChange={(event) => setForm({
+                ...form,
+                employeeNo: event.target.value,
+              })}
+            />
+          </div>
 
           <FormControl fullWidth>
             <InputLabel>{TEXT.team}</InputLabel>
@@ -292,12 +301,9 @@ function EmployeeDialogContent({
           <TextField
             fullWidth
             type="date"
-            label={employee ? TEXT.effectiveDate : TEXT.hireDate}
-            value={dateValue}
-            onChange={(event) => {
-              if (employee) setEffectiveDate(event.target.value);
-              else setForm({ ...form, startDate: event.target.value });
-            }}
+            label={TEXT.hireDate}
+            value={form.startDate}
+            onChange={(event) => setForm({ ...form, startDate: event.target.value })}
             slotProps={{ inputLabel: { shrink: true } }}
           />
 
@@ -311,6 +317,15 @@ function EmployeeDialogContent({
               slotProps={{ inputLabel: { shrink: true } }}
             />
           )}
+
+          <TextField
+            fullWidth
+            multiline
+            minRows={2}
+            label={TEXT.etc}
+            value={form.etc ?? ''}
+            onChange={(event) => setForm({ ...form, etc: event.target.value })}
+          />
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 3 }}>
@@ -320,6 +335,7 @@ function EmployeeDialogContent({
           disabled={
             !form.name.trim()
             || (isApiDataSource && !form.employeeNo?.trim())
+            || (isApiDataSource && !form.empCompany?.trim())
             || !form.teamId
             || (isApiDataSource && (
               form.teamId === UNASSIGNED_TEAM_ID ||
@@ -332,12 +348,14 @@ function EmployeeDialogContent({
             {
               ...form,
               employeeNo: form.employeeNo?.trim() ?? '',
+              empCompany: form.empCompany?.trim() ?? '',
               name: form.name.trim(),
               email: form.email?.trim() ?? '',
               phoneNo: form.phoneNo?.trim() ?? '',
               jobTitle: form.jobTitle.trim(),
+              etc: form.etc?.trim() ?? '',
             },
-            dateValue,
+            form.startDate,
           )}
         >
           {TEXT.save}

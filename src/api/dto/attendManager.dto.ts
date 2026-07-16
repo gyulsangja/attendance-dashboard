@@ -8,6 +8,8 @@ export type AttendManagerSummaryDto = {
   weekEndDate?: string;
   operation_confirmed?: boolean | string;
   operationConfirmed?: boolean | string;
+  shift_confirmed?: boolean | string;
+  shiftConfirmed?: boolean | string;
   attendance_schedule_count?: number | string;
   attendanceScheduleCount?: number | string;
   shift_schedule_count?: number | string;
@@ -25,6 +27,16 @@ export type AttendManagerSummaryDto = {
 };
 
 export type AttendManagerConfirmStatusDto = {
+  idx?: number | string;
+  year?: number | string;
+  month?: number | string;
+  week?: number | string;
+  upload_date?: string;
+  uploadDate?: string;
+  attendance_confirm?: boolean | string;
+  attendanceConfirm?: boolean | string;
+  success_count?: number | string;
+  successCount?: number | string;
   is_confirmed?: boolean | string;
   isConfirmed?: boolean | string;
   confirmed_at?: string;
@@ -41,6 +53,15 @@ export type AttendManagerConfirmStatusDto = {
   confirmStatusResult?: AttendManagerConfirmStatusDto;
   confirm_status?: AttendManagerConfirmStatusDto;
   confirmStatus?: AttendManagerConfirmStatusDto;
+};
+
+export type AttendManagerConfirmStatusListResponseDto = {
+  confirmstatuslist?: AttendManagerConfirmStatusDto[];
+  confirmStatusList?: AttendManagerConfirmStatusDto[];
+  items?: AttendManagerConfirmStatusDto[];
+  rows?: AttendManagerConfirmStatusDto[];
+  list?: AttendManagerConfirmStatusDto[];
+  data?: AttendManagerConfirmStatusDto[];
 };
 
 export type AttendManagerShiftScheduleDto = {

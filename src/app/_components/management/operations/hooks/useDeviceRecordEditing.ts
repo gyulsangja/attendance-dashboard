@@ -34,7 +34,7 @@ export const useDeviceRecordEditing = ({
 
   const openTimeEditor = (employeeId: number, date: string) => {
     const record = deviceRecords.find(
-      (item) => item.employeeId === employeeId && item.date === date,
+      (item) => String(item.employeeId) === String(employeeId) && item.date === date,
     );
     const snapshot = getOrganizationSnapshot(
       organization.teams,

@@ -67,7 +67,9 @@ export function useOrganizationManagement() {
   );
 
   const snapshot = useMemo(
-    () => getOrganizationSnapshot(sourceTeams, sourceEmployees, sourceHistory, asOfDate),
+    () => (isApiDataSource
+      ? { teams: sourceTeams, employees: sourceEmployees }
+      : getOrganizationSnapshot(sourceTeams, sourceEmployees, sourceHistory, asOfDate)),
     [sourceTeams, sourceEmployees, sourceHistory, asOfDate],
   );
   const { teams: snapshotTeams, employees: snapshotEmployees } = snapshot;

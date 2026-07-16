@@ -92,7 +92,7 @@ export default function WeeklyReportDialog({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {report.timeRows.map((row) => (
+                  {report.timeRows.length > 0 ? report.timeRows.map((row) => (
                     <TableRow key={row.employeeId}>
                       <TableCell>{row.department}</TableCell>
                       <TableCell>{row.employeeName}</TableCell>
@@ -111,7 +111,13 @@ export default function WeeklyReportDialog({
                         );
                       })}
                     </TableRow>
-                  ))}
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={report.timeColumns.length + 2} align="center">
+                        표시할 주간보고 데이터가 없습니다.
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>

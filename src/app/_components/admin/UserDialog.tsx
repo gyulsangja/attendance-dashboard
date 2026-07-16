@@ -14,13 +14,17 @@ import {
   Stack,
   TextField,
 } from '@mui/material';
-import { userRoles, type UserRole } from '@/mocks';
+import { normalizeUserRole } from '@/adapters/authAdapter';
+import {
+  getDefaultBackendRoleCode,
+  normalizeBackendRoleCode,
+  userRoles,
+} from '@/constants/roles';
 import type { SystemUser } from '@/types/domain';
 
 export type UserRoleOption = {
   value: string;
   label: string;
-  role: UserRole;
 };
 
 type UserDialogProps = {
@@ -34,6 +38,11 @@ type UserDialogProps = {
   onSave: () => void;
 };
 
+const fallbackRoleOptions: UserRoleOption[] = userRoles.map((role) => ({
+  value: getDefaultBackendRoleCode(role.id),
+  label: role.label,
+}));
+
 export default function UserDialog({
   open,
   form,
@@ -44,18 +53,18 @@ export default function UserDialog({
   onClose,
   onSave,
 }: UserDialogProps) {
-  const resolvedRoleOptions = roleOptions.length > 0
-    ? roleOptions
-    : userRoles.map((role) => ({
-      value: role.id,
-      label: role.label,
-      role: role.id,
-    }));
-  const selectedRoleValue = form.backendRoleCode ?? form.role;
+  const resolvedRoleOptions = roleOptions.length > 0 ? roleOptions : fallbackRoleOptions;
+  const selectedRoleCode = normalizeBackendRoleCode(form.backendRoleCode) || getDefaultBackendRoleCode(form.role);
+  const isSaveDisabled =
+    saving
+    || !form.name.trim()
+    || !form.username.trim()
+    || !form.empNo?.trim()
+    || form.password.length < 4;
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>회원 추가</DialogTitle>
+      <DialogTitle>사용자 추가</DialogTitle>
       <DialogContent sx={{ pt: '12px !important' }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <Stack spacing={2.5}>
@@ -73,6 +82,12 @@ export default function UserDialog({
           />
           <TextField
             fullWidth
+            label="사번"
+            value={form.empNo ?? ''}
+            onChange={(event) => onFormChange({ ...form, empNo: event.target.value })}
+          />
+          <TextField
+            fullWidth
             type="password"
             label="초기 비밀번호"
             value={form.password}
@@ -82,20 +97,22 @@ export default function UserDialog({
             <InputLabel>권한</InputLabel>
             <Select
               label="권한"
-              value={selectedRoleValue}
+              value={selectedRoleCode}
               onChange={(event) => {
-                const value = event.target.value;
+                const value = normalizeBackendRoleCode(event.target.value);
                 const option = resolvedRoleOptions.find((item) => item.value === value);
                 onFormChange({
                   ...form,
-                  role: option?.role ?? value as UserRole,
-                  backendRoleCode: option?.value,
-                  backendRoleName: option?.label,
+                  role: normalizeUserRole(value),
+                  backendRoleCode: value,
+                  backendRoleName: option?.label ?? value,
                 });
               }}
             >
               {resolvedRoleOptions.map((role) => (
-                <MenuItem key={role.value} value={role.value}>{role.label}</MenuItem>
+                <MenuItem key={role.value} value={role.value}>
+                  {role.label}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -105,7 +122,7 @@ export default function UserDialog({
         <Button onClick={onClose}>취소</Button>
         <Button
           variant="contained"
-          disabled={saving || !form.name.trim() || !form.username.trim() || form.password.length < 4}
+          disabled={isSaveDisabled}
           onClick={onSave}
         >
           {saving ? '저장 중' : '저장'}

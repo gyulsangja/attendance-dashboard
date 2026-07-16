@@ -5,6 +5,7 @@ import { Add } from '@mui/icons-material';
 import { Alert, Button, CircularProgress } from '@mui/material';
 import { UserDialog, UserGrid, type UserRoleOption } from '@/app/_components';
 import { normalizeUserRole } from '@/adapters/authAdapter';
+import { getDefaultBackendRoleCode, normalizeBackendRoleCode } from '@/constants/roles';
 import { useCommonCodesQuery } from '@/hooks/useCommonCodeQueries';
 import {
   useDeleteUserMutation,
@@ -12,31 +13,27 @@ import {
   useModifyUserMutation,
   useUsersQuery,
 } from '@/hooks/useUserQueries';
-import { isApiDataSource } from '@/repositories/config';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import {
-  addSystemUser,
-  deleteSystemUser,
-  updateSystemUserRole,
-} from '@/store/slices/authSlice';
-import type { SystemUser, UserRole } from '@/types/domain';
+import { useAppSelector } from '@/store/hooks';
+import type { SystemUser } from '@/types/domain';
 
 const newUser = (): Omit<SystemUser, 'id'> => ({
   username: '',
-  password: '1234',
+  password: '',
   name: '',
+  empNo: '',
   role: 'GENERAL',
+  backendRoleCode: getDefaultBackendRoleCode('GENERAL'),
+  backendRoleName: '일반사용자',
 });
 
 export default function Page() {
-  const dispatch = useAppDispatch();
-  const { users: storeUsers, currentUserId } = useAppSelector((state) => state.auth);
+  const { currentUserId } = useAppSelector((state) => state.auth);
   const usersQuery = useUsersQuery();
   const commonCodesQuery = useCommonCodesQuery();
   const insertUserMutation = useInsertUserMutation();
   const modifyUserMutation = useModifyUserMutation();
   const deleteUserMutation = useDeleteUserMutation();
-  const users = isApiDataSource ? usersQuery.data ?? [] : storeUsers;
+  const users = usersQuery.data ?? [];
   const backendRoleCodes = useMemo(
     () => (commonCodesQuery.data ?? []).filter((code) => code.groupCode === 'G_USER_LEVEL'),
     [commonCodesQuery.data],
@@ -46,9 +43,8 @@ export default function Page() {
       .filter((code) => code.isActive && code.detailCode)
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((code) => ({
-        value: code.detailCode,
+        value: normalizeBackendRoleCode(code.detailCode),
         label: code.label,
-        role: normalizeUserRole(code.detailCode),
       })),
     [backendRoleCodes],
   );
@@ -57,7 +53,20 @@ export default function Page() {
   const [error, setError] = useState('');
 
   const save = () => {
-    if (users.some((user) => user.username === form.username.trim())) {
+    const username = form.username.trim();
+    const empNo = form.empNo?.trim() ?? '';
+
+    if (!/^[A-Za-z0-9_.-]+$/.test(username)) {
+      setError('아이디는 영문, 숫자, 마침표, 하이픈, 밑줄만 사용할 수 있습니다.');
+      return;
+    }
+
+    if (!/^[0-9]+$/.test(empNo)) {
+      setError('사번은 숫자만 입력해 주세요.');
+      return;
+    }
+
+    if (users.some((user) => user.username === username)) {
       setError('이미 사용 중인 아이디입니다.');
       return;
     }
@@ -65,15 +74,11 @@ export default function Page() {
     const user = {
       ...form,
       id: Math.max(0, ...users.map((item) => item.id)) + 1,
-      username: form.username.trim(),
+      username,
       name: form.name.trim(),
+      empNo,
+      role: normalizeUserRole(form.backendRoleCode),
     };
-
-    if (!isApiDataSource) {
-      dispatch(addSystemUser(user));
-      setOpen(false);
-      return;
-    }
 
     insertUserMutation.mutate(user, {
       onSuccess: () => setOpen(false),
@@ -88,25 +93,20 @@ export default function Page() {
     setOpen(true);
   };
 
-  const changeRole = (userId: number, role: UserRole) => {
-    const user = users.find((item) => item.id === userId);
-    if (!user) return;
+  const changeRole = (user: SystemUser, roleCode: string) => {
+    const normalizedRoleCode = normalizeBackendRoleCode(roleCode);
+    const roleOption = backendRoleOptions.find((item) => item.value === normalizedRoleCode);
 
-    if (!isApiDataSource) {
-      dispatch(updateSystemUserRole({ userId, role }));
-      return;
-    }
-
-    modifyUserMutation.mutate({ ...user, role });
+    modifyUserMutation.mutate({
+      ...user,
+      role: normalizeUserRole(normalizedRoleCode),
+      backendRoleCode: normalizedRoleCode,
+      backendRoleName: roleOption?.label ?? normalizedRoleCode,
+    });
   };
 
   const deleteUser = (user: SystemUser) => {
     if (!window.confirm(`${user.name} 사용자를 삭제하시겠습니까?`)) return;
-
-    if (!isApiDataSource) {
-      dispatch(deleteSystemUser(user.id));
-      return;
-    }
 
     deleteUserMutation.mutate(user);
   };
@@ -125,10 +125,6 @@ export default function Page() {
         </Button>
       </div>
 
-      <Alert severity="info" sx={{ mt: 4 }}>
-        백엔드 권한 코드는 실제 API의 role_code이며, 프론트 권한은 화면 정책에 맞춰 변환한 값입니다. 사용자 등록/권한 변경/삭제는 백엔드 API 기준으로 처리합니다.
-      </Alert>
-
       {usersQuery.isError && (
         <Alert severity="error" sx={{ mt: 2 }}>
           사용자 목록을 불러오지 못했습니다.
@@ -137,17 +133,17 @@ export default function Page() {
 
       {commonCodesQuery.isError && (
         <Alert severity="warning" sx={{ mt: 2 }}>
-          권한 공통코드를 불러오지 못해 백엔드 권한 코드를 그대로 표시합니다.
+          권한 공통코드를 불러오지 못해 권한 코드를 그대로 표시합니다.
         </Alert>
       )}
 
       {(modifyUserMutation.isError || deleteUserMutation.isError) && (
         <Alert severity="error" sx={{ mt: 2 }}>
-          사용자 정보 변경 중 오류가 발생했습니다. 백엔드 사용자 저장 DTO 확인이 필요합니다.
+          사용자 정보 변경 중 오류가 발생했습니다.
         </Alert>
       )}
 
-      {isApiDataSource && usersQuery.isLoading ? (
+      {usersQuery.isLoading ? (
         <div className="flex min-h-[360px] items-center justify-center">
           <CircularProgress size={32} />
         </div>
@@ -167,7 +163,7 @@ export default function Page() {
         form={form}
         error={error}
         saving={insertUserMutation.isPending}
-        roleOptions={isApiDataSource ? backendRoleOptions : undefined}
+        roleOptions={backendRoleOptions}
         onFormChange={setForm}
         onClose={() => setOpen(false)}
         onSave={save}

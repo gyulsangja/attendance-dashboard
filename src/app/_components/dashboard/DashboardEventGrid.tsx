@@ -15,7 +15,7 @@ export type DashboardEventRow = {
 const baseColumns: GridColDef<DashboardEventRow>[] = [
   { field: 'date', headerName: '일자', minWidth: 105, flex: 0.8 },
   { field: 'department', headerName: '부서', minWidth: 110, flex: 0.9 },
-  { field: 'name', headerName: '이름', minWidth: 90, flex: 0.7 },
+  { field: 'name', headerName: '성명', minWidth: 90, flex: 0.7 },
   { field: 'content', headerName: '내용', minWidth: 100, flex: 0.8 },
 ];
 
@@ -33,7 +33,7 @@ export default function DashboardEventGrid({
   const columns: GridColDef<DashboardEventRow>[] = showDetail
     ? [
       ...baseColumns,
-      { field: 'detail', headerName: '판정 근거', minWidth: 130, flex: 1.2 },
+      { field: 'detail', headerName: '상세', minWidth: 130, flex: 1.2 },
     ]
     : baseColumns;
 

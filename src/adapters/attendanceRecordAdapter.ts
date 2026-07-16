@@ -39,6 +39,39 @@ const getDate = (dto: AttendanceManagerDto) =>
   dto.workDate ??
   '';
 
+const normalizeTime = (value?: string) => {
+  if (!value) return undefined;
+  const [hour, minute] = value.split(':');
+  if (!hour || !minute) return value;
+  return `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
+};
+
+const getWorkingMinutes = (checkIn?: string, checkOut?: string) => {
+  if (!checkIn || !checkOut) return 0;
+
+  const [inHour, inMinute] = checkIn.split(':').map(Number);
+  const [outHour, outMinute] = checkOut.split(':').map(Number);
+  if (
+    !Number.isFinite(inHour)
+    || !Number.isFinite(inMinute)
+    || !Number.isFinite(outHour)
+    || !Number.isFinite(outMinute)
+  ) {
+    return 0;
+  }
+
+  const start = inHour * 60 + inMinute;
+  const end = outHour * 60 + outMinute;
+  return end >= start ? end - start : end + 24 * 60 - start;
+};
+
+const formatWorkingTime = (checkIn?: string, checkOut?: string) => {
+  const minutes = getWorkingMinutes(checkIn, checkOut);
+  const hours = Math.floor(minutes / 60);
+  const remainMinutes = minutes % 60;
+  return `${String(hours).padStart(2, '0')}:${String(remainMinutes).padStart(2, '0')}`;
+};
+
 export const adaptAttendanceManagerDtoToRecord = (
   dto: AttendanceManagerDto,
 ): AttendanceRecord => {
@@ -74,36 +107,29 @@ export const adaptAttendanceManagerDtoToRecord = (
     department: dto.dept_name ?? dto.deptName ?? dto.dept_code ?? dto.deptCode ?? '-',
     position: dto.rank_name ?? dto.rankName ?? dto.position ?? dto.rank_code ?? dto.rankCode ?? '-',
     date: getDate(dto),
-    checkIn: dto.check_in ?? dto.checkIn ?? dto.attendance_time ?? dto.attendanceTime,
-    checkOut: dto.check_out ?? dto.checkOut ?? dto.leave_working_time ?? dto.leaveWorkingTime,
+    checkIn: normalizeTime(dto.check_in ?? dto.checkIn ?? dto.attendance_time ?? dto.attendanceTime),
+    checkOut: normalizeTime(dto.check_out ?? dto.checkOut ?? dto.leave_working_time ?? dto.leaveWorkingTime),
     events: codeId ? [{ codeId, detail }] : [],
     memo: dto.memo ?? dto.remark ?? dto.attend_reason ?? dto.attendReason ?? dto.etc,
   };
 };
 export const adaptAttendanceRecordToManagerDto = (
   record: AttendanceRecord,
-): AttendanceManagerDto => ({
-  id: record.id,
-  idx: record.id,
-  attend_card_no: record.employeeId,
-  emp_no: record.employeeId,
-  emp_name: record.employeeName,
-  dept_name: record.department,
-  rank_name: record.position,
-  attend_date: record.date,
-  attend_record_date: record.date,
-  check_in: record.checkIn,
-  check_out: record.checkOut,
-  attendance_time: record.checkIn,
-  leave_working_time: record.checkOut,
-  attend_status: record.events[0]?.codeId ?? '',
-  attend_code: record.events[0]?.codeId ?? '',
-  attendance_code: record.events[0]?.codeId ?? '',
-  ttendance_code: record.events[0]?.codeId ?? '',
-  detail_code: record.events[0]?.codeId ?? '',
-  attend_reason: record.events.map((event) => event.detail).filter(Boolean).join(', '),
-  attend_codes: record.events.map((event) => event.codeId),
-  attendance_codes: record.events.map((event) => event.codeId),
-  memo: record.memo,
-  etc: record.events.map((event) => event.codeId).join(','),
-});
+): AttendanceManagerDto => {
+  const checkIn = normalizeTime(record.checkIn);
+  const checkOut = normalizeTime(record.checkOut);
+  const employeeKey = String(record.employeeId);
+  const attendanceCode = record.events[0]?.codeId ?? '';
+
+  return {
+    idx: String(record.id),
+    attend_date: record.date,
+    attend_card_no: employeeKey,
+    emp_no: employeeKey,
+    attendance_time: checkIn ?? '',
+    leave_working_time: checkOut ?? '',
+    total_working: formatWorkingTime(checkIn, checkOut),
+    attendance_code: attendanceCode,
+    etc: record.memo ?? '',
+  };
+};

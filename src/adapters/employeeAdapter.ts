@@ -67,6 +67,7 @@ export const adaptEmployeeDtoToOrganizationEmployee = (
 ): OrganizationEmployee => ({
   id: getEmployeeId(dto, index),
   employeeNo: getEmployeeNo(dto),
+  empCompany: dto.emp_company ?? dto.empCompany ?? '',
   name: getEmployeeName(dto),
   email: dto.email ?? '',
   phoneNo: dto.phone_no ?? dto.phoneNo ?? '',
@@ -84,12 +85,13 @@ export const adaptEmployeeDtoToOrganizationEmployee = (
   backendWorkTypeName: getJobTitleLabel(dto, lookup),
   backendHoldStatusCode: getHoldStatusCode(dto),
   backendHoldStatusName: getHoldStatusLabel(dto, lookup),
+  etc: dto.etc ?? '',
 });
 
 export const adaptOrganizationEmployeeToEmployeeDto = (
   employee: OrganizationEmployee,
 ): EmployeeDto => ({
-  emp_company: 'LX',
+  emp_company: employee.empCompany ?? '',
   emp_no: employee.employeeNo ?? employee.id,
   emp_name: employee.name,
   dept_code: employee.backendDeptCode ?? employee.teamId,
@@ -99,6 +101,7 @@ export const adaptOrganizationEmployeeToEmployeeDto = (
   email: employee.email ?? '',
   phone_no: employee.phoneNo ?? '',
   hire_date: employee.startDate,
-  etc: '',
+  retire_date: employee.endDate ?? '',
+  etc: employee.etc ?? '',
 });
 

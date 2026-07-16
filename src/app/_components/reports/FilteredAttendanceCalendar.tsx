@@ -17,23 +17,26 @@ export default function FilteredAttendanceCalendar({
   startDate,
   endDate,
 }: FilteredAttendanceCalendarProps) {
-  const monthStart = `${year}-${String(month).padStart(2, '0')}-01`;
-  const monthEnd = `${year}-${String(month).padStart(2, '0')}-${String(new Date(year, month, 0).getDate()).padStart(2, '0')}`;
-  const visibleStartDate = startDate > monthStart ? startDate : monthStart;
-  const visibleEndDate = endDate < monthEnd ? endDate : monthEnd;
-  const firstVisibleDay = Number(visibleStartDate.slice(8, 10));
-  const lastVisibleDay = Number(visibleEndDate.slice(8, 10));
-  const eventsByDay = rows.reduce<Record<number, FilteredAttendanceRow[]>>((result, row) => {
-    const [rowYear, rowMonth, rowDay] = row.dateKey.split('-').map(Number);
-    if (rowYear === year && rowMonth === month) {
-      result[rowDay] = [...(result[rowDay] ?? []), row];
-    }
+  const toDate = (dateKey: string) => new Date(`${dateKey}T00:00:00`);
+  const toDateKey = (date: Date) => [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
+  const addDays = (date: Date, days: number) =>
+    new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+  const start = toDate(startDate);
+  const end = toDate(endDate);
+  const visibleDates: Date[] = [];
+
+  for (let current = start; current <= end; current = addDays(current, 1)) {
+    visibleDates.push(current);
+  }
+
+  const eventsByDate = rows.reduce<Record<string, FilteredAttendanceRow[]>>((result, row) => {
+    result[row.dateKey] = [...(result[row.dateKey] ?? []), row];
     return result;
   }, {});
-  const visibleDays = Array.from(
-    { length: Math.max(lastVisibleDay - firstVisibleDay + 1, 0) },
-    (_, index) => firstVisibleDay + index,
-  );
 
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200">
@@ -50,24 +53,31 @@ export default function FilteredAttendanceCalendar({
         ))}
       </div>
       <div className="grid grid-cols-7">
-        {visibleDays.map((day) => {
-          const weekday = new Date(year, month - 1, day).getDay();
+        {visibleDates.map((date, index) => {
+          const dateKey = toDateKey(date);
+          const weekday = date.getDay();
+          const cellMonth = date.getMonth() + 1;
+          const day = date.getDate();
+          const isSelectedMonth = date.getFullYear() === year && cellMonth === month;
+          const dayLabel = isSelectedMonth ? String(day) : `${cellMonth}/${day}`;
+
           return (
             <div
-              key={day}
+              key={dateKey}
               className="min-h-32 border-b border-r border-slate-200 bg-white p-2 [&:nth-child(7n)]:border-r-0"
-              style={{ gridColumnStart: visibleDays[0] === day ? weekday + 1 : undefined }}
+              style={{ gridColumnStart: index === 0 ? weekday + 1 : undefined }}
             >
               <div className={`mb-2 text-sm font-semibold ${
                 weekday === 0 ? 'text-red-600' : weekday === 6 ? 'text-blue-600' : 'text-slate-600'
               }`}
               >
-                {day}
+                {dayLabel}
               </div>
               <div className="space-y-1.5">
-                {(eventsByDay[day] ?? []).map((event) => {
+                {(eventsByDate[dateKey] ?? []).map((event) => {
                   const warning = ['LATE', 'EARLY_LEAVE', 'ABSENT', 'ATT02', 'ATT03', 'ATT04']
                     .includes(event.codeId);
+
                   return (
                     <div
                       key={event.id}
@@ -81,7 +91,6 @@ export default function FilteredAttendanceCalendar({
                         <strong className="truncate">{event.name}</strong>
                         <span>{event.content}</span>
                       </div>
-                      <p className="mt-0.5 truncate text-[11px] opacity-70">{event.detail}</p>
                     </div>
                   );
                 })}

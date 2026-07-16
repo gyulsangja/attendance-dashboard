@@ -27,6 +27,17 @@ const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 const displayDate = (date: string) =>
   `${date}(${WEEKDAYS[new Date(`${date}T00:00:00`).getDay()]})`;
 
+const getMonthStartDate = (year: number, month: number) =>
+  `${year}-${String(month).padStart(2, '0')}-01`;
+
+const getMonthEndDate = (year: number, month: number) =>
+  `${year}-${String(month).padStart(2, '0')}-${String(new Date(year, month, 0).getDate()).padStart(2, '0')}`;
+
+const getDefaultCalendarMonth = (year: number) => {
+  const today = new Date();
+  return today.getFullYear() === year ? today.getMonth() + 1 : 1;
+};
+
 export function useFilteredAttendanceReport() {
   const { year, month, week, startDate, endDate } = useAppSelector(selectReportPeriod);
   const storeAttendanceRecords = useAppSelector(selectReportRecords);
@@ -36,8 +47,13 @@ export function useFilteredAttendanceReport() {
     () => (isApiDataSource ? apiAttendanceCodesQuery.data ?? [] : storeAttendanceCodes),
     [apiAttendanceCodesQuery.data, storeAttendanceCodes],
   );
-  const calendarMonth = month === 'all' ? Number(startDate.slice(5, 7)) : month;
   const periodType = week !== 'all' ? 'WEEK' : month !== 'all' ? 'MONTH' : 'YEAR';
+  const isYearPeriod = periodType === 'YEAR';
+  const [selectedCalendarMonth, setSelectedCalendarMonth] = useState(() =>
+    month === 'all' ? getDefaultCalendarMonth(year) : month);
+  const calendarMonth = month === 'all' ? selectedCalendarMonth : month;
+  const calendarStartDate = isYearPeriod ? getMonthStartDate(year, calendarMonth) : startDate;
+  const calendarEndDate = isYearPeriod ? getMonthEndDate(year, calendarMonth) : endDate;
   const apiRecordsQuery = useStatisticsAttendanceQuery({
     periodType,
     year,
@@ -46,7 +62,12 @@ export function useFilteredAttendanceReport() {
   });
   const attendanceRecords = useMemo(() => (
     isApiDataSource ? apiRecordsQuery.data ?? [] : storeAttendanceRecords
-  ), [apiRecordsQuery.data, storeAttendanceRecords]);
+  ).filter((record) => record.date >= startDate && record.date <= endDate), [
+    apiRecordsQuery.data,
+    endDate,
+    startDate,
+    storeAttendanceRecords,
+  ]);
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
   const initializedCodes = useRef(false);
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('calendar');
@@ -69,22 +90,40 @@ export function useFilteredAttendanceReport() {
     () => selectedCodes.filter((id) => availableCodeIds.includes(id)),
     [availableCodeIds, selectedCodes],
   );
-  const rows = useMemo(() => attendanceRecords.flatMap((record) =>
-    record.events
-      .filter((event) => effectiveSelectedCodes.includes(event.codeId))
-      .map((event, index) => ({
-        id: `${record.id}-${index}`,
-        date: displayDate(record.date),
-        dateKey: record.date,
-        department: record.department,
-        name: record.employeeName,
-        codeId: event.codeId,
-        content: attendanceCodes.find((code) => code.id === event.codeId)?.label
-          ?? event.detail
-          ?? event.codeId,
-        detail: event.detail,
-      })),
-  ), [attendanceRecords, attendanceCodes, effectiveSelectedCodes]);
+  const rows = useMemo(() => {
+    const rowMap = new Map<string, FilteredAttendanceRow>();
+
+    attendanceRecords.forEach((record) => {
+      record.events
+        .filter((event) => effectiveSelectedCodes.includes(event.codeId))
+        .forEach((event, index) => {
+          const key = [
+            record.date,
+            record.employeeId,
+            record.employeeName,
+            event.codeId,
+            event.detail,
+          ].join('|');
+
+          if (rowMap.has(key)) return;
+
+          rowMap.set(key, {
+            id: `${record.id}-${index}`,
+            date: displayDate(record.date),
+            dateKey: record.date,
+            department: record.department,
+            name: record.employeeName,
+            codeId: event.codeId,
+            content: attendanceCodes.find((code) => code.id === event.codeId)?.label
+              ?? event.detail
+              ?? event.codeId,
+            detail: event.detail,
+          });
+        });
+    });
+
+    return [...rowMap.values()];
+  }, [attendanceRecords, attendanceCodes, effectiveSelectedCodes]);
 
   return {
     year,
@@ -92,6 +131,9 @@ export function useFilteredAttendanceReport() {
     startDate,
     endDate,
     calendarMonth,
+    calendarStartDate,
+    calendarEndDate,
+    isYearPeriod,
     attendanceCodes,
     selectedCodes: effectiveSelectedCodes,
     rows,
@@ -102,6 +144,7 @@ export function useFilteredAttendanceReport() {
     isCodeLoading: isApiDataSource && apiAttendanceCodesQuery.isLoading,
     isCodeError: isApiDataSource && apiAttendanceCodesQuery.isError,
     setSelectedCodes,
+    setSelectedCalendarMonth,
     setViewMode,
   };
 }

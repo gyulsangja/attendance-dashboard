@@ -8,11 +8,40 @@ import type {
   CommonGroupResponseDto,
 } from './dto/commonCode.dto';
 
+const toTrimmedString = (value: unknown, fallback = '') => String(value ?? fallback).trim();
+const toNumber = (value: unknown, fallback = 0) => {
+  const numberValue = Number(value ?? fallback);
+  return Number.isFinite(numberValue) ? numberValue : fallback;
+};
+
+const normalizeCommonGroupPayload = (payload: CommonGroupDto): CommonGroupDto => ({
+  group_code: toTrimmedString(payload.group_code ?? payload.groupCode),
+  group_code_name: toTrimmedString(
+    payload.group_code_name ?? payload.groupCodeName ?? payload.group_name ?? payload.groupName,
+  ),
+  description: toTrimmedString(payload.description),
+  use_status: toTrimmedString(payload.use_status ?? payload.useStatus ?? payload.use_yn ?? payload.useYn, 'Y'),
+  etc: toTrimmedString(payload.etc ?? payload.remark),
+});
+
+const normalizeCommonCodePayload = (payload: CommonCodeDto): CommonCodeDto => ({
+  group_code: toTrimmedString(payload.group_code ?? payload.groupCode),
+  detail_code: toTrimmedString(payload.detail_code ?? payload.detailCode ?? payload.code),
+  detail_code_name: toTrimmedString(
+    payload.detail_code_name ?? payload.detailCodeName ?? payload.code_name ?? payload.codeName ?? payload.name,
+  ),
+  sort_order: toNumber(payload.sort_order ?? payload.sortOrder),
+  use_status: toTrimmedString(payload.use_status ?? payload.useStatus ?? payload.use_yn ?? payload.useYn, 'Y'),
+  ref_val1: toTrimmedString(payload.ref_val1 ?? payload.refVal1 ?? payload.reg_val1 ?? payload.regVal1),
+  ref_val2: toTrimmedString(payload.ref_val2 ?? payload.refVal2 ?? payload.reg_val2 ?? payload.regVal2),
+  etc: toTrimmedString(payload.etc ?? payload.remark),
+});
+
 export const commonCodeApi = {
   insertGroup(payload: CommonGroupDto) {
     return apiClient<string>('/api/common/group/insert', {
       method: 'POST',
-      body: { groupbaseinfo: payload },
+      body: { groupbaseinfo: normalizeCommonGroupPayload(payload) },
     });
   },
 
@@ -29,7 +58,7 @@ export const commonCodeApi = {
   modifyGroup(payload: CommonGroupDto) {
     return apiClient<string>('/api/common/group/modify', {
       method: 'POST',
-      body: { groupiteminfo: payload },
+      body: { groupiteminfo: normalizeCommonGroupPayload(payload) },
     });
   },
 
@@ -42,7 +71,7 @@ export const commonCodeApi = {
   insertCode(payload: CommonCodeDto) {
     return apiClient<string>('/api/common/code/insert', {
       method: 'POST',
-      body: { commoncodeinfo: payload },
+      body: { commoncodeinfo: normalizeCommonCodePayload(payload) },
     });
   },
 
@@ -59,12 +88,12 @@ export const commonCodeApi = {
   modifyCode(payload: CommonCodeDto) {
     return apiClient<string>('/api/common/code/modify', {
       method: 'POST',
-      body: { commoncodeinfo: payload },
+      body: { commoncodeinfo: normalizeCommonCodePayload(payload) },
     });
   },
 
   deleteCode(detailCode: string) {
-    return apiClient<string>(`/api/common/group/delete/${detailCode}`, {
+    return apiClient<string>(`/api/common/code/delete/${encodeURIComponent(detailCode.trim())}`, {
       method: 'POST',
     });
   },

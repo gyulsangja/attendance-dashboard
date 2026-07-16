@@ -8,13 +8,15 @@ import type {
   AttendManagerShiftScheduleDto,
   AttendManagerSummaryDto,
 } from '@/api/dto/attendManager.dto';
-import { isApiDataSource } from './config';
 
 export type AttendManagerRepository = {
   getSummary: (params: AttendManagerWeekParams) => Promise<AttendManagerSummaryDto | null>;
   getOperationConfirmStatus: (
     params: AttendManagerWeekParams
   ) => Promise<AttendManagerConfirmStatusDto | null>;
+  getOperationConfirmStatusList: (
+    params: AttendManagerMonthParams
+  ) => Promise<AttendManagerConfirmStatusDto[]>;
   getShiftMonth: (
     params: AttendManagerMonthParams
   ) => Promise<AttendManagerShiftScheduleDto[]>;
@@ -25,26 +27,10 @@ export type AttendManagerRepository = {
   cancelOperationWeek: (params: AttendManagerWeekParams) => Promise<void>;
 };
 
-const mockAttendManagerRepository: AttendManagerRepository = {
-  async getSummary() {
-    return null;
-  },
-  async getOperationConfirmStatus() {
-    return null;
-  },
-  async getShiftMonth() {
-    return [];
-  },
-  async saveShift() {},
-  async modifyShift() {},
-  async deleteShift() {},
-  async confirmOperationWeek() {},
-  async cancelOperationWeek() {},
-};
-
 const apiAttendManagerRepository: AttendManagerRepository = {
   getSummary: attendManagerApi.getSummary,
   getOperationConfirmStatus: attendManagerApi.getOperationConfirmStatus,
+  getOperationConfirmStatusList: attendManagerApi.getOperationConfirmStatusList,
   getShiftMonth: attendManagerApi.getShiftMonth,
   async saveShift(schedules) {
     await attendManagerApi.saveShift(schedules);
@@ -63,6 +49,4 @@ const apiAttendManagerRepository: AttendManagerRepository = {
   },
 };
 
-export const attendManagerRepository = isApiDataSource
-  ? apiAttendManagerRepository
-  : mockAttendManagerRepository;
+export const attendManagerRepository = apiAttendManagerRepository;

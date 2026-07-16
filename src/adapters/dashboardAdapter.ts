@@ -55,6 +55,13 @@ const adaptRecordRow = (record: DashboardAttendanceRecordDto, index: number) => 
   codeId: record.attendance_code ?? record.attendanceCode ?? '',
 });
 
+const isNormalAttendanceRecord = (record: DashboardAttendanceRecordDto) => {
+  const code = String(record.attendance_code ?? record.attendanceCode ?? '').trim().toUpperCase();
+  const name = String(record.attendance_code_name ?? record.attendanceCodeName ?? record.detail ?? record.reason ?? '').trim();
+
+  return ['ATT00', 'ATT01', 'NORMAL'].includes(code) || name.includes('정상출근');
+};
+
 const adaptShift = (shift: DashboardShiftScheduleDto, index: number): ShiftSchedule => {
   const shiftType = shift.shift_type ?? shift.shiftType ?? shift.shift_name ?? shift.shiftName ?? '';
   const shiftTime = shiftTimeByType[shiftType] ?? { checkIn: '', checkOut: '' };
@@ -104,7 +111,6 @@ export const adaptDashboardWeeklyDtoToViewModel = (
     const code = item.attendance_code ?? item.attendanceCode;
     return !code || !summaryCodeIds.has(code);
   });
-
   const eventCounts = detailCodeCounts?.reduce<Record<string, number>>((result, item) => {
     const code = item.attendance_code ?? item.attendanceCode;
     if (code) result[code] = toNumber(item.count);
@@ -160,7 +166,9 @@ export const adaptDashboardWeeklyDtoToViewModel = (
       }))
       : fallback.summaryCards,
     exceptionRows: exceptionRows ? exceptionRows.map(adaptRecordRow) : fallback.exceptionRows,
-    vacationRows: vacationRows ? vacationRows.map(adaptRecordRow) : fallback.vacationRows,
+    vacationRows: vacationRows
+      ? vacationRows.filter((row) => !isNormalAttendanceRecord(row)).map(adaptRecordRow)
+      : fallback.vacationRows,
     weekShifts: shifts ? shifts.map(adaptShift) : fallback.weekShifts,
     operationItems,
     detailAttendanceCodes: codeCounts

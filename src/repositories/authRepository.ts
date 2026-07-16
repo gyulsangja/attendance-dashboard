@@ -6,9 +6,7 @@ import {
   getAccessTokenFromLoginResponse,
 } from '@/adapters/authAdapter';
 import { adaptUserInfoDtoToSystemUser } from '@/adapters/userAdapter';
-import { systemUsers } from '@/mocks';
 import type { SystemUser } from '@/types/domain';
-import { isApiDataSource } from './config';
 
 export type LoginResult = {
   user: SystemUser;
@@ -18,20 +16,6 @@ export type LoginResult = {
 export type AuthRepository = {
   login: (username: string, password: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
-};
-
-const mockAuthRepository: AuthRepository = {
-  async login(username, password) {
-    const user = systemUsers.find(
-      (item) => item.username === username.trim() && item.password === password,
-    );
-    if (!user) throw new Error('아이디 또는 비밀번호가 올바르지 않습니다.');
-    return { user };
-  },
-
-  async logout() {
-    tokenStorage.clearAccessToken();
-  },
 };
 
 const apiAuthRepository: AuthRepository = {
@@ -49,7 +33,7 @@ const apiAuthRepository: AuthRepository = {
       const userInfo = await userInfoApi.selectOne(username.trim());
       if (userInfo) user = adaptUserInfoDtoToSystemUser(userInfo);
     } catch {
-      // 로그인 API가 토큰만 반환하면 사용자 조회 실패 시 최소 세션으로 진입한다.
+      // 로그인 응답에 토큰만 있는 경우 최소 세션으로 진입한다.
     }
 
     if (accessToken) tokenStorage.setSession(user, accessToken);
@@ -69,6 +53,4 @@ const apiAuthRepository: AuthRepository = {
   },
 };
 
-export const authRepository = isApiDataSource
-  ? apiAuthRepository
-  : mockAuthRepository;
+export const authRepository = apiAuthRepository;

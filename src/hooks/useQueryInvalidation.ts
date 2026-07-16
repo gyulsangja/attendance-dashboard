@@ -35,6 +35,7 @@ export const invalidateAttendManagerQueries = (queryClient: QueryClient) => {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: ['attend-manager-summary'] }),
     queryClient.invalidateQueries({ queryKey: ['attend-manager-operation-confirm-status'] }),
+    queryClient.invalidateQueries({ queryKey: ['attend-manager-operation-confirm-status-list'] }),
     queryClient.invalidateQueries({ queryKey: ['attend-manager-shift-month'] }),
     queryClient.invalidateQueries({ queryKey: ['dashboard-weekly'] }),
     queryClient.invalidateQueries({ queryKey: ['dashboard-block'] }),

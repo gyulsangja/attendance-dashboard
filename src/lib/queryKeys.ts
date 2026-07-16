@@ -8,6 +8,8 @@
     ['attend-manager-summary', year, month, week] as const,
   attendManagerOperationConfirmStatus: (year: number, month: number, week: number) =>
     ['attend-manager-operation-confirm-status', year, month, week] as const,
+  attendManagerOperationConfirmStatusList: (year: number, month: number) =>
+    ['attend-manager-operation-confirm-status-list', year, month] as const,
   attendManagerShiftMonth: (year: number, month: number, week: number) =>
     ['attend-manager-shift-month', year, month, week] as const,
   statisticsAttendance: (

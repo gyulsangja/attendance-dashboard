@@ -1,6 +1,13 @@
 import { apiClient } from './client';
 import type { HolidayDto, HolidayListResponseDto } from './dto/holiday.dto';
 
+const normalizeHolidayPayload = (payload: HolidayDto): HolidayDto => ({
+  holiday_id: payload.holiday_id ?? payload.holidayId ?? payload.id ?? '',
+  holiday_date: payload.holiday_date ?? payload.holidayDate ?? payload.date ?? '',
+  holiday_name: payload.holiday_name ?? payload.holidayName ?? payload.name ?? '',
+  etc: payload.etc ?? '',
+});
+
 const unwrapHolidayList = (response: HolidayDto[] | HolidayListResponseDto) => {
   if (Array.isArray(response)) return response;
 
@@ -22,7 +29,7 @@ export const holidayApi = {
     return apiClient<string>('/api/attend/manager/holiday/insert', {
       method: 'POST',
       body: {
-        holidayinfo: payload,
+        holidayinfo: normalizeHolidayPayload(payload),
       },
     });
   },
@@ -30,7 +37,7 @@ export const holidayApi = {
   modify(payload: HolidayDto) {
     return apiClient<string>('/api/attend/manager/holiday/modify', {
       method: 'POST',
-      body: { holidayinfo: payload },
+      body: { holidayinfo: normalizeHolidayPayload(payload) },
     });
   },
 

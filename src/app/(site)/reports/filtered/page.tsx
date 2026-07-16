@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { Alert } from '@mui/material';
 import { FilterCode, SwitchButton } from '@/app/_components';
 import {
@@ -7,9 +8,34 @@ import {
   FilteredAttendanceTable,
   useFilteredAttendanceReport,
 } from '@/app/_components';
+import { useAppDispatch } from '@/store/hooks';
+import { setMonth, setWeek, setYear } from '@/store/slices/reportPeriodSlice';
+
+const toPositiveNumber = (value: string | null) => {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) && numberValue > 0 ? numberValue : null;
+};
 
 export default function Page() {
+  const dispatch = useAppDispatch();
+  const appliedQueryRef = useRef('');
   const report = useFilteredAttendanceReport();
+  const monthOptions = Array.from({ length: 12 }, (_, index) => index + 1);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const year = toPositiveNumber(searchParams.get('year'));
+    const month = toPositiveNumber(searchParams.get('month'));
+    const week = toPositiveNumber(searchParams.get('week'));
+    const queryKey = `${year ?? ''}-${month ?? ''}-${week ?? ''}`;
+
+    if (!year || !month || !week || appliedQueryRef.current === queryKey) return;
+
+    appliedQueryRef.current = queryKey;
+    dispatch(setYear(year));
+    dispatch(setMonth(month));
+    dispatch(setWeek(week));
+  }, [dispatch]);
 
   return (
     <>
@@ -55,13 +81,35 @@ export default function Page() {
         {report.viewMode === 'table' ? (
           <FilteredAttendanceTable rows={report.rows} />
         ) : (
-          <FilteredAttendanceCalendar
-            rows={report.rows}
-            year={report.year}
-            month={report.calendarMonth}
-            startDate={report.startDate}
-            endDate={report.endDate}
-          />
+          <>
+            {report.isYearPeriod && (
+              <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="flex flex-wrap gap-2">
+                  {monthOptions.map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => report.setSelectedCalendarMonth(value)}
+                      className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${
+                        report.calendarMonth === value
+                          ? 'bg-slate-800 text-white'
+                          : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {value}월
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <FilteredAttendanceCalendar
+              rows={report.rows}
+              year={report.year}
+              month={report.calendarMonth}
+              startDate={report.calendarStartDate}
+              endDate={report.calendarEndDate}
+            />
+          </>
         )}
       </section>
     </>

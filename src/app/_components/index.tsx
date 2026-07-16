@@ -28,7 +28,6 @@ export { default as UserGrid } from './admin/UserGrid';
 export { default as EmployeeDialog } from './employees/EmployeeDialog';
 export type { EmployeeDialogOption } from './employees/EmployeeDialog';
 export { default as EmployeeGrid } from './employees/EmployeeGrid';
-export { default as OrganizationHistoryGrid } from './employees/OrganizationHistoryGrid';
 export { default as TeamDialog } from './employees/TeamDialog';
 export { default as TeamPanel } from './employees/TeamPanel';
 export { useOrganizationManagement } from './employees/hooks/useOrganizationManagement';

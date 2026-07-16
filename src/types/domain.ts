@@ -36,6 +36,8 @@ export type AttendanceCode = {
   isExceptional: boolean;
   startDate: string;
   endDate?: string;
+  sortOrder?: number;
+  etc?: string;
 };
 
 export type WorkTimePolicy = {
@@ -139,6 +141,7 @@ export type OrganizationTeam = {
 export type OrganizationEmployee = {
   id: number;
   employeeNo?: string;
+  empCompany?: string;
   name: string;
   email?: string;
   phoneNo?: string;
@@ -156,6 +159,7 @@ export type OrganizationEmployee = {
   backendWorkTypeName?: string;
   backendHoldStatusCode?: string;
   backendHoldStatusName?: string;
+  etc?: string;
 };
 
 export type OrganizationHistory = {

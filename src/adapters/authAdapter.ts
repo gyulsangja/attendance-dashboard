@@ -1,39 +1,22 @@
-﻿import type { LoginResponseDto } from '@/api/dto/auth.dto';
+import type { LoginResponseDto } from '@/api/dto/auth.dto';
+import { getFrontendRoleFromBackendCode } from '@/constants/roles';
 import type { SystemUser, UserRole } from '@/types/domain';
 
-const fallbackRole: UserRole = 'GENERAL';
-const roleAliases: Record<string, UserRole> = {
-  ADMIN: 'ADMIN',
-  ROLE_ADMIN: 'ADMIN',
-  ROLE_SUPER: 'ADMIN',
-  SUPER: 'ADMIN',
-  EXECUTIVE: 'EXECUTIVE',
-  ROLE_EXECUTIVE: 'EXECUTIVE',
-  SHIFT_MANAGER: 'SHIFT_MANAGER',
-  ROLE_SHIFT_MANAGER: 'SHIFT_MANAGER',
-  ORGANIZATION_MANAGER: 'ORGANIZATION_MANAGER',
-  ORG_MANAGER: 'ORGANIZATION_MANAGER',
-  ROLE_ORGANIZATION_MANAGER: 'ORGANIZATION_MANAGER',
-  GENERAL: 'GENERAL',
-  ROLE_GENERAL: 'GENERAL',
-  ROLE_USER: 'GENERAL',
-};
-
-const developmentAdminUsernames = new Set(['dev1']);
+const frontendRoles = new Set<UserRole>([
+  'ADMIN',
+  'EXECUTIVE',
+  'SHIFT_MANAGER',
+  'ORGANIZATION_MANAGER',
+  'GENERAL',
+]);
 
 export const normalizeUserRole = (role?: UserRole | string): UserRole => {
-  if (!role) return fallbackRole;
-  return roleAliases[String(role).trim().toUpperCase()] ?? fallbackRole;
-};
+  if (!role) return 'GENERAL';
 
-export const applyDevelopmentAccessOverride = (user: SystemUser): SystemUser => {
-  if (!developmentAdminUsernames.has(user.username.trim().toLowerCase())) return user;
+  const normalized = String(role).trim().toUpperCase();
+  if (frontendRoles.has(normalized as UserRole)) return normalized as UserRole;
 
-  return {
-    ...user,
-    role: 'ADMIN',
-    backendRoleCode: user.backendRoleCode ?? 'DEV_FRONTEND_ADMIN_OVERRIDE',
-  };
+  return getFrontendRoleFromBackendCode(normalized);
 };
 
 const toNumericUserId = (identifier: string) => {
@@ -85,12 +68,14 @@ export const adaptLoginUser = (
     response.userId ??
     fallbackUsername ??
     '';
+  const roleCode = response.role ?? response.auth_cd ?? response.authCd;
 
-  return applyDevelopmentAccessOverride({
+  return {
     id: toNumericUserId(identifier),
     username,
     password: '',
     name,
-    role: normalizeUserRole(response.role ?? response.auth_cd ?? response.authCd),
-  });
+    role: normalizeUserRole(roleCode),
+    backendRoleCode: roleCode,
+  };
 };

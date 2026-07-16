@@ -2,7 +2,7 @@
 
 import { Chip, Box } from '@mui/material';
 import type { GridColDef } from '@mui/x-data-grid';
-import type { AttendanceRecord, OperationSchedule } from '@/types/domain';
+import type { AttendanceCode, AttendanceRecord, OperationSchedule } from '@/types/domain';
 
 export type WeeklyAttendanceEmployeeRow = {
   id: number;
@@ -22,6 +22,7 @@ type UseWeeklyAttendanceGridParams = {
   }>;
   records: AttendanceRecord[];
   schedules: OperationSchedule[];
+  attendanceCodes?: AttendanceCode[];
   department: string;
   onEdit: (employeeId: number, date: string) => void;
   readOnly?: boolean;
@@ -51,6 +52,7 @@ export function useWeeklyAttendanceGrid({
   employees = [],
   records,
   schedules,
+  attendanceCodes = [],
   department,
   onEdit,
   readOnly = false,
@@ -93,6 +95,7 @@ export function useWeeklyAttendanceGrid({
   const rows = weekEmployees.filter(
     (employee) => department === 'all' || employee.department === department,
   );
+  const attendanceCodeMap = new Map(attendanceCodes.map((code) => [code.id, code.label]));
 
   const displayDays = [...new Map([
     ...days.map((day) => [day.date, day] as const),
@@ -142,7 +145,12 @@ export function useWeeklyAttendanceGrid({
           (item) => item.employeeId === row.id && item.date === day.date,
         );
         const recordLabels = record?.events.map(
-          (event) => event.detail || event.codeId,
+          (event) => {
+            const codeLabel = attendanceCodeMap.get(event.codeId);
+            if (codeLabel) return codeLabel;
+            if (event.detail && event.detail !== event.codeId) return event.detail;
+            return event.codeId;
+          },
         ) ?? [];
         const publicHoliday = !row.shiftWorker && record?.isHoliday && record.holidayName
           ? { name: record.holidayName }

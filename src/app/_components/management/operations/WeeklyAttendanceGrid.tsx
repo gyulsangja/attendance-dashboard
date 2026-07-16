@@ -11,7 +11,7 @@ import {
 import { DataGrid } from '@mui/x-data-grid';
 import { koKR } from '@mui/x-data-grid/locales';
 import { useWeeklyAttendanceGrid } from '@/app/_components/management/operations/hooks/useWeeklyAttendanceGrid';
-import type { AttendanceRecord, OperationSchedule } from '@/types/domain';
+import type { AttendanceCode, AttendanceRecord, OperationSchedule } from '@/types/domain';
 
 type WeeklyAttendanceGridProps = {
   days: { date: string; label: string }[];
@@ -24,6 +24,7 @@ type WeeklyAttendanceGridProps = {
   }>;
   records: AttendanceRecord[];
   schedules: OperationSchedule[];
+  attendanceCodes?: AttendanceCode[];
   onEdit: (employeeId: number, date: string) => void;
   readOnly?: boolean;
 };
@@ -33,6 +34,7 @@ export default function WeeklyAttendanceGrid({
   employees = [],
   records,
   schedules,
+  attendanceCodes = [],
   onEdit,
   readOnly = false,
 }: WeeklyAttendanceGridProps) {
@@ -42,6 +44,7 @@ export default function WeeklyAttendanceGrid({
     employees,
     records,
     schedules,
+    attendanceCodes,
     department,
     onEdit,
     readOnly,

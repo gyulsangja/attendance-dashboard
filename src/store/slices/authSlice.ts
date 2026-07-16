@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { systemUsers, type SystemUser, type UserRole } from '@/mocks';
+import type { SystemUser, UserRole } from '@/types/domain';
 
 type AuthState = {
   users: SystemUser[];
@@ -8,7 +8,7 @@ type AuthState = {
 };
 
 const initialState: AuthState = {
-  users: systemUsers.map((user) => ({ ...user })),
+  users: [],
   currentUserId: null,
   accessToken: null,
 };
