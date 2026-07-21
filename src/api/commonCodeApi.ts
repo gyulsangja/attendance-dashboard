@@ -27,6 +27,7 @@ const normalizeCommonCodeBasePayload = (payload: CommonCodeDto): CommonCodeDto =
     payload.detail_code_name ?? payload.detailCodeName ?? payload.code_name ?? payload.codeName ?? payload.name,
   ),
   use_status: toTrimmedString(payload.use_status ?? payload.useStatus ?? payload.use_yn ?? payload.useYn, 'Y'),
+  sort_order: '',
   ref_val1: toTrimmedString(payload.ref_val1 ?? payload.refVal1 ?? payload.reg_val1 ?? payload.regVal1),
   ref_val2: toTrimmedString(payload.ref_val2 ?? payload.refVal2 ?? payload.reg_val2 ?? payload.regVal2),
   etc: toTrimmedString(payload.etc ?? payload.remark),
@@ -37,7 +38,7 @@ const normalizeCommonCodeInsertPayload = (payload: CommonCodeDto): CommonCodeDto
 
 const normalizeCommonCodeModifyPayload = (payload: CommonCodeDto): CommonCodeDto => ({
   ...normalizeCommonCodeBasePayload(payload),
-  sort_order: toTrimmedString(payload.sort_order ?? payload.sortOrder),
+  sort_order: '',
 });
 
 export const commonCodeApi = {

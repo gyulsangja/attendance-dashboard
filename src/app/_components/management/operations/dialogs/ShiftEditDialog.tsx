@@ -46,19 +46,6 @@ function ShiftEditDialogForm({ value, onClose, onSave, onDelete }: Props & { val
     });
   };
 
-  const updateTime = (field: 'checkIn' | 'checkOut', time: string) => {
-    if (!form) return;
-
-    const next = { ...form, [field]: time };
-    const checkIn = next.checkIn ?? '';
-    const checkOut = next.checkOut ?? '';
-
-    setForm({
-      ...next,
-      time: getShiftLabel(checkIn, checkOut),
-    });
-  };
-
   return (
     <Dialog open={Boolean(value)} onClose={onClose} fullWidth maxWidth="xs">
       <DialogTitle>교대근무 일정 수정</DialogTitle>
@@ -75,29 +62,11 @@ function ShiftEditDialogForm({ value, onClose, onSave, onDelete }: Props & { val
             >
               {SHIFT_PRESETS.map((preset) => (
                 <MenuItem key={preset.value} value={preset.value}>
-                  {getShiftLabel(preset.checkIn, preset.checkOut)}
+                  {preset.label}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
-          <Stack direction="row" spacing={2}>
-            <TextField
-              fullWidth
-              type="time"
-              label="출근 기준시간"
-              value={form?.checkIn ?? ''}
-              onChange={(event) => updateTime('checkIn', event.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-            <TextField
-              fullWidth
-              type="time"
-              label="퇴근 기준시간"
-              value={form?.checkOut ?? ''}
-              onChange={(event) => updateTime('checkOut', event.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-          </Stack>
         </Stack>
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'space-between', px: 3, pb: 3 }}>
@@ -113,7 +82,7 @@ function ShiftEditDialogForm({ value, onClose, onSave, onDelete }: Props & { val
           <Button onClick={onClose}>취소</Button>
           <Button
             variant="contained"
-            disabled={saving || !form?.checkIn || !form?.checkOut}
+            disabled={saving || !form?.shift}
             onClick={async () => {
               if (!form) return;
               setSaving(true);
@@ -137,4 +106,3 @@ export default function ShiftEditDialog(props: Props) {
 
   return <ShiftEditDialogForm key={props.value.id} {...props} value={props.value} />;
 }
-

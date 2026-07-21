@@ -15,6 +15,7 @@ const shiftTimeByType: Record<string, { checkIn: string; checkOut: string }> = {
   SHIFT_DAY: { checkIn: '09:00', checkOut: '18:00' },
   SHIFT_NIGHT: { checkIn: '12:00', checkOut: '21:00' },
   SHIFT_DAWN: { checkIn: '21:00', checkOut: '09:00' },
+  SHIFT_WEEK_DAY: { checkIn: '09:00', checkOut: '21:00' },
 };
 
 const getShiftType = (dto: AttendManagerShiftScheduleDto) =>

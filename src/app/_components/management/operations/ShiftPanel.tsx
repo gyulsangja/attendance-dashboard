@@ -27,6 +27,10 @@ const shiftColors: Record<string, string> = {
   '21:00 ~ 익일 09:00': '#4338ca',
 };
 
+const shiftLabels: Record<string, string> = {
+  SHIFT_WEEK_DAY: '주말/공휴일 09:00~21:00',
+};
+
 const toDateKey = (date: Date) => [
   date.getFullYear(),
   String(date.getMonth() + 1).padStart(2, '0'),
@@ -51,9 +55,10 @@ export default function ShiftPanel({
   const events = rows.map((schedule) => {
     const color = shiftColors[schedule.time] ?? '#475569';
     const editable = isInSelectedWeek(schedule.date, selectedWeek);
+    const label = shiftLabels[schedule.shift] ?? schedule.time;
     return {
       id: String(schedule.id),
-      title: `${schedule.name} · ${schedule.time}`,
+      title: `${schedule.name} · ${label}`,
       date: schedule.date,
       backgroundColor: color,
       borderColor: color,

@@ -34,13 +34,12 @@ import {
 } from '@/hooks/useCommonCodeQueries';
 
 const TEXT = {
-  title: '직원 정보 항목 관리',
+  title: '직원정보 항목 관리',
   error: '항목 저장 중 오류가 발생했습니다.',
   addItem: '항목 추가',
   active: '사용',
   inactive: '미사용',
   code: '관리코드',
-  sortOrder: '표시순서',
   memo: '비고',
   memoPlaceholder: '관리 참고용 메모를 입력합니다.',
   insert: '추가',
@@ -88,7 +87,7 @@ const emptyForm = (groupCode: string = categories[0].groupCode): CommonCode => (
   groupCode,
   detailCode: '',
   label: '',
-  sortOrder: 99,
+  sortOrder: 0,
   isActive: true,
   refVal1: '',
   refVal2: '',
@@ -104,9 +103,6 @@ const createNextCode = (prefix: string, separator: string, rows: CommonCode[]) =
 
   return `${prefix}${separator}${String(maxNumber + 1).padStart(2, '0')}`;
 };
-
-const createNextSortOrder = (rows: CommonCode[]) =>
-  rows.reduce((max, row) => Math.max(max, Number(row.sortOrder) || 0), 0) + 1;
 
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : '';
@@ -127,7 +123,7 @@ export default function EmployeeInfoOptionPanel() {
   const rows = useMemo(
     () => codes
       .filter((code) => code.groupCode === category.groupCode)
-      .sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label)),
+      .sort((a, b) => a.label.localeCompare(b.label, 'ko') || a.detailCode.localeCompare(b.detailCode)),
     [codes, category.groupCode],
   );
 
@@ -135,7 +131,6 @@ export default function EmployeeInfoOptionPanel() {
     () => createNextCode(category.codePrefix, category.codeSeparator, rows),
     [category.codePrefix, category.codeSeparator, rows],
   );
-  const nextSortOrder = useMemo(() => createNextSortOrder(rows), [rows]);
   const displayDetailCode = (editingDetailCode ?? form.detailCode) || nextDetailCode;
 
   const closeDialog = () => {
@@ -149,7 +144,6 @@ export default function EmployeeInfoOptionPanel() {
     setForm({
       ...emptyForm(category.groupCode),
       detailCode: nextDetailCode,
-      sortOrder: nextSortOrder,
     });
     setDialogOpen(true);
   };
@@ -163,7 +157,7 @@ export default function EmployeeInfoOptionPanel() {
 
   const selectCode = (code: CommonCode) => {
     setEditingDetailCode(code.detailCode);
-    setForm({ ...code });
+    setForm({ ...code, sortOrder: 0 });
     setDialogOpen(true);
   };
 
@@ -174,7 +168,7 @@ export default function EmployeeInfoOptionPanel() {
       groupCode: category.groupCode,
       detailCode: (editingDetailCode ?? form.detailCode.trim().toUpperCase()) || nextDetailCode,
       label: form.label.trim(),
-      sortOrder: Number(form.sortOrder) || nextSortOrder,
+      sortOrder: 0,
       refVal1: form.refVal1.trim(),
       refVal2: form.refVal2.trim(),
       etc: form.etc.trim(),
@@ -225,7 +219,6 @@ export default function EmployeeInfoOptionPanel() {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>{TEXT.sortOrder}</TableCell>
                 <TableCell>{TEXT.code}</TableCell>
                 <TableCell>{category.fieldLabel}</TableCell>
                 <TableCell>{TEXT.status}</TableCell>
@@ -236,7 +229,6 @@ export default function EmployeeInfoOptionPanel() {
             <TableBody>
               {rows.map((code) => (
                 <TableRow key={`${code.groupCode}-${code.detailCode}`} hover>
-                  <TableCell>{code.sortOrder}</TableCell>
                   <TableCell className="font-mono text-xs text-slate-600">{code.detailCode}</TableCell>
                   <TableCell>{code.label}</TableCell>
                   <TableCell>
@@ -256,7 +248,7 @@ export default function EmployeeInfoOptionPanel() {
               ))}
               {rows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4, color: 'text.secondary' }}>
                     {TEXT.empty}
                   </TableCell>
                 </TableRow>
@@ -282,14 +274,6 @@ export default function EmployeeInfoOptionPanel() {
             placeholder={category.fieldPlaceholder}
             value={form.label}
             onChange={(event) => setForm({ ...form, label: event.target.value })}
-          />
-          <TextField
-            fullWidth
-            type="number"
-            label={TEXT.sortOrder}
-            value={form.sortOrder}
-            onChange={(event) => setForm({ ...form, sortOrder: Number(event.target.value) || 0 })}
-            slotProps={{ htmlInput: { min: 1 } }}
           />
           <TextField
             fullWidth

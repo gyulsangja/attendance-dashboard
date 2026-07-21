@@ -66,7 +66,7 @@ export const adaptAttendanceCodeToCommonCodeDto = (
   group_code: 'G_ATTE_CODE',
   detail_code: code.id,
   detail_code_name: code.label,
-  sort_order: code.sortOrder ?? 99,
+  sort_order: '',
   use_status: code.isActive ? 'Y' : 'N',
   ref_val1: '',
   ref_val2: '',

@@ -47,7 +47,7 @@ export const adaptCommonCodeToDto = (code: CommonCode): CommonCodeDto => ({
   group_code: code.groupCode,
   detail_code: code.detailCode,
   detail_code_name: code.label,
-  sort_order: code.sortOrder,
+  sort_order: '',
   use_status: code.isActive ? 'Y' : 'N',
   ref_val1: code.refVal1,
   ref_val2: code.refVal2,

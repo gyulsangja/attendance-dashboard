@@ -16,6 +16,7 @@ export const SHIFT_PRESETS: ShiftPreset[] = [
   { value: 'SHIFT_DAY', checkIn: '09:00', checkOut: '18:00', label: '09:00~18:00' },
   { value: 'SHIFT_NIGHT', checkIn: '12:00', checkOut: '21:00', label: '12:00~21:00' },
   { value: 'SHIFT_DAWN', checkIn: '21:00', checkOut: '09:00', label: '21:00~익일 09:00' },
+  { value: 'SHIFT_WEEK_DAY', checkIn: '09:00', checkOut: '21:00', label: '주말/공휴일 09:00~21:00' },
 ];
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -138,8 +139,6 @@ export function useShiftEntryDrafts({
     drafts,
     setWorkerId,
     setSelectedDates,
-    setCheckIn,
-    setCheckOut,
     setDrafts,
     applyShiftType,
     toggleDate,

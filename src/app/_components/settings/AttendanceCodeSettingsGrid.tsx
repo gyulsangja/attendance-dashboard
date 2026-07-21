@@ -18,7 +18,6 @@ const TEXT = {
   active: '사용 여부',
   activeUse: '사용',
   inactive: '미사용',
-  sortOrder: '표시 순서',
   etc: '비고',
   manage: '관리',
   edit: '수정',
@@ -55,15 +54,6 @@ export default function AttendanceCodeSettingsGrid({
       ),
     },
     {
-      field: 'sortOrder',
-      headerName: TEXT.sortOrder,
-      minWidth: 110,
-      flex: 0.6,
-      align: 'center',
-      headerAlign: 'center',
-      valueGetter: (_value, row) => row.sortOrder ?? 99,
-    },
-    {
       field: 'etc',
       headerName: TEXT.etc,
       minWidth: 200,
@@ -96,7 +86,7 @@ export default function AttendanceCodeSettingsGrid({
       <div className="h-[590px] p-5">
         <DataGrid
           rows={[...visibleCodes].sort((a, b) =>
-            (a.sortOrder ?? 99) - (b.sortOrder ?? 99) || a.label.localeCompare(b.label, 'ko'))}
+            a.label.localeCompare(b.label, 'ko') || a.id.localeCompare(b.id))}
           columns={codeColumns}
           pageSizeOptions={[10, 20]}
           initialState={{ pagination: { paginationModel: { page: 0, pageSize: 10 } } }}

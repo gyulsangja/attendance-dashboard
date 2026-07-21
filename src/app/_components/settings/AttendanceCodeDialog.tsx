@@ -25,11 +25,10 @@ const TEXT = {
   addTitle: '근태코드 추가',
   code: '관리코드',
   codePlaceholder: '예: ATT07',
-  codeHelper: '등록 후에는 출퇴근/근태 기록에서 참조되므로 변경하지 않습니다.',
+  codeHelper: '등록 후 출퇴근/근태 기록에서 참조되므로 변경하지 않습니다.',
   label: '근태코드명',
   labelPlaceholder: '예: 연차, 병가, 지각',
   active: '사용',
-  sortOrder: '표시 순서',
   etc: '비고',
   cancel: '취소',
   save: '저장',
@@ -43,7 +42,7 @@ const emptyCode = (): AttendanceCode => ({
   isActive: true,
   isExceptional: false,
   startDate: today(),
-  sortOrder: 99,
+  sortOrder: 0,
   etc: '',
 });
 
@@ -84,14 +83,6 @@ export default function AttendanceCodeDialog({ open, code, onClose, onSave }: Pr
 
         <TextField
           fullWidth
-          type="number"
-          label={TEXT.sortOrder}
-          value={form.sortOrder ?? 99}
-          onChange={(event) => setForm({ ...form, sortOrder: Number(event.target.value) || 99 })}
-        />
-
-        <TextField
-          fullWidth
           multiline
           minRows={3}
           label={TEXT.etc}
@@ -105,7 +96,7 @@ export default function AttendanceCodeDialog({ open, code, onClose, onSave }: Pr
           variant="contained"
           disabled={!form.id.trim() || !form.label.trim()}
           onClick={() => onSave(
-            { ...form, id: form.id.trim(), label: form.label.trim(), etc: form.etc?.trim() ?? '' },
+            { ...form, id: form.id.trim(), label: form.label.trim(), sortOrder: 0, etc: form.etc?.trim() ?? '' },
             today(),
           )}
         >

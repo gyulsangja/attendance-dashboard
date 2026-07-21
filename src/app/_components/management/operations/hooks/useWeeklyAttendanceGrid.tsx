@@ -1,6 +1,6 @@
 'use client';
 
-import { Chip, Box } from '@mui/material';
+import { Box, Chip } from '@mui/material';
 import type { GridColDef } from '@mui/x-data-grid';
 import type { AttendanceCode, AttendanceRecord, OperationSchedule } from '@/types/domain';
 
@@ -44,7 +44,8 @@ const getDateLabel = (date: string) => {
   const [, month, day] = date.split('-');
   if (!month || !day) return date;
 
-  return `${Number(month)}/${Number(day)}`;
+  const weekday = new Intl.DateTimeFormat('ko-KR', { weekday: 'short' }).format(new Date(`${date}T00:00:00`));
+  return `${Number(month)}/${Number(day)}(${weekday})`;
 };
 
 export function useWeeklyAttendanceGrid({
@@ -128,7 +129,7 @@ export function useWeeklyAttendanceGrid({
     },
     ...displayDays.map((day) => ({
       field: day.date,
-      headerName: day.label,
+      headerName: getDateLabel(day.date),
       headerClassName: getDayClassName(day.date, 'header', records),
       cellClassName: getDayClassName(day.date, 'cell', records),
       minWidth: 130,
@@ -144,14 +145,12 @@ export function useWeeklyAttendanceGrid({
         const items = schedules.filter(
           (item) => item.employeeId === row.id && item.date === day.date,
         );
-        const recordLabels = record?.events.map(
-          (event) => {
-            const codeLabel = attendanceCodeMap.get(event.codeId);
-            if (codeLabel) return codeLabel;
-            if (event.detail && event.detail !== event.codeId) return event.detail;
-            return event.codeId;
-          },
-        ) ?? [];
+        const recordLabels = record?.events.map((event) => {
+          const codeLabel = attendanceCodeMap.get(event.codeId);
+          if (codeLabel) return codeLabel;
+          if (event.detail && event.detail !== event.codeId) return event.detail;
+          return event.codeId;
+        }) ?? [];
         const publicHoliday = !row.shiftWorker && record?.isHoliday && record.holidayName
           ? { name: record.holidayName }
           : null;

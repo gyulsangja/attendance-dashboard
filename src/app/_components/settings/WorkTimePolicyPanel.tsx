@@ -14,7 +14,7 @@ type WorkTimePolicyPanelProps = {
 
 const TEXT = {
   title: '근무시간 설정',
-  description: '일반근무와 반차 출퇴근 기준시간을 설정합니다. 저장된 기준시간은 백엔드 자동판정 기준으로 사용됩니다.',
+  description: '일반근무와 반차의 출퇴근 기준시간을 설정합니다.',
   basicWork: '일반근무',
   halfAm: '오전반차',
   halfPm: '오후반차',

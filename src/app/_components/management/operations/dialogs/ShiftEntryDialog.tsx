@@ -17,7 +17,6 @@ import {
   Stack,
   ToggleButton,
   ToggleButtonGroup,
-  TextField,
 } from '@mui/material';
 import {
   SHIFT_PRESETS,
@@ -57,7 +56,7 @@ export default function ShiftEntryDialog({
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <Alert severity="info">
-            근무자 1명과 기준시간, 여러 날짜를 선택해 일정을 추가하세요. 여러 묶음을 추가한 뒤 한 번에 저장할 수 있습니다.
+            교대근무자 1명과 근무 유형, 여러 날짜를 선택해 일정을 추가하세요. 여러 묶음을 추가한 뒤 한 번에 저장할 수 있습니다.
           </Alert>
 
           {workers.length === 0 && (
@@ -128,28 +127,9 @@ export default function ShiftEntryDialog({
             </Button>
           </Stack>
 
-          <Stack direction="row" spacing={2}>
-            <TextField
-              fullWidth
-              type="time"
-              label="출근 기준시간"
-              value={entry.checkIn}
-              onChange={(event) => entry.setCheckIn(event.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-            <TextField
-              fullWidth
-              type="time"
-              label="퇴근 기준시간"
-              value={entry.checkOut}
-              onChange={(event) => entry.setCheckOut(event.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-          </Stack>
-
           <Button
             variant="outlined"
-            disabled={workers.length === 0 || !entry.workerId || entry.selectedDates.length === 0 || !entry.checkIn || !entry.checkOut}
+            disabled={workers.length === 0 || !entry.workerId || entry.selectedDates.length === 0}
             onClick={entry.addDrafts}
           >
             선택 일정 추가
