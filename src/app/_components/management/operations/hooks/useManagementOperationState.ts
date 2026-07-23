@@ -5,7 +5,6 @@ import {
   adaptAttendManagerConfirmStatus,
   adaptAttendManagerShiftDtoToSchedule,
   adaptAttendManagerSummary,
-  getAttendManagerConfirmStatusSuccessCount,
 } from '@/adapters/attendManagerAdapter';
 import {
   useAttendManagerOperationConfirmStatusQuery,
@@ -17,6 +16,7 @@ import { useAttendanceRecordsQuery } from '@/hooks/useAttendanceRecordQueries';
 import { useOrganizationEmployeesQuery } from '@/hooks/useEmployeeQueries';
 import { useOperationSchedulesQuery } from '@/hooks/useOperationScheduleQueries';
 import { buildAttendanceWeekKey } from '@/lib/attendance/attendancePeriodKey';
+import { getCanonicalAttendanceCode } from '@/lib/attendance/attendanceCodeCanonical';
 import { filterItemsByPeriod } from '@/lib/management/operationWeek';
 import { isApiDataSource } from '@/repositories/config';
 import {
@@ -65,9 +65,25 @@ const getCodeLabel = (
   codeId: string,
   attendanceCodes: AttendanceCode[],
   fallback?: string,
-) => attendanceCodes.find((code) => code.id === codeId)?.label
-  ?? fallback
-  ?? codeId;
+) => getCanonicalAttendanceCode(codeId, attendanceCodes, fallback).label;
+
+const hasDeviceUploadHistory = (status: {
+  idx?: number | string;
+  upload_date?: string;
+  uploadDate?: string;
+  success_count?: number | string;
+  successCount?: number | string;
+} | null | undefined) => {
+  if (!status) return false;
+  const idx = status.idx === undefined || status.idx === null ? '' : String(status.idx).trim();
+  const uploadDate = String(status.upload_date ?? status.uploadDate ?? '').trim();
+  const successCount = Number(status.success_count ?? status.successCount ?? 0);
+
+  return Boolean(idx || uploadDate || successCount > 0);
+};
+
+const getConfirmStatusMonth = (status: { month?: number | string; monty?: number | string }) =>
+  status.month ?? status.monty;
 
 const getRecordCodeLabels = (
   record: AttendanceRecord | undefined,
@@ -91,10 +107,12 @@ const buildWeeklyReportFromOperationData = ({
   schedules: OperationSchedule[];
   templateEmployees: Array<{
     employeeId: number;
+    employeeNo?: string;
     employeeName: string;
     department: string;
     position?: string;
     shiftWorker?: boolean;
+    email?: string;
   }>;
   week: { label: string; startDate: string; endDate: string };
   weekDays: Array<{ date: string; label: string }>;
@@ -102,10 +120,11 @@ const buildWeeklyReportFromOperationData = ({
   const countMap = new Map<string, { count: number; label?: string }>();
   const addCodeCount = (codeId: string, label?: string) => {
     if (!codeId) return;
-    const current = countMap.get(codeId);
-    countMap.set(codeId, {
+    const canonical = getCanonicalAttendanceCode(codeId, attendanceCodes, label);
+    const current = countMap.get(canonical.id);
+    countMap.set(canonical.id, {
       count: (current?.count ?? 0) + 1,
-      label: current?.label ?? label,
+      label: current?.label ?? canonical.label,
     });
   };
 
@@ -272,7 +291,7 @@ export const useManagementOperationState = () => {
   const apiCurrentWeekConfirmStatus = useMemo(
     () => (apiOperationConfirmStatusListQuery.data ?? []).find((item) =>
       String(item.year) === String(management.year)
-      && String(item.month) === String(management.month)
+      && String(getConfirmStatusMonth(item)) === String(management.month)
       && String(item.week) === String(management.weekNumber)),
     [
       apiOperationConfirmStatusListQuery.data,
@@ -324,17 +343,22 @@ export const useManagementOperationState = () => {
   const effectiveTemplateEmployees = isApiDataSource
     ? (apiOrganizationEmployeesQuery.data ?? []).map((employee) => ({
       employeeId: getApiEmployeeSelectId(employee),
+      employeeNo: employee.employeeNo,
       employeeName: employee.name,
       department: employee.backendDeptName ?? employee.backendDeptCode ?? '-',
       position: employee.backendRankName ?? employee.backendRankCode ?? employee.position,
       shiftWorker: employee.shiftWorker,
+      email: employee.email,
     }))
     : templateEmployees;
   const effectiveWeekTerminalRecords = (isApiDataSource
     ? effectiveDeviceRecords
     : filterItemsByPeriod(effectiveDeviceRecords, week))
     .filter((item) => Boolean(item.checkIn || item.checkOut));
-  const effectiveWeekCsvUploaded = effectiveWeekTerminalRecords.length > 0;
+  const effectiveWeekUploadHistory = isApiDataSource
+    ? hasDeviceUploadHistory(apiCurrentWeekConfirmStatus)
+    : effectiveWeekTerminalRecords.length > 0;
+  const effectiveWeekCsvUploaded = effectiveWeekUploadHistory;
   const effectiveSteps = steps.map((step, index) => {
     if (index === 0) {
       return {
@@ -346,16 +370,11 @@ export const useManagementOperationState = () => {
     if (index !== 1) return step;
     return {
       ...step,
-      value: effectiveWeekCsvUploaded
-        ? `${effectiveWeekTerminalRecords.length}건 확인`
-        : '업로드 필요',
+      value: effectiveWeekCsvUploaded ? '업로드 완료' : '업로드 필요',
       done: effectiveWeekCsvUploaded,
     };
   });
   const summaryScheduleCount = apiSummary?.attendanceScheduleCount ?? effectiveWeekSchedules.length;
-  const statusListDeviceRecordCount = getAttendManagerConfirmStatusSuccessCount(apiCurrentWeekConfirmStatus);
-  const summaryDeviceRecordCount = apiSummary?.deviceRecordCount
-    ?? (statusListDeviceRecordCount > 0 ? statusListDeviceRecordCount : effectiveWeekTerminalRecords.length);
   const summarySteps = effectiveSteps.map((step, index) => {
     if (index === 0) {
       return {
@@ -367,10 +386,8 @@ export const useManagementOperationState = () => {
     if (index === 1) {
       return {
         ...step,
-        value: summaryDeviceRecordCount > 0
-          ? `${summaryDeviceRecordCount}건 확인`
-          : '업로드 필요',
-        done: summaryDeviceRecordCount > 0,
+        value: effectiveWeekUploadHistory ? '업로드 완료' : '업로드 필요',
+        done: effectiveWeekUploadHistory,
       };
     }
     if (index === 2) {
@@ -386,7 +403,7 @@ export const useManagementOperationState = () => {
     if (index === 3) {
       return {
         ...step,
-        value: effectiveConfirmed ? '최종 확정' : '확정 전',
+        value: effectiveConfirmed ? '검토완료' : '검토중',
         done: effectiveConfirmed,
       };
     }
@@ -421,6 +438,15 @@ export const useManagementOperationState = () => {
       apiOrganizationEmployeesQuery.isLoading
     ),
     confirmed: effectiveConfirmed,
+    operationConfirmIdx: apiCurrentWeekConfirmStatus?.idx ?? apiOperationConfirmStatusQuery.data?.idx ?? null,
+    uploadHistory: apiCurrentWeekConfirmStatus
+      ? {
+        idx: apiCurrentWeekConfirmStatus.idx,
+        uploadDate: apiCurrentWeekConfirmStatus.upload_date ?? apiCurrentWeekConfirmStatus.uploadDate,
+        successCount: apiCurrentWeekConfirmStatus.success_count ?? apiCurrentWeekConfirmStatus.successCount,
+        confirmed: adaptAttendManagerConfirmStatus(apiCurrentWeekConfirmStatus, false),
+      }
+      : null,
     deviceRecords: effectiveDeviceRecords,
     deviceRecordsApiError: isApiDataSource && apiRecordsQuery.isError,
     deviceRecordsApiLoading: isApiDataSource && apiRecordsQuery.isLoading,

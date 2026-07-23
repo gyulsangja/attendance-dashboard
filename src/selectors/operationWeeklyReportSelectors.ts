@@ -1,3 +1,4 @@
+import { getCanonicalAttendanceCode } from '@/lib/attendance/attendanceCodeCanonical';
 import { filterItemsByPeriod } from '@/lib/management/operationWeek';
 import {
   UNASSIGNED_TEAM_ID,
@@ -46,18 +47,20 @@ const countEventsByCode = (
   const counts = records
     .flatMap((record) => record.events)
     .reduce<Record<string, number>>((result, event) => {
-      result[event.codeId] = (result[event.codeId] ?? 0) + 1;
+      const canonical = getCanonicalAttendanceCode(event.codeId, attendanceCodes, event.detail);
+      result[canonical.id] = (result[canonical.id] ?? 0) + 1;
       return result;
     }, {});
 
   return Object.entries(counts)
     .map(([codeId, count]) => {
       const code = attendanceCodes.find((item) => item.id === codeId);
+      const canonical = getCanonicalAttendanceCode(codeId, attendanceCodes, code?.label);
       return {
-        codeId,
-        label: code?.label ?? codeId,
+        codeId: canonical.id,
+        label: canonical.label,
         count,
-        exceptional: code?.isExceptional ?? ['LATE', 'EARLY_LEAVE', 'ABSENT'].includes(codeId),
+        exceptional: code?.isExceptional ?? ['LATE', 'EARLY_LEAVE', 'ABSENT'].includes(canonical.id),
       };
     })
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
@@ -76,9 +79,10 @@ const getEventCodeLabels = (
 ) => {
   if (!record || record.events.length === 0) return '';
 
-  return record.events
-    .map((event) => attendanceCodes.find((code) => code.id === event.codeId)?.label ?? event.codeId)
-    .join(', ');
+  return [...new Map(record.events.map((event) => {
+    const canonical = getCanonicalAttendanceCode(event.codeId, attendanceCodes, event.detail);
+    return [canonical.id, canonical.label] as const;
+  })).values()].join(', ');
 };
 
 const getTimeCell = (

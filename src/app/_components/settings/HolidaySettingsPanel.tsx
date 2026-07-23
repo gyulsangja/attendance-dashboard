@@ -43,7 +43,7 @@ const TEXT = {
   cancel: '취소',
   edit: '수정',
   delete: '삭제',
-  loadError: '공휴일 API를 불러오지 못했습니다.',
+  loadError: '공휴일 정보를 불러오지 못했습니다.',
   saveError: '공휴일 저장 중 오류가 발생했습니다.',
   emptyName: '공휴일명을 입력해 주세요.',
   emptyDate: '날짜를 선택해 주세요.',

@@ -23,7 +23,7 @@ export default function DashboardOperationStatus({
         <div>
           <h2 className="font-bold">운영관리 진행현황</h2>
           <p className="mt-1 text-sm text-slate-500">
-            근태 입력부터 상세보기 반영까지의 진행 상태입니다.
+            선택 주차의 근태 입력과 검토 진행 상태입니다.
           </p>
         </div>
         <strong className="text-2xl text-slate-800">{progress}%</strong>

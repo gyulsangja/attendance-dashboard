@@ -60,7 +60,7 @@ export default function Page() {
       )}
       {report.isApiError && (
         <Alert severity="warning" sx={{ mb: 2 }}>
-          월간 출퇴근 기록 조회 API를 불러오지 못했습니다.
+          월간 출퇴근 기록을 불러오지 못했습니다.
         </Alert>
       )}
       {report.isApiLoading && (

@@ -30,9 +30,9 @@ export default function ConfirmPanel({
 
   return (
     <div className="mx-auto max-w-2xl py-6">
-      <h2 className="text-xl font-bold">주간 운영관리 확정</h2>
+      <h2 className="text-xl font-bold">주차 검토완료</h2>
       <p className="mt-2 text-slate-500">
-        근태 일정, 단말기 데이터, 교대근무 검토가 완료되면 선택 주차를 확정합니다.
+        근태 일정, 출입통제데이터, 교대근무 검토가 완료되면 선택 주차를 검토완료 처리합니다.
       </p>
       <div className="mt-6 space-y-3 rounded-xl bg-slate-50 p-5">
         {steps.slice(0, 3).map((step) => (
@@ -52,7 +52,7 @@ export default function ConfirmPanel({
           onClick={onToggle}
           sx={{ bgcolor: confirmed ? '#475569' : '#0f172a' }}
         >
-          {confirmed ? '확정 취소 후 수정' : '운영관리 확정'}
+          {confirmed ? '검토완료 취소' : '주차 검토완료'}
         </Button>
         {confirmed && (
           <Button

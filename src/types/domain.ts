@@ -32,6 +32,7 @@ export type SystemUser = {
 export type AttendanceCode = {
   id: string;
   label: string;
+  groupCode?: 'G_ATTE_CODE' | 'G_ATTE_STATUS' | string;
   isActive: boolean;
   isExceptional: boolean;
   startDate: string;
@@ -78,6 +79,9 @@ export type AttendanceEvent = {
 
 export type AttendanceRecord = {
   id: number;
+  year?: number;
+  month?: number;
+  week?: number;
   employeeId: number;
   employeeName: string;
   department: string;
@@ -116,7 +120,7 @@ export type OperationSchedule = {
   detail: string;
 };
 
-export type ShiftScheduleStatus = '승인대기' | '확정';
+export type ShiftScheduleStatus = '승인대기' | '검토완료';
 
 export type ShiftSchedule = {
   id: number;

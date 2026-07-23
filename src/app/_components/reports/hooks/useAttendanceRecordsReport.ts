@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useAttendanceCodesQuery } from '@/hooks/useAttendanceCodeQueries';
 import { useHolidaysQuery } from '@/hooks/useHolidayQueries';
 import { useStatisticsMonthlyAttendanceRecordsQuery } from '@/hooks/useStatisticsQueries';
-import { getKoreanPublicHoliday } from '@/lib/date';
+import { dedupeAttendanceEventsByStatusCode, getCanonicalAttendanceCode } from '@/lib/attendance/attendanceCodeCanonical';
 import { isApiDataSource } from '@/repositories/config';
 import {
   selectReportAttendanceCodes,
@@ -18,7 +18,7 @@ import {
   UNASSIGNED_TEAM_ID,
   UNASSIGNED_TEAM_NAME,
 } from '@/store/slices/organizationSlice';
-import type { AttendanceRecord, ReportEmployee } from '@/types/domain';
+import type { AttendanceRecord, Holiday, ReportEmployee } from '@/types/domain';
 
 export type AttendanceCellStatus = 'normal' | 'late' | 'leave' | 'holiday' | 'warning';
 export type AttendanceCellValue = {
@@ -31,7 +31,7 @@ export type AttendanceRecordDay = {
   day: number;
   date: string;
   weekday: number;
-  holiday: ReturnType<typeof getKoreanPublicHoliday>;
+  holiday: Pick<Holiday, 'date' | 'name' | 'type'> | null;
 };
 
 export const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -44,10 +44,21 @@ export const attendanceCellStyles: Record<AttendanceCellStatus, string> = {
   warning: 'bg-white text-slate-700',
 };
 
-const hasAnyCode = (record: AttendanceRecord, codeIds: string[]) =>
-  record.events.some((event) => codeIds.includes(event.codeId));
+const hasAnyCode = (
+  record: AttendanceRecord,
+  codeIds: string[],
+  attendanceCodes: { id: string; label: string; groupCode?: string }[],
+) => record.events.some((event) =>
+  codeIds.includes(getCanonicalAttendanceCode(event.codeId, attendanceCodes, event.detail).id));
 
 const getTimeText = (label: string, value?: string) => `${label} ${value || '-'}`;
+
+const buildAttendanceLabelText = (
+  record: AttendanceRecord,
+  attendanceCodes: { id: string; label: string; groupCode?: string }[],
+) => dedupeAttendanceEventsByStatusCode(record.events, attendanceCodes)
+  .map((event) => event.canonicalLabel)
+  .join(' / ');
 
 export function useAttendanceRecordsReport() {
   const dispatch = useAppDispatch();
@@ -106,7 +117,7 @@ export function useAttendanceRecordsReport() {
         day,
         date,
         weekday: new Date(`${date}T00:00:00`).getDay(),
-        holiday: apiHolidayByDate.get(date) ?? (isApiDataSource ? null : getKoreanPublicHoliday(date)),
+        holiday: apiHolidayByDate.get(date) ?? null,
       } satisfies AttendanceRecordDay;
     },
   ), [apiHolidayByDate, year, displayMonth]);
@@ -139,19 +150,16 @@ export function useAttendanceRecordsReport() {
     );
     if (!record) return undefined;
 
-    const labels = record.events
-      .map((event) => attendanceCodes.find((code) => code.id === event.codeId)?.label ?? event.detail ?? event.codeId)
-      .filter(Boolean);
-    const labelText = labels.join(', ');
+    const labelText = buildAttendanceLabelText(record, attendanceCodes);
     const timeText = `${record.checkIn ?? '-'} ~ ${record.checkOut ?? '-'}`;
 
-    if (hasAnyCode(record, ['ABSENT', 'ATT04'])) {
+    if (hasAnyCode(record, ['ABSENT', 'ATT04'], attendanceCodes)) {
       return { top: labelText || '결근', bottom: timeText, status: 'normal' };
     }
-    if (hasAnyCode(record, ['ANNUAL', 'SICK', 'ATT05', 'HALF_PM', 'HALF_AM', 'ATT06', 'REMOTE_WORK'])) {
+    if (hasAnyCode(record, ['ANNUAL', 'SICK', 'ATT05', 'HALF_PM', 'HALF_AM', 'ATT06', 'REMOTE_WORK'], attendanceCodes)) {
       return { top: labelText || '근태코드', bottom: timeText, status: 'leave' };
     }
-    if (hasAnyCode(record, ['EARLY_LEAVE', 'ATT03', 'LATE', 'ATT02'])) {
+    if (hasAnyCode(record, ['EARLY_LEAVE', 'ATT03', 'LATE', 'ATT02'], attendanceCodes)) {
       return { top: labelText || '근태코드', bottom: timeText, status: 'normal' };
     }
     if (labelText) {

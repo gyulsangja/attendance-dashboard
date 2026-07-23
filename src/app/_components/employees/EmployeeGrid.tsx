@@ -4,6 +4,7 @@ import { Delete, Edit } from '@mui/icons-material';
 import { Chip, IconButton, Tooltip } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { koKR } from '@mui/x-data-grid/locales';
+import { getEmployeeOrganizationGroupName } from '@/lib/organization/employeeGrouping';
 import {
   UNASSIGNED_TEAM_ID,
   UNASSIGNED_TEAM_NAME,
@@ -47,9 +48,12 @@ export default function EmployeeGrid({
       headerName: '부서/팀',
       minWidth: 130,
       flex: 0.9,
-      valueGetter: (_value, row) => row.teamId === UNASSIGNED_TEAM_ID
-        ? UNASSIGNED_TEAM_NAME
-        : teams.find((team) => team.id === row.teamId)?.name ?? row.teamId,
+      valueGetter: (_value, row) => getEmployeeOrganizationGroupName(
+        row,
+        row.teamId === UNASSIGNED_TEAM_ID
+          ? UNASSIGNED_TEAM_NAME
+          : teams.find((team) => team.id === row.teamId)?.name,
+      ),
     },
     { field: 'position', headerName: '직급', minWidth: 90, flex: 0.6 },
     { field: 'jobTitle', headerName: '근무유형', minWidth: 120, flex: 0.8 },

@@ -25,8 +25,8 @@ const groupStyleByLabel: Record<string, string> = {
 };
 
 const groupDescriptionByLabel: Record<string, string> = {
-  '출근 기록': '단말기 출퇴근 기록 기준',
-  '이상 근태': '지각, 조퇴, 결근 합계',
+  '출근 기록': '출입통제데이터 기준',
+  '이상 근태': '지각, 결근 합계',
   '휴가/반차': '연차, 오전반차, 오후반차 합계',
 };
 

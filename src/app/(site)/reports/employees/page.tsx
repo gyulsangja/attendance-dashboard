@@ -46,7 +46,7 @@ const TEXT = {
   searchPlaceholder: '이름 검색',
   noEmployee: '선택된 직원 없음',
   empty: '선택한 기간에 조회된 직원 근태 기록이 없습니다.',
-  error: '직원별 근태 기록 조회 API를 불러오지 못했습니다.',
+  error: '직원별 근태 기록을 불러오지 못했습니다.',
   loading: '직원별 근태 기록을 불러오는 중입니다.',
   date: '일자',
   type: '근태',

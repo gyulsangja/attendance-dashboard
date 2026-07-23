@@ -23,18 +23,14 @@ export const useManagementOperations = () => {
     codeMaster,
     deviceRecords: state.deviceRecords,
     organization,
+    schedules: state.displayedWeekSchedules,
   });
   const deviceUpload = useDeviceUpload({
-    deviceRecords: state.deviceRecords,
+    operationConfirmIdx: state.operationConfirmIdx,
     year: state.year,
     month: state.month,
     weekNumber: state.weekNumber,
-    organization,
-    policy: codeMaster.workTimePolicy,
-    schedules: state.displayedWeekSchedules,
-    shifts: state.shifts,
     week: state.week,
-    weekDays: state.weekDays,
   });
   const actions = useManagementOperationActions({
     deviceEditing,

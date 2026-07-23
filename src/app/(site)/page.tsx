@@ -200,7 +200,7 @@ export default function Home() {
 
       {isDashboardError && (
         <Alert severity="warning" sx={{ mt: 3 }}>
-          대시보드 API 일부를 불러오지 못했습니다. 확인된 데이터만 표시합니다.
+          대시보드 일부 정보를 불러오지 못했습니다. 확인된 데이터만 표시합니다.
         </Alert>
       )}
 

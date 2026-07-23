@@ -61,6 +61,9 @@ export default function ManagementDialogs({
         value={dialogs.editingTime}
         onChange={dialogs.setEditingTime}
         onSave={actions.saveDeviceTime}
+        onAddSchedule={dialogs.addTimeSchedule}
+        onModifySchedule={dialogs.modifyTimeSchedule}
+        onDeleteSchedule={dialogs.deleteTimeSchedule}
         saving={dialogs.isSavingDeviceTime}
         error={dialogs.hasDeviceTimeError}
       />

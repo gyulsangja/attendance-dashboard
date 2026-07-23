@@ -3,6 +3,7 @@
 import { Alert, Skeleton } from '@mui/material';
 import { useAttendanceCodesQuery } from '@/hooks/useAttendanceCodeQueries';
 import { useStatisticsAttendanceQuery } from '@/hooks/useStatisticsQueries';
+import { getCanonicalAttendanceCode } from '@/lib/attendance/attendanceCodeCanonical';
 import { isApiDataSource } from '@/repositories/config';
 import {
   selectReportAttendanceCodes,
@@ -39,24 +40,34 @@ export default function ReportsSummaryBox() {
     : storeAttendanceCodes;
   const records = (apiRecordsQuery.data ?? []).filter((record) =>
     record.date >= startDate && record.date <= endDate);
+  const getCodeLabelKey = (codeId: string, fallback = '') =>
+    getCanonicalAttendanceCode(codeId, attendanceCodes, fallback).id;
   const periodEmployeeCount = new Set(
     records.map((record) => `${record.employeeId}|${record.department}|${record.position}`),
   ).size;
   const counts = isApiDataSource
-    ? records.flatMap((record) => record.events).reduce<Record<string, number>>((result, event) => {
-      result[event.codeId] = (result[event.codeId] ?? 0) + 1;
+    ? records.reduce<Record<string, number>>((result, record) => {
+      const labels = new Set(record.events.map((event) => getCodeLabelKey(event.codeId, event.detail)).filter(Boolean));
+      labels.forEach((label) => {
+        result[label] = (result[label] ?? 0) + 1;
+      });
       return result;
     }, {})
     : storeCounts;
   const employeeCount = isApiDataSource
     ? periodEmployeeCount
     : storeEmployeeCount;
-  const activeCodes = attendanceCodes
+  const activeCodes = [...new Map(attendanceCodes
     .filter((code) => code.isActive)
-    .map((code) => ({
-      ...code,
-      count: counts[code.id] ?? 0,
-    }))
+    .map((code) => {
+      const canonical = getCanonicalAttendanceCode(code.id, attendanceCodes, code.label);
+      return [canonical.id, {
+        ...code,
+        id: canonical.id,
+        label: canonical.label,
+        count: counts[canonical.id] ?? 0,
+      }] as const;
+    })).values()]
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, 'ko'));
   const occurredCodes = activeCodes.filter((code) => code.count > 0);
   const totalCount = activeCodes.reduce((sum, code) => sum + code.count, 0);

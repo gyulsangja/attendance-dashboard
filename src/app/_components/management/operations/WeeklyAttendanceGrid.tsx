@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import {
@@ -12,6 +12,14 @@ import { DataGrid } from '@mui/x-data-grid';
 import { koKR } from '@mui/x-data-grid/locales';
 import { useWeeklyAttendanceGrid } from '@/app/_components/management/operations/hooks/useWeeklyAttendanceGrid';
 import type { AttendanceCode, AttendanceRecord, OperationSchedule } from '@/types/domain';
+
+export type MailSelectionTarget = {
+  key: string;
+  employeeId: number;
+  date: string;
+  codeId: string;
+  codeName: string;
+};
 
 type WeeklyAttendanceGridProps = {
   days: { date: string; label: string }[];
@@ -27,6 +35,9 @@ type WeeklyAttendanceGridProps = {
   attendanceCodes?: AttendanceCode[];
   onEdit: (employeeId: number, date: string) => void;
   readOnly?: boolean;
+  mailSelectionTargets?: MailSelectionTarget[];
+  selectedMailTargetKeys?: string[];
+  onToggleMailTarget?: (key: string) => void;
 };
 
 export default function WeeklyAttendanceGrid({
@@ -37,6 +48,9 @@ export default function WeeklyAttendanceGrid({
   attendanceCodes = [],
   onEdit,
   readOnly = false,
+  mailSelectionTargets = [],
+  selectedMailTargetKeys = [],
+  onToggleMailTarget,
 }: WeeklyAttendanceGridProps) {
   const [department, setDepartment] = useState('all');
   const { rows, columns, departments } = useWeeklyAttendanceGrid({
@@ -48,6 +62,9 @@ export default function WeeklyAttendanceGrid({
     department,
     onEdit,
     readOnly,
+    mailSelectionTargets,
+    selectedMailTargetKeys,
+    onToggleMailTarget,
   });
 
   return (
@@ -56,7 +73,7 @@ export default function WeeklyAttendanceGrid({
         <div>
           <h3 className="font-bold">주간 출퇴근 통합 현황</h3>
           <p className="mt-1 text-sm text-slate-500">
-            {readOnly ? '확정 상태에서는 출퇴근 시간 수동 수정을 제한합니다.' : '날짜 셀을 클릭하면 출퇴근 시간을 수정할 수 있습니다.'}
+            {readOnly ? '검토완료 상태에서는 출퇴근 시간 수동 수정을 제한합니다.' : '날짜 셀을 클릭하면 출퇴근 시간을 수정할 수 있습니다.'}
           </p>
         </div>
 
@@ -81,7 +98,7 @@ export default function WeeklyAttendanceGrid({
         <DataGrid
           rows={rows}
           columns={columns}
-          rowHeight={72}
+          rowHeight={76}
           columnHeaderHeight={48}
           pageSizeOptions={[10, 20, 30]}
           initialState={{
@@ -124,6 +141,12 @@ export default function WeeklyAttendanceGrid({
               p: 0,
               justifyContent: 'center',
               overflow: 'hidden',
+            },
+            '& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within': {
+              outline: 'none',
+            },
+            '& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within': {
+              outline: 'none',
             },
           }}
         />

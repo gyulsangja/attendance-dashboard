@@ -51,6 +51,12 @@ const TEXT = {
   attendanceTitle: '근태코드 관리',
   attendanceDescription: '지각, 조퇴, 결근, 연차 등 운영관리와 상세보기에서 사용할 근태코드를 관리합니다.',
   addAttendanceCode: '근태코드 추가',
+  statusTitle: '출입통제 근태상태',
+  statusDescription: '출입통제데이터 업로드 후 자동판정 결과로 사용하는 상태 코드입니다.',
+  scheduleTitle: '직원별 근태정보',
+  scheduleDescription: '운영관리에서 직접 입력하는 연차, 병가, 반차 등 직원별 근태 코드입니다.',
+  addStatusCode: '근태상태 추가',
+  addScheduleCode: '근태정보 추가',
 };
 
 const settingsTabs = [
@@ -77,12 +83,18 @@ export default function Page() {
   const [policy, setPolicy] = useState(workTimePolicy);
   const [policyTouched, setPolicyTouched] = useState(false);
   const [settingsTab, setSettingsTab] = useState(0);
+  const [attendanceCodeTab, setAttendanceCodeTab] = useState(0);
   const [editingCode, setEditingCode] = useState<AttendanceCode | null>(null);
+  const [codeDialogGroup, setCodeDialogGroup] = useState<'G_ATTE_CODE' | 'G_ATTE_STATUS'>('G_ATTE_CODE');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [policySaveMessage, setPolicySaveMessage] = useState('');
 
-  const visibleCodes = useMemo(
-    () => sourceCodes,
+  const statusCodes = useMemo(
+    () => sourceCodes.filter((code) => code.groupCode === 'G_ATTE_STATUS'),
+    [sourceCodes],
+  );
+  const scheduleCodes = useMemo(
+    () => sourceCodes.filter((code) => code.groupCode !== 'G_ATTE_STATUS'),
     [sourceCodes],
   );
 
@@ -90,21 +102,45 @@ export default function Page() {
     workTimePolicyQuery.data && !policyTouched
       ? workTimePolicyQuery.data
       : policy;
+  const activeCodeSection = attendanceCodeTab === 0
+    ? {
+      title: TEXT.statusTitle,
+      description: TEXT.statusDescription,
+      buttonLabel: TEXT.addStatusCode,
+      buttonVariant: 'contained' as const,
+      groupCode: 'G_ATTE_STATUS' as const,
+      codes: statusCodes,
+    }
+    : {
+      title: TEXT.scheduleTitle,
+      description: TEXT.scheduleDescription,
+      buttonLabel: TEXT.addScheduleCode,
+      buttonVariant: 'contained' as const,
+      groupCode: 'G_ATTE_CODE' as const,
+      codes: scheduleCodes,
+    };
 
   if (!access.canManageSettings) {
     return <Alert severity="warning">{access.roleLabel} {TEXT.noAccess}</Alert>;
   }
 
-  const openCodeDialog = (code: AttendanceCode | null) => {
+  const openCodeDialog = (
+    code: AttendanceCode | null,
+    groupCode: 'G_ATTE_CODE' | 'G_ATTE_STATUS' = 'G_ATTE_CODE',
+  ) => {
     setEditingCode(code);
+    setCodeDialogGroup((code?.groupCode as 'G_ATTE_CODE' | 'G_ATTE_STATUS' | undefined) ?? groupCode);
     setDialogOpen(true);
   };
 
   const saveCode = (code: AttendanceCode, effectiveDate: string) => {
     const nextCode = {
       ...code,
-      id: editingCode ? code.id : code.id || createNextAttendanceCodeId(sourceCodes),
+      id: editingCode ? code.id : code.id || createNextAttendanceCodeId(
+        sourceCodes.filter((item) => item.groupCode === codeDialogGroup),
+      ),
       label: code.label.trim(),
+      groupCode: editingCode?.groupCode ?? code.groupCode ?? codeDialogGroup,
       startDate: code.startDate || effectiveDate,
     };
 
@@ -158,21 +194,43 @@ export default function Page() {
 
       {settingsTab === 1 && (
         <section className="mt-5 space-y-4">
-          <div className="flex flex-wrap items-end justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div>
+          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
               <h2 className="text-lg font-bold">{TEXT.attendanceTitle}</h2>
               <p className="mt-1 text-sm text-slate-500">{TEXT.attendanceDescription}</p>
+              </div>
+              <Tabs
+                value={attendanceCodeTab}
+                onChange={(_event, value) => setAttendanceCodeTab(value)}
+                sx={{ minHeight: 36 }}
+              >
+                <Tab label={TEXT.statusTitle} sx={{ minHeight: 36 }} />
+                <Tab label={TEXT.scheduleTitle} sx={{ minHeight: 36 }} />
+              </Tabs>
             </div>
-            <Button variant="contained" startIcon={<Add />} onClick={() => openCodeDialog(null)}>
-              {TEXT.addAttendanceCode}
-            </Button>
           </div>
 
-          <AttendanceCodeSettingsGrid
-            visibleCodes={visibleCodes}
-            onEdit={openCodeDialog}
-            actionsDisabled={insertCodeMutation.isPending || modifyCodeMutation.isPending}
-          />
+          <section className="space-y-3">
+            <div className="flex flex-wrap items-end justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div>
+                <h3 className="font-bold">{activeCodeSection.title}</h3>
+                <p className="mt-1 text-sm text-slate-500">{activeCodeSection.description}</p>
+              </div>
+              <Button
+                variant={activeCodeSection.buttonVariant}
+                startIcon={<Add />}
+                onClick={() => openCodeDialog(null, activeCodeSection.groupCode)}
+              >
+                {activeCodeSection.buttonLabel}
+              </Button>
+            </div>
+            <AttendanceCodeSettingsGrid
+              visibleCodes={activeCodeSection.codes}
+              onEdit={(code) => openCodeDialog(code, activeCodeSection.groupCode)}
+              actionsDisabled={insertCodeMutation.isPending || modifyCodeMutation.isPending}
+            />
+          </section>
         </section>
       )}
 
@@ -197,9 +255,10 @@ export default function Page() {
       {settingsTab === 3 && <HolidaySettingsPanel />}
 
       <AttendanceCodeDialog
-        key={dialogOpen ? editingCode?.id ?? 'new-code' : 'closed-code'}
+        key={dialogOpen ? editingCode?.id ?? `new-code-${codeDialogGroup}` : 'closed-code'}
         open={dialogOpen}
         code={editingCode}
+        groupCode={codeDialogGroup}
         onClose={() => setDialogOpen(false)}
         onSave={saveCode}
       />

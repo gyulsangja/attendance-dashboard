@@ -111,8 +111,33 @@ const getRecordCodeName = (record: AttendanceManagerDto) =>
   ?? record.attend_status_name
   ?? record.attendStatusName
   ?? record.attend_reason
-  ?? record.attendReason
-  ?? getRecordCode(record);
+    ?? record.attendReason
+    ?? getRecordCode(record);
+
+const normalizeLabelKey = (value: unknown) =>
+  String(value ?? '').trim().replace(/\s+/g, '').toUpperCase();
+
+const isAbnormalAttendanceLabel = (code: unknown, name: unknown) => {
+  const normalizedCode = normalizeLabelKey(code);
+  const normalizedName = normalizeLabelKey(name);
+  const target = `${normalizedCode}|${normalizedName}`;
+
+  return [
+    'LATE',
+    'ABSENT',
+    'MISSING',
+    'NOCHECK',
+    'UNCHECK',
+    'ATT02',
+    'ATT04',
+    'ATT07',
+    'ATT08',
+    '지각',
+    '결근',
+    '미체크',
+    '미기록',
+  ].some((keyword) => target.includes(normalizeLabelKey(keyword)));
+};
 
 const isNormalAttendance = (record: AttendanceManagerDto) => {
   const code = String(getRecordCode(record)).trim().toUpperCase();
@@ -122,6 +147,8 @@ const isNormalAttendance = (record: AttendanceManagerDto) => {
     || ['ATT00', 'ATT01', 'NORMAL'].includes(code)
     || name.includes('정상출근');
 };
+
+void isNormalAttendance;
 
 const adaptManagerRecord = (record: AttendanceManagerDto, index: number) => {
   const checkIn = record.check_in ?? record.checkIn ?? record.attendance_time ?? record.attendanceTime ?? '';
@@ -162,6 +189,20 @@ const adaptEmployeeAttendRecord = (record: EmployeeAttendDto, index: number) => 
     detail: record.etc ?? record.memo ?? record.remark ?? '',
   };
 };
+
+const getEmployeeAttendCode = (record: EmployeeAttendDto) =>
+  record.detail_code ?? record.detailCode ?? record.attend_code ?? record.attendCode ?? '';
+
+const getEmployeeAttendCodeName = (record: EmployeeAttendDto) =>
+  record.attend_reason
+  ?? record.attendReason
+  ?? record.detail_code_name
+  ?? record.detailCodeName
+  ?? record.attend_code_name
+  ?? record.attendCodeName
+  ?? record.attend_name
+  ?? record.attendName
+  ?? getEmployeeAttendCode(record);
 
 const isNormalEmployeeAttend = (record: EmployeeAttendDto) => {
   const code = String(record.detail_code ?? record.detailCode ?? record.attend_code ?? record.attendCode ?? '')
@@ -221,7 +262,7 @@ const adaptStatsDashToWeeklyDto = (dto: DashboardWeeklyDto): DashboardWeeklyDto 
         label: '이상 근태',
         attendance_code: 'GROUP_EXCEPTION',
         attendance_code_name: '이상 근태',
-        count: latenessCount + earlyLeaveCount + absenceCount,
+        count: latenessCount + absenceCount,
       },
       {
         label: '휴가/반차',
@@ -241,76 +282,76 @@ const getStatsDash = async (params: DashboardWeeklyParams) => {
   return adaptStatsDashToWeeklyDto(response);
 };
 
-const getWeeklyExceptionalRecords = async (params: DashboardWeeklyParams): Promise<DashboardWeeklyDto> => {
-  const response = await apiClient<AttendanceManagerDto[] | AttendanceManagerListResponseDto>(
-    `/api/attend/manager/select/week/${params.year}/${params.month}/${params.week}`,
-  );
-  const exceptionalRecords = getAttendanceRows(response)
-    .filter((record) => !isNormalAttendance(record))
-    .map(adaptManagerRecord);
+const getWeeklyAttendanceSources = async (params: DashboardWeeklyParams) => {
+  const [managerResponse, employeeAttendResponse] = await Promise.all([
+    apiClient<AttendanceManagerDto[] | AttendanceManagerListResponseDto>(
+      `/api/attend/manager/select/week/${params.year}/${params.month}/${params.week}`,
+    ),
+    apiClient<EmployeeAttendDto[] | EmployeeAttendListResponseDto>(
+      '/api/employee/attend/select',
+      {
+        method: 'POST',
+        body: {
+          attendselectinfo: {
+            select_type: '1',
+            year: String(params.year),
+            month: String(params.month),
+            week: String(params.week),
+          },
+        },
+      },
+    ),
+  ]);
 
-  return { exceptional_attendance_records: exceptionalRecords };
+  return {
+    managerRows: getAttendanceRows(managerResponse),
+    employeeAttendRows: getEmployeeAttendRows(employeeAttendResponse),
+  };
+};
+
+const dedupeDashboardRecords = (records: ReturnType<typeof adaptManagerRecord>[]) => {
+  const recordMap = new Map<string, ReturnType<typeof adaptManagerRecord>>();
+
+  records.forEach((record) => {
+    const key = [
+      record.work_date,
+      record.emp_no,
+      normalizeLabelKey(record.attendance_code_name ?? record.attendance_code),
+    ].join('|');
+    if (!recordMap.has(key)) recordMap.set(key, record);
+  });
+
+  return [...recordMap.values()];
+};
+
+const getWeeklyExceptionalRecords = async (params: DashboardWeeklyParams): Promise<DashboardWeeklyDto> => {
+  const { managerRows, employeeAttendRows } = await getWeeklyAttendanceSources(params);
+  const exceptionalRecords = [
+    ...managerRows
+      .filter((record) => isAbnormalAttendanceLabel(getRecordCode(record), getRecordCodeName(record)))
+      .map(adaptManagerRecord),
+    ...employeeAttendRows
+      .filter((record) => isAbnormalAttendanceLabel(getEmployeeAttendCode(record), getEmployeeAttendCodeName(record)))
+      .map(adaptEmployeeAttendRecord),
+  ];
+
+  return { exceptional_attendance_records: dedupeDashboardRecords(exceptionalRecords) };
 };
 
 const getWeeklyPlans = async (params: DashboardWeeklyParams): Promise<DashboardWeeklyDto> => {
-  const requestBodies = [
-    {
-      attendselectinfo: {
-        select_type: '2',
-        year: String(params.year),
-        month: String(params.month),
-        week: String(params.week),
-      },
-    },
-    {
-      attendselectinfo: {
-        select_type: '1',
-        year: String(params.year),
-        month: String(params.month),
-        week: String(params.week),
-      },
-    },
+  const { managerRows, employeeAttendRows } = await getWeeklyAttendanceSources(params);
+  const plannedRecords = [
+    ...managerRows
+      .filter((record) => !isNormalAttendance(record))
+      .filter((record) => !isAbnormalAttendanceLabel(getRecordCode(record), getRecordCodeName(record)))
+      .map(adaptManagerRecord),
+    ...employeeAttendRows
+      .filter((record) => !isNormalEmployeeAttend(record))
+      .filter((record) => !isAbnormalAttendanceLabel(getEmployeeAttendCode(record), getEmployeeAttendCodeName(record)))
+      .map(adaptEmployeeAttendRecord),
   ];
 
-  for (const body of requestBodies) {
-    try {
-      const response = await apiClient<EmployeeAttendDto[] | EmployeeAttendListResponseDto>(
-        '/api/employee/attend/select',
-        { method: 'POST', body },
-      );
-      const rows = getEmployeeAttendRows(response);
-      if (rows.length > 0) {
-        return { weekly_attendance_plans: rows.filter((row) => !isNormalEmployeeAttend(row)).map(adaptEmployeeAttendRecord) };
-      }
-    } catch {
-      // Try the next backend-supported query shape.
-    }
-  }
-
-  const response = await apiClient<EmployeeAttendDto[] | EmployeeAttendListResponseDto>(
-    '/api/employee/attend/select/items',
-    {
-      method: 'POST',
-      body: {
-        attendanceitems: {
-          select_type: '3',
-          emp_no: '',
-          attend_code: '',
-          year: String(params.year),
-          month: String(params.month),
-          week: String(params.week),
-          start_date: '',
-          end_date: '',
-        },
-      },
-    },
-  );
-
-  return {
-    weekly_attendance_plans: getEmployeeAttendRows(response)
-      .filter((row) => !isNormalEmployeeAttend(row))
-      .map(adaptEmployeeAttendRecord),
-  };
+  return { weekly_attendance_plans: dedupeDashboardRecords(plannedRecords) };
 };
 
 export const dashboardApi = {

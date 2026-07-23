@@ -16,6 +16,7 @@ import type { AttendanceCode } from '@/types/domain';
 type Props = {
   open: boolean;
   code: AttendanceCode | null;
+  groupCode: 'G_ATTE_CODE' | 'G_ATTE_STATUS';
   onClose: () => void;
   onSave: (code: AttendanceCode, effectiveDate: string) => void;
 };
@@ -36,9 +37,10 @@ const TEXT = {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-const emptyCode = (): AttendanceCode => ({
+const emptyCode = (groupCode: Props['groupCode']): AttendanceCode => ({
   id: '',
   label: '',
+  groupCode,
   isActive: true,
   isExceptional: false,
   startDate: today(),
@@ -46,8 +48,8 @@ const emptyCode = (): AttendanceCode => ({
   etc: '',
 });
 
-export default function AttendanceCodeDialog({ open, code, onClose, onSave }: Props) {
-  const [form, setForm] = useState<AttendanceCode>(() => (code ? { ...code } : emptyCode()));
+export default function AttendanceCodeDialog({ open, code, groupCode, onClose, onSave }: Props) {
+  const [form, setForm] = useState<AttendanceCode>(() => (code ? { ...code } : emptyCode(groupCode)));
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -96,7 +98,14 @@ export default function AttendanceCodeDialog({ open, code, onClose, onSave }: Pr
           variant="contained"
           disabled={!form.id.trim() || !form.label.trim()}
           onClick={() => onSave(
-            { ...form, id: form.id.trim(), label: form.label.trim(), sortOrder: 0, etc: form.etc?.trim() ?? '' },
+            {
+              ...form,
+              id: form.id.trim(),
+              label: form.label.trim(),
+              groupCode: code?.groupCode ?? form.groupCode ?? groupCode,
+              sortOrder: 0,
+              etc: form.etc?.trim() ?? '',
+            },
             today(),
           )}
         >

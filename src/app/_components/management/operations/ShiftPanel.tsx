@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import koLocale from '@fullcalendar/core/locales/ko';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -29,7 +29,24 @@ const shiftColors: Record<string, string> = {
 
 const shiftLabels: Record<string, string> = {
   SHIFT_WEEK_DAY: '주말/공휴일 09:00~21:00',
+  SHIFT_WEEK_NIGHT: '주말/공휴일 21:00~익일 09:00',
 };
+
+const shiftOrder: Record<string, number> = {
+  SHIFT_DAY: 0,
+  SHIFT_NIGHT: 1,
+  SHIFT_DAWN: 2,
+  SHIFT_WEEK_DAY: 3,
+  SHIFT_WEEK_NIGHT: 4,
+};
+
+const getShiftOrder = (schedule: ShiftSchedule) =>
+  shiftOrder[schedule.shift]
+  ?? (schedule.time.startsWith('09:00') && schedule.time.includes('18:00') ? 0 : undefined)
+  ?? (schedule.time.startsWith('12:00') ? 1 : undefined)
+  ?? (schedule.time.startsWith('21:00') ? 2 : undefined)
+  ?? (schedule.time.startsWith('09:00') && schedule.time.includes('21:00') ? 3 : undefined)
+  ?? 99;
 
 const toDateKey = (date: Date) => [
   date.getFullYear(),
@@ -52,10 +69,16 @@ export default function ShiftPanel({
   onEdit,
   canInput = false,
 }: ShiftPanelProps) {
-  const events = rows.map((schedule) => {
+  const events = [...rows].sort(
+    (a, b) =>
+      a.date.localeCompare(b.date)
+      || getShiftOrder(a) - getShiftOrder(b)
+      || a.name.localeCompare(b.name),
+  ).map((schedule) => {
     const color = shiftColors[schedule.time] ?? '#475569';
     const editable = isInSelectedWeek(schedule.date, selectedWeek);
     const label = shiftLabels[schedule.shift] ?? schedule.time;
+    const order = getShiftOrder(schedule);
     return {
       id: String(schedule.id),
       title: `${schedule.name} · ${label}`,
@@ -64,7 +87,7 @@ export default function ShiftPanel({
       borderColor: color,
       textColor: '#ffffff',
       classNames: editable ? [] : ['shift-readonly-event'],
-      extendedProps: { time: schedule.time, editable },
+      extendedProps: { time: schedule.time, editable, shiftOrder: order },
     };
   });
 
@@ -97,7 +120,7 @@ export default function ShiftPanel({
       </Alert>
       {confirmed && (
         <Alert severity="warning" sx={{ mb: 2 }}>
-          운영관리 최종 확정 상태에서는 교대근무 일정을 입력, 수정, 삭제할 수 없습니다.
+          주차 검토완료 상태에서는 교대근무 일정을 입력, 수정, 삭제할 수 없습니다.
         </Alert>
       )}
 
@@ -113,6 +136,14 @@ export default function ShiftPanel({
           fixedWeekCount={false}
           showNonCurrentDates
           events={events}
+          eventOrder={(a, b) => {
+            const eventA = a as { extendedProps?: { shiftOrder?: unknown }; title?: string };
+            const eventB = b as { extendedProps?: { shiftOrder?: unknown }; title?: string };
+            const orderA = Number(eventA.extendedProps?.shiftOrder ?? 99);
+            const orderB = Number(eventB.extendedProps?.shiftOrder ?? 99);
+            if (orderA !== orderB) return orderA - orderB;
+            return (eventA.title ?? '').localeCompare(eventB.title ?? '');
+          }}
           height="auto"
           dayMaxEvents={4}
           dayCellClassNames={({ date }) => {

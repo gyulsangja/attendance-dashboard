@@ -1,8 +1,9 @@
-﻿'use client';
+'use client';
 
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { adaptShiftScheduleToAttendManagerDto } from '@/adapters/attendManagerAdapter';
 import { queryKeys } from '@/lib/queryKeys';
+import type { AttendManagerSendMailItem } from '@/api/attendManagerApi';
 import { attendManagerRepository } from '@/repositories/attendManagerRepository';
 import type { ShiftSchedule } from '@/types/domain';
 import { invalidateAttendManagerQueries } from './useQueryInvalidation';
@@ -178,3 +179,7 @@ export const useCancelAttendManagerOperationWeekMutation = () => {
 };
 
 
+export const useSendAttendManagerMailMutation = () =>
+  useMutation({
+    mutationFn: (items: AttendManagerSendMailItem[]) => attendManagerRepository.sendMail(items),
+  });

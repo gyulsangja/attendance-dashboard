@@ -48,7 +48,7 @@ export default function ScheduleEditDialog({ value, onChange, onSave }: Props) {
       codeMaster.codes,
       codeMaster.history,
       date,
-    )).filter((code) => code.isActive);
+    )).filter((code) => code.isActive && (!isApiDataSource || code.groupCode !== 'G_ATTE_STATUS'));
   const organizationSnapshot = getOrganizationSnapshot(
     organization.teams,
     organization.employees,

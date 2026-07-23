@@ -22,7 +22,7 @@ export default function DashboardCompanyStatus({
   const activeCodeCount = activeAttendanceCodeCount ?? attendanceCodes.length;
   const attendanceCodeDetail = activeAttendanceCodeCount === undefined
     ? '공통코드 기준'
-    : '대시보드 API 기준';
+    : '대시보드 기준';
   const cards = [
     {
       label: '재직 인원',

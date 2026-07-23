@@ -97,22 +97,21 @@ export const attendanceApi = {
     });
   },
 
-  deleteByEmployee(idx: number | string) {
-    return apiClient<string>(`/api/attend/manager/delete/emp_no/${idx}?idx=${encodeURIComponent(String(idx))}`);
+  insert(payload: AttendanceManagerDto) {
+    return apiClient<string>('/api/attend/manager/insert', {
+      method: 'POST',
+      body: { attendetailinfo: payload },
+    });
   },
 
-  deleteByWeek(year: number | string, month: number | string, week: number | string) {
-    const params = new URLSearchParams({
-      year: String(year),
-      month: String(month),
-      week: String(week),
-    });
+  updateAttendance(year: number | string, month: number | string, week: number | string) {
+    return apiClient<string>(
+      `/api/attend/manager/update/${Number(year)}/${Number(month)}/${Number(week)}`,
+    );
+  },
 
-    return apiClient<string>(`/api/attend/manager/delete/week?${params.toString()}`, {
-      method: 'POST',
-      headers: { Accept: 'text/plain' },
-      body: '',
-    });
+  deleteByEmployee(idx: number | string) {
+    return apiClient<string>(`/api/attend/manager/delete/emp_no/${idx}?idx=${encodeURIComponent(String(idx))}`);
   },
 
   deleteByEmployeeWeek(

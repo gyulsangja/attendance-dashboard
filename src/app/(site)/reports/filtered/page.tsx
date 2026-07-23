@@ -47,7 +47,7 @@ export default function Page() {
         )}
         {report.isCodeError && (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            근태코드 API를 불러오지 못했습니다.
+            근태코드를 불러오지 못했습니다.
           </Alert>
         )}
         <FilterCode
@@ -74,7 +74,7 @@ export default function Page() {
         )}
         {report.isApiError && (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            근태 기록 조회 API를 불러오지 못했습니다.
+            근태 기록을 불러오지 못했습니다.
           </Alert>
         )}
 

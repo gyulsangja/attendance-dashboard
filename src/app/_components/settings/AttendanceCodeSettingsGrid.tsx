@@ -21,7 +21,7 @@ const TEXT = {
   etc: '비고',
   manage: '관리',
   edit: '수정',
-  apiPending: 'API 처리 중',
+  apiPending: '처리 중',
 };
 
 const gridSx = {

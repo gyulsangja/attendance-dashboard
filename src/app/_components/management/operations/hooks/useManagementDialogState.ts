@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type {
   AttendanceCode,
   AttendanceRecord,
+  OperationSchedule,
   ShiftSchedule,
 } from '@/types/domain';
 import type { RootState } from '@/store/store';
@@ -15,6 +16,7 @@ type Props = {
   codeMaster: RootState['attendanceCode'];
   deviceRecords: AttendanceRecord[];
   organization: RootState['organization'];
+  schedules: OperationSchedule[];
 };
 
 export const useManagementDialogState = ({
@@ -22,6 +24,7 @@ export const useManagementDialogState = ({
   codeMaster,
   deviceRecords,
   organization,
+  schedules,
 }: Props) => {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [shiftOpen, setShiftOpen] = useState(false);
@@ -31,6 +34,7 @@ export const useManagementDialogState = ({
     codeMaster,
     deviceRecords,
     organization,
+    schedules,
   });
 
   return {
@@ -42,6 +46,9 @@ export const useManagementDialogState = ({
       editingTime: deviceEditing.editingTime,
       hasDeviceTimeError: deviceEditing.isError,
       isSavingDeviceTime: deviceEditing.isSaving,
+      addTimeSchedule: deviceEditing.addTimeSchedule,
+      deleteTimeSchedule: deviceEditing.deleteTimeSchedule,
+      modifyTimeSchedule: deviceEditing.modifyTimeSchedule,
       scheduleOpen,
       shiftOpen,
       setEditingSchedule: scheduleEditing.setEditingSchedule,

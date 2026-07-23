@@ -38,8 +38,9 @@ export const userRoles: RoleAccessConfig[] = [
     id: 'EXECUTIVE',
     backendCodes: ['ROLE_EXECUTIVE'],
     label: '임원',
-    description: '회원관리를 제외한 주요 관리 기능을 사용할 수 있습니다.',
+    description: '대시보드, 상세보기, 운영관리, 직원조직관리를 사용할 수 있습니다.',
     ...fullAccessWithoutUserManagement,
+    canManageSettings: false,
   },
   {
     id: 'ORGANIZATION_MANAGER',

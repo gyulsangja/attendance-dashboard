@@ -1,7 +1,9 @@
 'use client';
 
-import { Box, Chip } from '@mui/material';
+import { Box, Checkbox, Chip, Stack } from '@mui/material';
 import type { GridColDef } from '@mui/x-data-grid';
+import type { MailSelectionTarget } from '@/app/_components/management/operations/WeeklyAttendanceGrid';
+import { dedupeAttendanceEventsByStatusCode } from '@/lib/attendance/attendanceCodeCanonical';
 import type { AttendanceCode, AttendanceRecord, OperationSchedule } from '@/types/domain';
 
 export type WeeklyAttendanceEmployeeRow = {
@@ -26,6 +28,9 @@ type UseWeeklyAttendanceGridParams = {
   department: string;
   onEdit: (employeeId: number, date: string) => void;
   readOnly?: boolean;
+  mailSelectionTargets?: MailSelectionTarget[];
+  selectedMailTargetKeys?: string[];
+  onToggleMailTarget?: (key: string) => void;
 };
 
 const getDayClassName = (
@@ -57,6 +62,9 @@ export function useWeeklyAttendanceGrid({
   department,
   onEdit,
   readOnly = false,
+  mailSelectionTargets = [],
+  selectedMailTargetKeys = [],
+  onToggleMailTarget,
 }: UseWeeklyAttendanceGridParams) {
   const employeeMap = new Map<number, WeeklyAttendanceEmployeeRow>();
 
@@ -97,6 +105,7 @@ export function useWeeklyAttendanceGrid({
     (employee) => department === 'all' || employee.department === department,
   );
   const attendanceCodeMap = new Map(attendanceCodes.map((code) => [code.id, code.label]));
+  const selectedMailTargetSet = new Set(selectedMailTargetKeys);
 
   const displayDays = [...new Map([
     ...days.map((day) => [day.date, day] as const),
@@ -132,7 +141,7 @@ export function useWeeklyAttendanceGrid({
       headerName: getDateLabel(day.date),
       headerClassName: getDayClassName(day.date, 'header', records),
       cellClassName: getDayClassName(day.date, 'cell', records),
-      minWidth: 130,
+      minWidth: 132,
       flex: 1,
       align: 'center' as const,
       headerAlign: 'center' as const,
@@ -145,51 +154,166 @@ export function useWeeklyAttendanceGrid({
         const items = schedules.filter(
           (item) => item.employeeId === row.id && item.date === day.date,
         );
-        const recordLabels = record?.events.map((event) => {
+        const recordEntries = record?.events.map((event) => {
           const codeLabel = attendanceCodeMap.get(event.codeId);
-          if (codeLabel) return codeLabel;
-          if (event.detail && event.detail !== event.codeId) return event.detail;
-          return event.codeId;
+          return {
+            codeId: event.codeId,
+            label: codeLabel || (event.detail && event.detail !== event.codeId ? event.detail : event.codeId),
+          };
         }) ?? [];
         const publicHoliday = !row.shiftWorker && record?.isHoliday && record.holidayName
-          ? { name: record.holidayName }
+          ? { codeId: `HOLIDAY-${record.holidayName}`, label: record.holidayName }
           : null;
-        const attendanceLabels = [...new Set([
-          ...(publicHoliday ? [publicHoliday.name] : []),
-          ...items.map((item) => item.type),
-          ...recordLabels,
-        ])];
+        const attendanceLabels = dedupeAttendanceEventsByStatusCode(
+          [
+            ...(publicHoliday ? [publicHoliday] : []),
+            ...items.map((item) => ({ codeId: item.codeId || item.type, detail: item.type })),
+            ...recordEntries.map((item) => ({ codeId: item.codeId, detail: item.label })),
+          ],
+          attendanceCodes,
+        ).map((item) => item.canonicalLabel);
+        const chipLabel = attendanceLabels.join(', ');
+        const cellMailTargets = mailSelectionTargets.filter(
+          (target) => target.employeeId === row.id && target.date === day.date,
+        );
+        const selectedCellMailTargetCount = cellMailTargets.filter((target) =>
+          selectedMailTargetSet.has(target.key)).length;
+        const canSelectMailTargets = cellMailTargets.length > 0 && Boolean(onToggleMailTarget);
+        const allCellMailTargetsSelected = canSelectMailTargets
+          && selectedCellMailTargetCount === cellMailTargets.length;
+
+        const toggleCellMailTargets = () => {
+          if (!onToggleMailTarget) return;
+
+          const shouldSelect = !allCellMailTargetsSelected;
+          cellMailTargets.forEach((target) => {
+            const selected = selectedMailTargetSet.has(target.key);
+            if (shouldSelect !== selected) onToggleMailTarget(target.key);
+          });
+        };
+        const toggleMailTargetOnly = (key: string) => {
+          if (!onToggleMailTarget) return;
+          onToggleMailTarget(key);
+        };
+        const handleCellClick = () => {
+          if (canSelectMailTargets) {
+            if (cellMailTargets.length === 1) toggleMailTargetOnly(cellMailTargets[0].key);
+            return;
+          }
+          if (!readOnly) onEdit(row.id, day.date);
+        };
 
         return (
           <Box
-            onClick={readOnly ? undefined : () => onEdit(row.id, day.date)}
+            onClick={handleCellClick}
             sx={{
-              width: '100%',
-              height: '100%',
+              width: 'calc(100% - 4px)',
+              height: 'calc(100% - 4px)',
+              m: '2px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
+              position: 'relative',
               textAlign: 'center',
-              cursor: readOnly ? 'default' : 'pointer',
+              cursor: canSelectMailTargets || !readOnly ? 'pointer' : 'default',
               px: 0.5,
-              '&:hover': readOnly ? undefined : { bgcolor: '#f8fafc' },
+              border: '1px solid transparent',
+              borderRadius: 1,
+              boxShadow: 'none',
+              bgcolor: allCellMailTargetsSelected ? '#eef2ff' : undefined,
+              '&:hover': canSelectMailTargets || !readOnly
+                ? {
+                  bgcolor: allCellMailTargetsSelected ? '#eef2ff' : '#f8fafc',
+                  boxShadow: 'none',
+                }
+                : undefined,
             }}
           >
+            {canSelectMailTargets && (
+              <Checkbox
+                size="small"
+                checked={allCellMailTargetsSelected}
+                indeterminate={
+                  selectedCellMailTargetCount > 0
+                  && selectedCellMailTargetCount < cellMailTargets.length
+                }
+                onClick={(event) => {
+                  event.stopPropagation();
+                  toggleCellMailTargets();
+                }}
+                onChange={() => {}}
+                sx={{
+                  position: 'absolute',
+                  top: 3,
+                  left: 3,
+                  p: 0.25,
+                  bgcolor: 'rgba(255,255,255,0.9)',
+                  borderRadius: 1,
+                  '& .MuiSvgIcon-root': { fontSize: 16 },
+                }}
+              />
+            )}
+
             <div className="whitespace-nowrap text-xs font-semibold">
               {record?.checkIn ? `출 ${record.checkIn}` : '출 -'}{' '}
               <span className="text-slate-400">/</span>{' '}
               {record?.checkOut ? `퇴 ${record.checkOut}` : '퇴 -'}
             </div>
 
-            {attendanceLabels.length > 0 && (
+            {canSelectMailTargets ? (
+              <Stack
+                direction="row"
+                spacing={0.5}
+                useFlexGap
+                sx={{
+                  mt: 0.5,
+                  maxWidth: 'calc(100% - 6px)',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                }}
+              >
+                {cellMailTargets.map((target) => {
+                  const selected = selectedMailTargetSet.has(target.key);
+                  return (
+                    <Chip
+                      key={target.key}
+                      size="small"
+                      label={target.codeName || target.codeId}
+                      title={`${target.codeName || target.codeId} (${target.codeId})`}
+                      variant={selected ? 'filled' : 'outlined'}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        toggleMailTargetOnly(target.key);
+                      }}
+                      sx={{
+                        height: 20,
+                        maxWidth: 86,
+                        bgcolor: selected ? '#eef2ff' : '#ffffff',
+                        color: selected ? '#3730a3' : '#475569',
+                        borderColor: selected ? '#818cf8' : '#cbd5e1',
+                        fontSize: 10,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        '& .MuiChip-label': {
+                          px: 0.75,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        },
+                      }}
+                    />
+                  );
+                })}
+              </Stack>
+            ) : attendanceLabels.length > 0 && (
               <Chip
                 size="small"
-                label={attendanceLabels.join(', ')}
+                label={chipLabel}
+                title={chipLabel}
                 sx={{
                   mt: 0.5,
                   height: 20,
-                  maxWidth: '100%',
+                  maxWidth: 'calc(100% - 6px)',
                   bgcolor: '#f1f5f9',
                   color: '#475569',
                   fontSize: 10,
@@ -210,3 +334,5 @@ export function useWeeklyAttendanceGrid({
 
   return { rows, columns, departments };
 }
+
+

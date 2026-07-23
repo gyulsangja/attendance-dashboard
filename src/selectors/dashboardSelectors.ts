@@ -4,6 +4,7 @@ import {
   filterItemsByPeriod,
   getOperationWeekPeriod,
 } from '@/lib/management/operationWeek';
+import { getCanonicalAttendanceCode } from '@/lib/attendance/attendanceCodeCanonical';
 import { getAttendanceCodesAtDate } from '@/store/slices/attendanceCodeSlice';
 import { getOrganizationSnapshot } from '@/store/slices/organizationSlice';
 import type { RootState } from '@/store/store';
@@ -80,23 +81,26 @@ export const selectDashboardData = (
       .map((code) => code.id),
   );
   const eventRows: DashboardEventWithCode[] = reportRecords.flatMap((record) =>
-    record.events.map((event, index) => ({
-      id: `${record.id}-${index}`,
-      date: record.date.slice(5).replace('-', '/'),
-      department: record.department,
-      name: record.employeeName,
-      content: attendanceCodes.find((code) => code.id === event.codeId)?.label
-        ?? event.codeId,
-      detail: event.detail,
-      codeId: event.codeId,
-    })),
+    record.events.map((event, index) => {
+      const canonical = getCanonicalAttendanceCode(event.codeId, attendanceCodes, event.detail);
+      return {
+        id: `${record.id}-${index}`,
+        date: record.date.slice(5).replace('-', '/'),
+        department: record.department,
+        name: record.employeeName,
+        content: canonical.label,
+        detail: event.detail,
+        codeId: canonical.id,
+      };
+    }),
   );
   const vacationRows = eventRows.filter((row) => !exceptionalCodeIds.has(row.codeId));
   const exceptionRows = eventRows.filter((row) => exceptionalCodeIds.has(row.codeId));
   const eventCounts = reportRecords
     .flatMap((record) => record.events)
     .reduce<Record<string, number>>((result, event) => {
-      result[event.codeId] = (result[event.codeId] ?? 0) + 1;
+      const canonical = getCanonicalAttendanceCode(event.codeId, attendanceCodes, event.detail);
+      result[canonical.id] = (result[canonical.id] ?? 0) + 1;
       return result;
     }, {});
   const checkInCount = reportRecords.filter((record) => record.checkIn).length;
@@ -130,8 +134,8 @@ export const selectDashboardData = (
       done: true,
     },
     {
-      label: '운영관리 최종 확정',
-      value: confirmed ? '확정 완료' : '확정 전',
+      label: '주차 검토완료',
+      value: confirmed ? '검토완료' : '검토중',
       done: confirmed,
     },
   ];

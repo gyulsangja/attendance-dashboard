@@ -1,33 +1,37 @@
 'use client';
 
-import type { ScheduleEntryEmployee } from '@/app/_components/management/operations/hooks/useScheduleEntryDrafts';
+import { Chip } from '@mui/material';
+import type { OperationSchedule } from '@/types/domain';
 
 type ScheduleEntryPreviewProps = {
-  rows: Array<{
-    employee: ScheduleEntryEmployee;
-    date: string;
-  }>;
-  codeLabel?: string;
+  rows: OperationSchedule[];
+  onDelete?: (row: OperationSchedule) => void;
 };
 
 export default function ScheduleEntryPreview({
   rows,
-  codeLabel,
+  onDelete,
 }: ScheduleEntryPreviewProps) {
   return (
-    <div className="max-h-48 overflow-y-auto rounded-lg border border-slate-200">
-      {rows.length ? rows.map(({ employee, date }) => (
+    <div className="max-h-56 overflow-y-auto rounded-lg border border-slate-200">
+      {rows.length ? rows.map((row) => (
         <div
-          key={`${employee.id}-${date}`}
-          className="grid grid-cols-[1fr_1fr_120px] border-b px-3 py-2 text-sm"
+          key={row.employeeId + '-' + row.date + '-' + row.codeId}
+          className="grid grid-cols-[1fr_1fr_120px_auto] items-center gap-2 border-b px-3 py-2 text-sm last:border-b-0"
         >
-          <strong>{employee.name}</strong>
-          <span>{codeLabel ?? '근태 미선택'}</span>
-          <span className="text-right text-slate-500">{date}</span>
+          <div className="min-w-0">
+            <strong className="block truncate">{row.name}</strong>
+            <span className="block truncate text-xs text-slate-500">{row.department}</span>
+          </div>
+          <span className="truncate">{row.type}</span>
+          <span className="text-right text-slate-500">{row.date}</span>
+          {onDelete ? (
+            <Chip size="small" label="삭제" variant="outlined" onDelete={() => onDelete(row)} />
+          ) : <span />}
         </div>
       )) : (
         <p className="p-4 text-center text-sm text-slate-400">
-          직원과 날짜를 선택해주세요.
+          추가한 근태일정이 없습니다.
         </p>
       )}
     </div>

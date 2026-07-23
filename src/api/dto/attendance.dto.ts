@@ -1,6 +1,9 @@
 ﻿export type AttendanceManagerDto = {
   id?: number | string;
   idx?: number | string;
+  year?: number | string;
+  month?: number | string;
+  week?: number | string;
   attend_card_no?: number | string;
   attendCardNo?: number | string;
   emp_no?: number | string;

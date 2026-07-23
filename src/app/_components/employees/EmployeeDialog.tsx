@@ -88,8 +88,15 @@ const isRetiredStatus = (code = '', label = '') => {
 const emptyEmployee = (
   id: number,
   teamId: string,
-  defaultPosition: string,
-  defaultHoldStatus: string,
+  defaults: {
+    positionCode: string;
+    positionName: string;
+    workTypeCode: string;
+    workTypeName: string;
+    holdStatusCode: string;
+    holdStatusName: string;
+    teamName: string;
+  },
 ): OrganizationEmployee => ({
   id,
   employeeNo: '',
@@ -98,12 +105,19 @@ const emptyEmployee = (
   email: '',
   phoneNo: '',
   teamId,
-  position: defaultPosition,
-  jobTitle: '',
+  position: defaults.positionName,
+  jobTitle: defaults.workTypeName,
   shiftWorker: false,
   startDate: today(),
   endDate: '',
-  backendHoldStatusCode: defaultHoldStatus,
+  backendDeptCode: teamId,
+  backendDeptName: defaults.teamName,
+  backendRankCode: defaults.positionCode,
+  backendRankName: defaults.positionName,
+  backendWorkTypeCode: defaults.workTypeCode,
+  backendWorkTypeName: defaults.workTypeName,
+  backendHoldStatusCode: defaults.holdStatusCode,
+  backendHoldStatusName: defaults.holdStatusName,
   etc: '',
 });
 
@@ -155,9 +169,22 @@ function EmployeeDialogContent({
     ? holdStatusOptions
     : isApiDataSource ? [] : fallbackHoldStatuses;
   const defaultPosition = resolvedPositionOptions[0]?.value ?? '';
+  const defaultPositionName = resolvedPositionOptions[0]?.label ?? defaultPosition;
+  const defaultWorkType = jobTitleOptions[0]?.value ?? '';
+  const defaultWorkTypeName = jobTitleOptions[0]?.label ?? defaultWorkType;
   const defaultHoldStatus = resolvedHoldStatusOptions[0]?.value ?? '';
+  const defaultHoldStatusName = resolvedHoldStatusOptions[0]?.label ?? defaultHoldStatus;
+  const defaultTeamName = teams.find((team) => team.id === defaultTeamId)?.name ?? defaultTeamId;
   const [form, setForm] = useState<OrganizationEmployee>(
-    () => employee ?? emptyEmployee(nextId, defaultTeamId, defaultPosition, defaultHoldStatus),
+    () => employee ?? emptyEmployee(nextId, defaultTeamId, {
+      positionCode: defaultPosition,
+      positionName: defaultPositionName,
+      workTypeCode: defaultWorkType,
+      workTypeName: defaultWorkTypeName,
+      holdStatusCode: defaultHoldStatus,
+      holdStatusName: defaultHoldStatusName,
+      teamName: defaultTeamName,
+    }),
   );
   const [validationMessage, setValidationMessage] = useState('');
   const getOptionLabel = (options: EmployeeDialogOption[], value: string) =>
@@ -356,7 +383,6 @@ function EmployeeDialogContent({
             || (isApiDataSource && !form.empCompany?.trim())
             || !form.teamId
             || (isApiDataSource && (
-              form.teamId === UNASSIGNED_TEAM_ID ||
               !form.backendRankCode ||
               !form.backendWorkTypeCode ||
               !form.backendHoldStatusCode

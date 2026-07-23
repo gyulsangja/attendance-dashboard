@@ -1,8 +1,12 @@
 import { Add, Edit, Groups } from '@mui/icons-material';
 import { Button, List, ListItemButton, ListItemText } from '@mui/material';
 import {
+  EMPLOYEE_GROUP_IDS,
+  EMPLOYEE_GROUP_NAMES,
+  getEmployeeOrganizationGroupId,
+} from '@/lib/organization/employeeGrouping';
+import {
   UNASSIGNED_TEAM_ID,
-  UNASSIGNED_TEAM_NAME,
   type OrganizationEmployee,
   type OrganizationTeam,
 } from '@/store/slices/organizationSlice';
@@ -22,9 +26,20 @@ const TEXT = {
   addTeam: '팀 추가',
   allMembers: '전체 구성원',
   memberSuffix: '명',
+  otherGroups: '기타',
 };
 
+const specialGroups = [
+  { id: UNASSIGNED_TEAM_ID, name: EMPLOYEE_GROUP_NAMES[UNASSIGNED_TEAM_ID] },
+  { id: EMPLOYEE_GROUP_IDS.LEAVE, name: EMPLOYEE_GROUP_NAMES[EMPLOYEE_GROUP_IDS.LEAVE] },
+  { id: EMPLOYEE_GROUP_IDS.RETIRED, name: EMPLOYEE_GROUP_NAMES[EMPLOYEE_GROUP_IDS.RETIRED] },
+];
+
 const memberCountLabel = (count: number) => `${count}${TEXT.memberSuffix}`;
+
+const countEmployeesByGroup = (employees: OrganizationEmployee[], groupId: string) => (
+  employees.filter((employee) => getEmployeeOrganizationGroupId(employee) === groupId).length
+);
 
 export default function TeamPanel({
   teams,
@@ -56,21 +71,8 @@ export default function TeamPanel({
           <ListItemText primary={TEXT.allMembers} secondary={memberCountLabel(employees.length)} />
         </ListItemButton>
 
-        <ListItemButton
-          selected={selectedTeamId === UNASSIGNED_TEAM_ID}
-          onClick={() => onSelect(UNASSIGNED_TEAM_ID)}
-          sx={{ mb: 0.5, borderRadius: 2 }}
-        >
-          <ListItemText
-            primary={UNASSIGNED_TEAM_NAME}
-            secondary={memberCountLabel(employees.filter(
-              (employee) => employee.teamId === UNASSIGNED_TEAM_ID,
-            ).length)}
-          />
-        </ListItemButton>
-
         {teams.map((team) => {
-          const count = employees.filter((employee) => employee.teamId === team.id).length;
+          const count = countEmployeesByGroup(employees, team.id);
 
           return (
             <ListItemButton
@@ -91,6 +93,23 @@ export default function TeamPanel({
             </ListItemButton>
           );
         })}
+
+        <div className="mt-4 border-t border-slate-200 pt-3">
+          <p className="px-3 pb-2 text-xs font-semibold text-slate-500">{TEXT.otherGroups}</p>
+          {specialGroups.map((group) => (
+            <ListItemButton
+              key={group.id}
+              selected={selectedTeamId === group.id}
+              onClick={() => onSelect(group.id)}
+              sx={{ mb: 0.5, borderRadius: 2 }}
+            >
+              <ListItemText
+                primary={group.name}
+                secondary={memberCountLabel(countEmployeesByGroup(employees, group.id))}
+              />
+            </ListItemButton>
+          ))}
+        </div>
       </List>
     </aside>
   );

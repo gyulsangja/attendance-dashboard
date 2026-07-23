@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAttendanceCodesQuery } from '@/hooks/useAttendanceCodeQueries';
 import { useStatisticsAttendanceQuery } from '@/hooks/useStatisticsQueries';
+import { getCanonicalAttendanceCode } from '@/lib/attendance/attendanceCodeCanonical';
 import { isApiDataSource } from '@/repositories/config';
 import {
   selectReportAttendanceCodes,
@@ -73,9 +74,12 @@ export function useFilteredAttendanceReport() {
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('calendar');
 
   const availableCodeIds = useMemo(() => {
-    const ids = new Set(attendanceCodes.map((code) => code.id));
+    const ids = new Set(attendanceCodes.map((code) =>
+      getCanonicalAttendanceCode(code.id, attendanceCodes, code.label).id));
     attendanceRecords.forEach((record) => {
-      record.events.forEach((event) => ids.add(event.codeId));
+      record.events.forEach((event) => {
+        ids.add(getCanonicalAttendanceCode(event.codeId, attendanceCodes, event.detail).id);
+      });
     });
     return [...ids];
   }, [attendanceCodes, attendanceRecords]);
@@ -95,14 +99,17 @@ export function useFilteredAttendanceReport() {
 
     attendanceRecords.forEach((record) => {
       record.events
-        .filter((event) => effectiveSelectedCodes.includes(event.codeId))
-        .forEach((event, index) => {
+        .map((event) => ({
+          event,
+          canonical: getCanonicalAttendanceCode(event.codeId, attendanceCodes, event.detail),
+        }))
+        .filter(({ canonical }) => effectiveSelectedCodes.includes(canonical.id))
+        .forEach(({ event, canonical }, index) => {
           const key = [
             record.date,
             record.employeeId,
             record.employeeName,
-            event.codeId,
-            event.detail,
+            canonical.id,
           ].join('|');
 
           if (rowMap.has(key)) return;
@@ -113,10 +120,8 @@ export function useFilteredAttendanceReport() {
             dateKey: record.date,
             department: record.department,
             name: record.employeeName,
-            codeId: event.codeId,
-            content: attendanceCodes.find((code) => code.id === event.codeId)?.label
-              ?? event.detail
-              ?? event.codeId,
+            codeId: canonical.id,
+            content: canonical.label,
             detail: event.detail,
           });
         });

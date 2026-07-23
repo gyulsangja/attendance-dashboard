@@ -40,7 +40,7 @@ export default function OperationHeader({
       <div>
         <h1 className="text-2xl font-bold">운영관리</h1>
         <p className="mt-1 text-sm text-slate-500">
-          주간 근태 자료를 입력하고 검토한 뒤 상세보기에 반영합니다.
+          주간 근태 자료를 입력하고 관리팀 기준으로 검토합니다.
         </p>
       </div>
 

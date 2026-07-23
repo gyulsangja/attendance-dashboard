@@ -1,6 +1,7 @@
 'use client';
 
 import { ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { getCanonicalAttendanceCode } from '@/lib/attendance/attendanceCodeCanonical';
 import type { AttendanceCode } from '@/types/domain';
 
 type Props = {
@@ -9,17 +10,49 @@ type Props = {
   onChange: (codes: string[]) => void;
 };
 
+type CodeGroup = {
+  key: string;
+  label: string;
+  ids: string[];
+};
+
+const buildCodeGroups = (codes: AttendanceCode[]) => [
+  ...codes.reduce((map, code) => {
+    const canonical = getCanonicalAttendanceCode(code.id, codes, code.label);
+    const ids = [...new Set([canonical.id, code.id])];
+    const current = map.get(canonical.id);
+
+    if (current) {
+      current.ids = [...new Set([...current.ids, ...ids])];
+      return map;
+    }
+
+    map.set(canonical.id, { key: canonical.id, label: canonical.label, ids });
+    return map;
+  }, new Map<string, CodeGroup>()).values(),
+];
+
 export default function FilterCode({ attendanceCodes, selectedCodes, onChange }: Props) {
   const activeCodes = attendanceCodes.filter((code) => code.isActive);
-  const allCodeIds = activeCodes.map((code) => code.id);
-  const allSelected = selectedCodes.length === allCodeIds.length;
+  const codeGroups = buildCodeGroups(activeCodes);
+  const allCodeIds = codeGroups.flatMap((group) => group.ids);
+  const isCodeGroupSelected = (group: CodeGroup) =>
+    group.ids.some((id) => selectedCodes.includes(id));
+  const allSelected = codeGroups.length > 0 && codeGroups.every(isCodeGroupSelected);
+
+  const toggleCodeGroup = (group: CodeGroup) => {
+    const selected = isCodeGroupSelected(group);
+
+    onChange(selected
+      ? selectedCodes.filter((id) => !group.ids.includes(id))
+      : [...new Set([...selectedCodes, ...group.ids])]);
+  };
 
   return (
     <div>
       <p className="mb-3 text-sm font-bold text-slate-700">근태코드</p>
       <ToggleButtonGroup
         value={selectedCodes}
-        onChange={(_, value: string[]) => onChange(value.filter((item) => item !== 'ALL'))}
         sx={{
           gap: 1,
           flexWrap: 'wrap',
@@ -47,11 +80,24 @@ export default function FilterCode({ attendanceCodes, selectedCodes, onChange }:
         >
           전체
         </ToggleButton>
-        {activeCodes.map((code) => (
-          <ToggleButton key={code.id} value={code.id}>
-            {code.label}
-          </ToggleButton>
-        ))}
+
+        {codeGroups.map((group) => {
+          const selected = isCodeGroupSelected(group);
+
+          return (
+            <ToggleButton
+              key={group.key}
+              value={group.key}
+              selected={selected}
+              onClick={(event) => {
+                event.preventDefault();
+                toggleCodeGroup(group);
+              }}
+            >
+              {group.label}
+            </ToggleButton>
+          );
+        })}
       </ToggleButtonGroup>
     </div>
   );

@@ -30,6 +30,7 @@ export type AttendManagerConfirmStatusDto = {
   idx?: number | string;
   year?: number | string;
   month?: number | string;
+  monty?: number | string;
   week?: number | string;
   upload_date?: string;
   uploadDate?: string;

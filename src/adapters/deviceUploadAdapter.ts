@@ -56,7 +56,7 @@ export const adaptUploadResultToSummary = (
     errorRows,
     absenceRows: 0,
     errors: [
-      result.message ?? '백엔드 업로드를 완료했습니다. 조회 API 응답 기준으로 화면에 반영됩니다.',
+      result.message ?? '업로드가 완료되었습니다. 조회된 기록 기준으로 화면에 반영됩니다.',
       ...(toNumber(result.overwrite_count ?? result.overwriteCount) > 0
         ? [`덮어쓰기 ${toNumber(result.overwrite_count ?? result.overwriteCount)}건`]
         : []),

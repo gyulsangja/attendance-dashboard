@@ -78,12 +78,14 @@ export const selectOperationTemplateEmployees = (state: RootState) => {
 
   return snapshot.employees.map((employee) => ({
     employeeId: employee.id,
+    employeeNo: employee.employeeNo,
     employeeName: employee.name,
     department: employee.teamId === UNASSIGNED_TEAM_ID
       ? UNASSIGNED_TEAM_NAME
       : snapshot.teams.find((team) => team.id === employee.teamId)?.name ?? '-',
     position: employee.position,
     shiftWorker: employee.shiftWorker,
+    email: employee.email,
   }));
 };
 
@@ -137,8 +139,8 @@ export const selectOperationSteps = (state: RootState): OperationStepSummary[] =
       done: weekSchedules.length > 0,
     },
     {
-      label: '단말기 CSV',
-      value: weekCsvUploaded ? `${weekTerminalRecords.length}건 확인` : '업로드 필요',
+      label: '출입통제데이터',
+      value: weekCsvUploaded ? '업로드 완료' : '업로드 필요',
       done: weekCsvUploaded,
     },
     {
@@ -150,7 +152,7 @@ export const selectOperationSteps = (state: RootState): OperationStepSummary[] =
     },
     {
       label: '운영관리',
-      value: confirmed ? '최종 확정' : '확정 전',
+      value: confirmed ? '검토완료' : '검토중',
       done: confirmed,
     },
   ];

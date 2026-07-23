@@ -1,4 +1,4 @@
-﻿import { apiClient } from './client';
+import { ApiError, apiClient } from './client';
 import type {
   AttendManagerConfirmStatusDto,
   AttendManagerConfirmStatusListResponseDto,
@@ -19,6 +19,26 @@ export type AttendManagerMonthParams = {
   month: number;
   week: number;
 };
+
+export type AttendManagerSendMailItem = {
+  empNo: string;
+  attendDate: string;
+  email: string;
+  attendCode: string;
+  mailType?: 1 | 2;
+  mailMessage?: string;
+};
+
+const buildSendMailRequestBody = (items: AttendManagerSendMailItem[]) => ({
+  sendmaillist: items.map((item) => ({
+    emp_no: item.empNo,
+    attend_date: item.attendDate,
+    email: item.email,
+    attend_code: item.attendCode,
+    mail_type: item.mailType ?? 1,
+    mail_message: item.mailMessage ?? '',
+  })),
+});
 
 const getShiftRows = (
   response: AttendManagerShiftScheduleDto[] | AttendManagerShiftScheduleListResponseDto,
@@ -210,11 +230,38 @@ export const attendManagerApi = {
     });
   },
 
+  deleteOperationWeekInfo(idx: number | string) {
+    return apiClient<string>(`/api/attend/manager/confirm/delete/${idx}`, {
+      method: 'POST',
+      headers: { Accept: 'text/plain' },
+    });
+  },
+
   deleteSchedule(schedule: EmployeeAttendDto) {
     return apiClient<string>('/api/attend/manager/schedule/delete', {
       method: 'POST',
       body: schedule,
     });
+  },
+
+  async sendMail(items: AttendManagerSendMailItem[]) {
+    const response = await apiClient<unknown>('/api/attend/manager/sendmail', {
+      method: 'POST',
+      headers: { Accept: 'text/plain' },
+      body: buildSendMailRequestBody(items),
+    });
+
+    const message = typeof response === 'string'
+      ? response.trim()
+      : response && typeof response === 'object'
+        ? String((response as Record<string, unknown>).message ?? '')
+        : '';
+
+    if (!message.includes('성공')) {
+      throw new ApiError('근태확인 이메일 발송 결과를 확인할 수 없습니다.', 200, response);
+    }
+
+    return message;
   },
 
 };

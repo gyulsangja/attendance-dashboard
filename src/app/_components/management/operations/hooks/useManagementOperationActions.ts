@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import type { AttendManagerSendMailItem } from '@/api/attendManagerApi';
 import type { OperationSchedule, ShiftSchedule } from '@/types/domain';
 import {
   useCancelAttendManagerOperationWeekMutation,
@@ -8,7 +9,9 @@ import {
   useDeleteAttendManagerShiftMutation,
   useModifyAttendManagerShiftMutation,
   useSaveAttendManagerShiftsMutation,
+  useSendAttendManagerMailMutation,
 } from '@/hooks/useAttendManagerQueries';
+import { useUpdateAttendanceRecordJudgementMutation } from '@/hooks/useAttendanceRecordQueries';
 import {
   useDeleteOperationScheduleMutation,
   useInsertOperationSchedulesMutation,
@@ -61,6 +64,8 @@ export const useManagementOperationActions = ({
   const deleteShiftMutation = useDeleteAttendManagerShiftMutation();
   const confirmOperationMutation = useConfirmAttendManagerOperationWeekMutation();
   const cancelOperationMutation = useCancelAttendManagerOperationWeekMutation();
+  const updateAttendanceMutation = useUpdateAttendanceRecordJudgementMutation();
+  const sendMailMutation = useSendAttendManagerMailMutation();
   const isMutating = (
     insertSchedulesMutation.isPending ||
     deleteScheduleMutation.isPending ||
@@ -68,7 +73,9 @@ export const useManagementOperationActions = ({
     modifyShiftMutation.isPending ||
     deleteShiftMutation.isPending ||
     confirmOperationMutation.isPending ||
-    cancelOperationMutation.isPending
+    cancelOperationMutation.isPending ||
+    updateAttendanceMutation.isPending ||
+    sendMailMutation.isPending
   );
   const mutationError = [
     insertSchedulesMutation.error,
@@ -78,6 +85,8 @@ export const useManagementOperationActions = ({
     deleteShiftMutation.error,
     confirmOperationMutation.error,
     cancelOperationMutation.error,
+    updateAttendanceMutation.error,
+    sendMailMutation.error,
   ].find(Boolean);
 
   return {
@@ -85,7 +94,7 @@ export const useManagementOperationActions = ({
     apiMutationError: isApiDataSource && mutationError
       ? mutationError instanceof Error
         ? mutationError.message
-        : '운영관리 API 처리 중 오류가 발생했습니다.'
+        : '운영관리 처리 중 오류가 발생했습니다.'
       : '',
     apiMutating: isApiDataSource && isMutating,
     addSchedules: async (items: OperationSchedule[]) => {
@@ -134,6 +143,14 @@ export const useManagementOperationActions = ({
     handleDeviceUpload: deviceUpload.handleDeviceUpload,
     openTimeEditor: deviceEditing.openTimeEditor,
     saveDeviceTime: deviceEditing.saveDeviceTime,
+    updateAttendanceJudgement: async () => {
+      if (!isApiDataSource) return;
+      await updateAttendanceMutation.mutateAsync({ year, month, week: weekNumber });
+    },
+    sendAttendanceMail: async (items: AttendManagerSendMailItem[]) => {
+      if (!isApiDataSource) return;
+      await sendMailMutation.mutateAsync(items);
+    },
     saveEditedSchedule: scheduleEditing.saveEditedSchedule,
     setOperationMonth: (value: number) => dispatch(setOperationMonth(value)),
     setOperationWeek: (value: number) => dispatch(setOperationWeek(value)),

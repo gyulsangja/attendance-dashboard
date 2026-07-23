@@ -7,6 +7,11 @@ import {
   useModifyEmployeeMutation,
   useOrganizationEmployeesQuery,
 } from '@/hooks/useEmployeeQueries';
+import {
+  EMPLOYEE_GROUP_IDS,
+  EMPLOYEE_GROUP_NAMES,
+  getEmployeeOrganizationGroupId,
+} from '@/lib/organization/employeeGrouping';
 import { isApiDataSource } from '@/repositories/config';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
@@ -20,7 +25,6 @@ import {
   type OrganizationEmployee,
   type OrganizationTeam,
   UNASSIGNED_TEAM_ID,
-  UNASSIGNED_TEAM_NAME,
 } from '@/store/slices/organizationSlice';
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -52,6 +56,14 @@ export function useOrganizationManagement() {
 
     const teamMap = new Map<string, OrganizationTeam>();
     sourceEmployees.forEach((employee) => {
+      const groupId = getEmployeeOrganizationGroupId(employee);
+      if (
+        groupId === UNASSIGNED_TEAM_ID
+        || groupId === EMPLOYEE_GROUP_IDS.LEAVE
+        || groupId === EMPLOYEE_GROUP_IDS.RETIRED
+      ) {
+        return;
+      }
       if (teamMap.has(employee.teamId)) return;
       teamMap.set(employee.teamId, {
         id: employee.teamId,
@@ -76,11 +88,12 @@ export function useOrganizationManagement() {
 
   const visibleEmployees = useMemo(
     () => snapshotEmployees.filter((employee) => {
-      const matchesTeam = selectedTeamId === 'all' || employee.teamId === selectedTeamId;
+      const groupId = getEmployeeOrganizationGroupId(employee);
+      const matchesTeam = selectedTeamId === 'all' || groupId === selectedTeamId;
       const keyword = search.trim().toLowerCase();
-      const currentTeamName = employee.teamId === UNASSIGNED_TEAM_ID
-        ? UNASSIGNED_TEAM_NAME
-        : snapshotTeams.find((team) => team.id === employee.teamId)?.name ?? '';
+      const currentTeamName = EMPLOYEE_GROUP_NAMES[groupId as keyof typeof EMPLOYEE_GROUP_NAMES]
+        ?? snapshotTeams.find((team) => team.id === employee.teamId)?.name
+        ?? '';
       const matchesSearch = !keyword || [employee.name, employee.email ?? '', employee.phoneNo ?? '', employee.position, employee.jobTitle, currentTeamName]
         .some((value) => value.toLowerCase().includes(keyword));
       return matchesTeam && matchesSearch;
@@ -167,7 +180,13 @@ export function useOrganizationManagement() {
     setTeamOpen(false);
   };
 
-  const selectedTeam = snapshotTeams.find((team) => team.id === selectedTeamId);
+  const selectedTeam = selectedTeamId in EMPLOYEE_GROUP_NAMES
+    ? {
+      id: selectedTeamId,
+      name: EMPLOYEE_GROUP_NAMES[selectedTeamId as keyof typeof EMPLOYEE_GROUP_NAMES],
+      startDate: '2024-01-01',
+    }
+    : snapshotTeams.find((team) => team.id === selectedTeamId);
   const shiftWorkerCount = snapshotEmployees.filter((employee) => employee.shiftWorker).length;
   const teamHasMembers = Boolean(editingTeam && employees.some(
     (employee) => employee.teamId === editingTeam.id,

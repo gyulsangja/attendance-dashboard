@@ -20,8 +20,11 @@ import {
 import { isApiDataSource } from '@/repositories/config';
 import type { CommonCode } from '@/adapters/commonCodeAdapter';
 import {
+  EMPLOYEE_GROUP_IDS,
+  EMPLOYEE_GROUP_NAMES,
+} from '@/lib/organization/employeeGrouping';
+import {
   UNASSIGNED_TEAM_ID,
-  UNASSIGNED_TEAM_NAME,
   type OrganizationTeam,
 } from '@/store/slices/organizationSlice';
 
@@ -90,6 +93,15 @@ export default function Page() {
     ? departmentTeams
     : organization.snapshotTeams;
   const selectedTeam = effectiveTeams.find((team) => team.id === organization.selectedTeamId);
+  const selectedGroupName = EMPLOYEE_GROUP_NAMES[
+    organization.selectedTeamId as keyof typeof EMPLOYEE_GROUP_NAMES
+  ];
+  const selectedTeamLabel = selectedGroupName ?? selectedTeam?.name ?? '전체 구성원';
+  const selectedVirtualGroup = [
+    UNASSIGNED_TEAM_ID,
+    EMPLOYEE_GROUP_IDS.LEAVE,
+    EMPLOYEE_GROUP_IDS.RETIRED,
+  ].includes(organization.selectedTeamId);
   const teamMutationLoading = insertCommonCodeMutation.isPending
     || modifyCommonCodeMutation.isPending
     || deleteCommonCodeMutation.isPending;
@@ -170,12 +182,12 @@ export default function Page() {
       )}
       {isApiDataSource && commonCodesQuery.isError && (
         <Alert severity="warning" sx={{ mt: 2 }}>
-          공통코드 API를 불러오지 못했습니다. 부서/직급/근무유형/재직상태 선택값을 확인할 수 없습니다.
+          부서/직급/근무유형/재직상태 선택값을 불러오지 못했습니다.
         </Alert>
       )}
       {isApiDataSource && teamMutationError && (
         <Alert severity="error" sx={{ mt: 2 }}>
-          팀 정보를 저장하지 못했습니다. 공통코드 API 저장 구조를 확인해 주세요.
+          팀 정보를 저장하지 못했습니다. 입력값을 확인해 주세요.
         </Alert>
       )}
 
@@ -222,9 +234,7 @@ export default function Page() {
               <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-bold">
-                    {organization.selectedTeamId === UNASSIGNED_TEAM_ID
-                      ? UNASSIGNED_TEAM_NAME
-                      : selectedTeam?.name ?? '전체 구성원'}
+                    {selectedTeamLabel}
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
                     총 {organization.visibleEmployees.length}명의 구성원이 조회됩니다.
@@ -261,7 +271,7 @@ export default function Page() {
         open={organization.employeeOpen}
         employee={organization.editingEmployee}
         teams={(isApiDataSource ? effectiveTeams : organization.teams).filter((team) => !team.endDate)}
-        defaultTeamId={organization.selectedTeamId === 'all'
+        defaultTeamId={organization.selectedTeamId === 'all' || selectedVirtualGroup
           ? effectiveTeams[0]?.id ?? UNASSIGNED_TEAM_ID
           : organization.selectedTeamId}
         nextId={Math.max(0, ...organization.employees.map((employee) => employee.id)) + 1}

@@ -23,6 +23,22 @@ const getShiftCardClassName = (time: string) => {
   return 'border-emerald-500 bg-emerald-50';
 };
 
+const shiftOrder: Record<string, number> = {
+  SHIFT_DAY: 0,
+  SHIFT_NIGHT: 1,
+  SHIFT_DAWN: 2,
+  SHIFT_WEEK_DAY: 3,
+  SHIFT_WEEK_NIGHT: 4,
+};
+
+const getShiftOrder = (shift: ShiftSchedule) =>
+  shiftOrder[shift.shift]
+  ?? (shift.time.startsWith('09:00') && shift.time.includes('18:00') ? 0 : undefined)
+  ?? (shift.time.startsWith('12:00') ? 1 : undefined)
+  ?? (shift.time.startsWith('21:00') ? 2 : undefined)
+  ?? (shift.time.startsWith('09:00') && shift.time.includes('21:00') ? 3 : undefined)
+  ?? 99;
+
 export default function DashboardShiftCalendar({
   startDate,
   endDate,
@@ -48,7 +64,7 @@ export default function DashboardShiftCalendar({
             const dayShifts = shifts
               .filter((shift) => shift.date === day.date)
               .sort((a, b) =>
-                (a.checkIn ?? '').localeCompare(b.checkIn ?? '')
+                getShiftOrder(a) - getShiftOrder(b)
                 || a.name.localeCompare(b.name));
             const weekendColor = day.weekday === '일'
               ? 'text-red-600'

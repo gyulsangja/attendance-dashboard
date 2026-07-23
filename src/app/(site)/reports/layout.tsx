@@ -1,7 +1,6 @@
 import {
   ReportsPeriodSelector,
-  ReportsSummaryBox,
-  ReportsSubNav
+  ReportsSubNav,
 } from '@/app/_components';
 import type { Metadata } from 'next';
 
@@ -20,7 +19,6 @@ export default function Layout({
         <h1 className="mb-3 font-bold">
           <ReportsPeriodSelector />
         </h1>
-        <ReportsSummaryBox />
       </div>
 
       <ReportsSubNav />

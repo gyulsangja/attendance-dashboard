@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { CheckCircle } from '@mui/icons-material';
 import { Alert, Box, Chip, Paper, Tab, Tabs } from '@mui/material';
@@ -55,7 +55,7 @@ export default function OperationManagementSection({
         </div>
         <Chip
           icon={confirmed ? <CheckCircle /> : undefined}
-          label={confirmed ? '상세보기 반영 완료' : '입력 진행 중'}
+          label={confirmed ? '검토완료' : '검토중'}
           color={confirmed ? 'success' : 'default'}
         />
       </div>
@@ -68,12 +68,12 @@ export default function OperationManagementSection({
       )}
       {attendManagerApiError && (
         <Alert severity="warning" sx={{ mt: 2 }}>
-          운영관리 일부 API를 불러오지 못했습니다. API 모드에서는 확인된 데이터만 표시합니다.
+          운영관리 일부 정보를 불러오지 못했습니다. 확인된 데이터만 표시합니다.
         </Alert>
       )}
       {actions.apiMutating && (
         <Alert severity="info" sx={{ mt: 2 }}>
-          운영관리 API 요청을 처리 중입니다.
+          운영관리 요청을 처리 중입니다.
         </Alert>
       )}
       {schedulesApiLoading && (
@@ -83,7 +83,7 @@ export default function OperationManagementSection({
       )}
       {schedulesApiError && (
         <Alert severity="warning" sx={{ mt: 2 }}>
-          근태 일정 목록 API를 불러오지 못했습니다.
+          근태 일정 목록을 불러오지 못했습니다.
         </Alert>
       )}
       {actions.apiMutationError && (
@@ -145,13 +145,13 @@ export default function OperationManagementSection({
           sx={{ px: 2, borderBottom: '1px solid #e2e8f0' }}
         >
           <Tab label="근태 일정 입력" />
-          <Tab label="단말기 CSV" />
+          <Tab label="출입통제데이터" />
           <Tab label="교대근무 일정" />
-          <Tab label="운영관리 확정" />
+          <Tab label="주차 검토완료" />
         </Tabs>
         {confirmed && (
           <Alert severity="warning" sx={{ mx: 3, mt: 2 }}>
-            이 주차는 운영관리 최종 확정 상태입니다. 내용을 변경하려면 운영관리 확정 탭에서 먼저 확정을 해제하세요.
+            이 주차는 검토완료 상태입니다. 내용을 변경하려면 주차 검토완료 탭에서 먼저 검토완료를 취소하세요.
           </Alert>
         )}
         <Box sx={{ p: 3 }}>
@@ -167,6 +167,7 @@ export default function OperationManagementSection({
           {tab === 1 && (
             <DevicePanel
               uploaded={weekCsvUploaded}
+              uploadHistory={state.uploadHistory}
               uploadSummary={
                 deviceUpload?.startDate === week.startDate
                 && deviceUpload.endDate === week.endDate
@@ -176,6 +177,8 @@ export default function OperationManagementSection({
               apiError={deviceRecordsApiError}
               onUpload={actions.handleDeviceUpload}
               onDeleteUpload={actions.deleteDeviceUpload}
+              onUpdateAttendance={actions.updateAttendanceJudgement}
+              onSendAttendanceMail={actions.sendAttendanceMail}
               templateEmployees={templateEmployees}
               days={weekDays}
               records={deviceRecords}

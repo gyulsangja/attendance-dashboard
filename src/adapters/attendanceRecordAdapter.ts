@@ -122,6 +122,9 @@ export const adaptAttendanceRecordToManagerDto = (
   const attendanceCode = record.events[0]?.codeId ?? '';
 
   return {
+    year: record.year,
+    month: record.month,
+    week: record.week,
     idx: String(record.id),
     attend_date: record.date,
     attend_card_no: employeeKey,

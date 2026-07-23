@@ -30,6 +30,13 @@ const getApiEmployeeSelectId = (employee: { id: number; employeeNo?: string }) =
   return Number.isFinite(employeeNo) && employeeNo > 0 ? employeeNo : employee.id;
 };
 
+const sortSchedules = (items: OperationSchedule[]) => [...items].sort(
+  (a, b) => a.date.localeCompare(b.date)
+    || a.department.localeCompare(b.department, 'ko')
+    || a.name.localeCompare(b.name, 'ko')
+    || a.type.localeCompare(b.type, 'ko'),
+);
+
 export function useScheduleEntryDrafts({ existing }: UseScheduleEntryDraftsParams) {
   const codeMaster = useAppSelector((state) => state.attendanceCode);
   const organization = useAppSelector((state) => state.organization);
@@ -38,9 +45,9 @@ export function useScheduleEntryDrafts({ existing }: UseScheduleEntryDraftsParam
   const [department, setDepartment] = useState('');
   const [employeeIds, setEmployeeIds] = useState<string[]>([]);
   const [codeId, setCodeId] = useState('');
-  const [dates, setDates] = useState<string[]>([]);
   const [dateDraft, setDateDraft] = useState('');
-  const referenceDate = dates[0] ?? dateDraft;
+  const [drafts, setDrafts] = useState<OperationSchedule[]>([]);
+  const referenceDate = dateDraft;
   const attendanceCodes = (isApiDataSource
     ? apiAttendanceCodesQuery.data ?? []
     : getAttendanceCodesAtDate(
@@ -48,7 +55,7 @@ export function useScheduleEntryDrafts({ existing }: UseScheduleEntryDraftsParam
       codeMaster.history,
       referenceDate,
     )
-  ).filter((code) => code.isActive);
+  ).filter((code) => code.isActive && (!isApiDataSource || code.groupCode !== 'G_ATTE_STATUS'));
 
   const effectiveCodeId = attendanceCodes.some((code) => code.id === codeId)
     ? codeId
@@ -61,7 +68,7 @@ export function useScheduleEntryDrafts({ existing }: UseScheduleEntryDraftsParam
         employeeNo: employee.employeeNo,
         name: employee.name,
         position: employee.backendRankName ?? employee.position,
-        department: employee.backendDeptName ?? employee.teamId,
+        department: employee.backendDeptName ?? employee.teamId ?? UNASSIGNED_TEAM_NAME,
       }));
     }
 
@@ -88,92 +95,102 @@ export function useScheduleEntryDrafts({ existing }: UseScheduleEntryDraftsParam
     referenceDate,
   ]);
 
-  const departments = [...new Set(reportEmployees.map((item) => item.department))];
+  const departments = [...new Set(reportEmployees.map((item) => item.department))]
+    .sort((a, b) => a.localeCompare(b, 'ko'));
   const selectedDepartment = department && departments.includes(department)
     ? department
     : '';
-  const departmentEmployees = reportEmployees.filter((item) => item.department === selectedDepartment);
+  const visibleEmployees = selectedDepartment
+    ? reportEmployees.filter((item) => item.department === selectedDepartment)
+    : reportEmployees;
   const selectedEmployees = reportEmployees.filter((item) =>
     employeeIds.includes(String(item.id)));
   const code = attendanceCodes.find((item) => item.id === effectiveCodeId);
-  const preview = selectedEmployees.flatMap((employee) =>
-    dates.map((date) => ({ employee, date })));
 
-  const selectDepartmentEmployees = () => {
+  const selectVisibleEmployees = () => {
     setEmployeeIds((current) => [
       ...new Set([
         ...current,
-        ...departmentEmployees.map((item) => String(item.id)),
+        ...visibleEmployees.map((item) => String(item.id)),
       ]),
     ]);
   };
 
-  const setDepartmentSelection = (values: string[]) => {
+  const clearVisibleEmployees = () => {
+    setEmployeeIds((current) => current.filter(
+      (id) => !visibleEmployees.some((item) => String(item.id) === id),
+    ));
+  };
+
+  const setVisibleSelection = (values: string[]) => {
     const others = employeeIds.filter(
-      (id) => !departmentEmployees.some((item) => String(item.id) === id),
+      (id) => !visibleEmployees.some((item) => String(item.id) === id),
     );
     setEmployeeIds([...others, ...values]);
   };
 
-  const addDate = () => {
-    if (!dateDraft) return;
-    setDates((current) =>
-      current.includes(dateDraft) ? current : [...current, dateDraft].sort());
+  const addDrafts = () => {
+    if (!code || selectedEmployees.length === 0 || !dateDraft) return;
+
+    const existingKeys = new Set(existing.map((item) => item.employeeId + '-' + item.date + '-' + item.codeId));
+    const draftMap = new Map(drafts.map((item) => [item.employeeId + '-' + item.date + '-' + item.codeId, item]));
+    let nextId = Math.max(0, ...existing.map((item) => item.id), ...drafts.map((item) => item.id)) + 1;
+
+    selectedEmployees.forEach((employee) => {
+      const key = employee.id + '-' + dateDraft + '-' + code.id;
+      if (existingKeys.has(key)) return;
+      draftMap.set(key, {
+        id: nextId++,
+        date: dateDraft,
+        department: employee.department,
+        employeeId: employee.id,
+        employeeNo: employee.employeeNo,
+        name: employee.name,
+        codeId: code.id,
+        type: code.label,
+        detail: code.label + ' 입력',
+      });
+    });
+
+    setDrafts(sortSchedules([...draftMap.values()]));
+    setEmployeeIds([]);
+    setDateDraft('');
   };
 
-  const removeDate = (date: string) => {
-    setDates((current) => current.filter((item) => item !== date));
+  const removeDraft = (draft: OperationSchedule) => {
+    setDrafts((current) => current.filter(
+      (item) => !(item.employeeId === draft.employeeId && item.date === draft.date && item.codeId === draft.codeId),
+    ));
   };
 
-  const buildSchedules = () => {
-    if (!code) return [];
-
-    let nextId = Math.max(0, ...existing.map((item) => item.id)) + 1;
-    return selectedEmployees.flatMap((employee) =>
-      dates
-        .filter(
-          (date) =>
-            !existing.some(
-              (item) =>
-                item.employeeId === employee.id
-                && item.date === date
-                && item.codeId === code.id,
-            ),
-        )
-        .map((date) => ({
-          id: nextId++,
-          date,
-          department: employee.department,
-          employeeId: employee.id,
-          employeeNo: employee.employeeNo,
-          name: employee.name,
-          codeId: code.id,
-          type: code.label,
-          detail: `${code.label} 입력`,
-        })),
-    );
+  const reset = () => {
+    setDepartment('');
+    setEmployeeIds([]);
+    setCodeId('');
+    setDateDraft('');
+    setDrafts([]);
   };
 
   return {
     department: selectedDepartment,
     employeeIds,
     codeId: effectiveCodeId,
-    dates,
     dateDraft,
+    drafts,
     attendanceCodes,
     departments,
-    departmentEmployees,
+    visibleEmployees,
     code,
-    preview,
     isLoading: isApiDataSource && (apiEmployeesQuery.isLoading || apiAttendanceCodesQuery.isLoading),
     isError: isApiDataSource && (apiEmployeesQuery.isError || apiAttendanceCodesQuery.isError),
     setDepartment,
     setCodeId,
     setDateDraft,
-    selectDepartmentEmployees,
-    setDepartmentSelection,
-    addDate,
-    removeDate,
-    buildSchedules,
+    selectVisibleEmployees,
+    clearVisibleEmployees,
+    setVisibleSelection,
+    addDrafts,
+    removeDraft,
+    reset,
   };
 }

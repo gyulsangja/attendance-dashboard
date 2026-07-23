@@ -29,6 +29,18 @@ export const useModifyAttendanceRecordMutation = () => {
   });
 };
 
+export const useInsertAttendanceRecordMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (record: AttendanceRecord) => attendanceRecordRepository.insert(record),
+    onSuccess: () => {
+      invalidateAttendanceRecordQueries(queryClient);
+      invalidateAttendManagerQueries(queryClient);
+    },
+  });
+};
+
 export const useDeleteAttendanceRecordMutation = () => {
   const queryClient = useQueryClient();
 
@@ -37,6 +49,22 @@ export const useDeleteAttendanceRecordMutation = () => {
     onSuccess: () => {
       invalidateAttendanceRecordQueries(queryClient);
       invalidateAttendManagerQueries(queryClient);
+    },
+  });
+};
+
+export const useUpdateAttendanceRecordJudgementMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (params: { year: number; month: number; week: number }) =>
+      attendanceRecordRepository.updateAttendance(params.year, params.month, params.week),
+    onSuccess: () => {
+      invalidateAttendanceRecordQueries(queryClient);
+      invalidateAttendManagerQueries(queryClient);
+      void queryClient.invalidateQueries({
+        queryKey: ['statistics-attendance'],
+      });
     },
   });
 };

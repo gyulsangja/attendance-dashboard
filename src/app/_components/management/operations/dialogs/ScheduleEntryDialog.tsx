@@ -3,7 +3,6 @@
 import {
   Alert,
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -37,16 +36,26 @@ export default function ScheduleEntryDialog({
 }: Props) {
   const entry = useScheduleEntryDrafts({ existing });
 
+  const close = () => {
+    entry.reset();
+    onClose();
+  };
+
   const save = async () => {
-    await onSave(entry.buildSchedules());
+    await onSave(entry.drafts);
+    entry.reset();
     onClose();
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={close} fullWidth maxWidth="md">
       <DialogTitle>근태일정 일괄 입력</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
+          <Alert severity="info">
+            직원, 근태코드, 날짜를 선택해 일정 묶음을 추가하세요. 여러 묶음을 추가한 뒤 한 번에 저장할 수 있습니다.
+          </Alert>
+
           {entry.isLoading && (
             <Alert severity="info">
               부서, 직원, 근태코드 정보를 불러오는 중입니다.
@@ -54,20 +63,18 @@ export default function ScheduleEntryDialog({
           )}
           {entry.isError && (
             <Alert severity="warning">
-              부서, 직원 또는 근태코드 API를 불러오지 못했습니다.
+              부서, 직원 또는 근태코드를 불러오지 못했습니다.
             </Alert>
           )}
 
           <FormControl fullWidth>
-            <InputLabel>부서</InputLabel>
+            <InputLabel>소속 필터</InputLabel>
             <Select
               value={entry.department}
-              label="부서"
+              label="소속 필터"
               onChange={(event) => entry.setDepartment(event.target.value)}
             >
-              <MenuItem value="" disabled>
-                부서를 선택하세요
-              </MenuItem>
+              <MenuItem value="">전체 직원</MenuItem>
               {entry.departments.map((item) => (
                 <MenuItem key={item} value={item}>
                   {item}
@@ -77,30 +84,35 @@ export default function ScheduleEntryDialog({
           </FormControl>
 
           <div>
-            <div className="mb-1 flex items-center justify-between">
+            <div className="mb-1 flex items-center justify-between gap-2">
               <p className="text-sm font-semibold text-slate-600">직원 선택</p>
-              <Button size="small" onClick={entry.selectDepartmentEmployees}>
-                현재 부서 전체 선택
-              </Button>
+              <Stack direction="row" spacing={1}>
+                <Button size="small" onClick={entry.selectVisibleEmployees}>
+                  현재 목록 전체 선택
+                </Button>
+                <Button size="small" onClick={entry.clearVisibleEmployees}>
+                  현재 목록 선택 해제
+                </Button>
+              </Stack>
             </div>
             <FormControl fullWidth>
-              <InputLabel>{entry.department || '직원'}</InputLabel>
+              <InputLabel>직원</InputLabel>
               <Select
                 multiple
                 value={entry.employeeIds.filter((id) =>
-                  entry.departmentEmployees.some((item) => String(item.id) === id))}
-                label={`${entry.department || '직원'}`}
-                renderValue={(selected) => `${selected.length}명 선택`}
+                  entry.visibleEmployees.some((item) => String(item.id) === id))}
+                label="직원"
+                renderValue={(selected) => selected.length + '명 선택'}
                 onChange={(event) => {
                   const values = typeof event.target.value === 'string'
                     ? event.target.value.split(',')
                     : event.target.value;
-                  entry.setDepartmentSelection(values);
+                  entry.setVisibleSelection(values);
                 }}
               >
-                {entry.departmentEmployees.map((item) => (
+                {entry.visibleEmployees.map((item) => (
                   <MenuItem key={item.id} value={String(item.id)}>
-                    {entry.employeeIds.includes(String(item.id)) ? '✓ ' : ''}{item.name}
+                    {entry.employeeIds.includes(String(item.id)) ? '[선택] ' : ''}{item.department} / {item.name}
                   </MenuItem>
                 ))}
               </Select>
@@ -125,43 +137,36 @@ export default function ScheduleEntryDialog({
             </Select>
           </FormControl>
 
-          <Stack direction="row" spacing={1}>
-            <TextField
-              fullWidth
-              type="date"
-              label="일자 추가"
-              value={entry.dateDraft}
-              onChange={(event) => entry.setDateDraft(event.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-            <Button variant="outlined" disabled={!entry.dateDraft} onClick={entry.addDate}>
-              추가
-            </Button>
-          </Stack>
+          <TextField
+            fullWidth
+            type="date"
+            label="날짜"
+            value={entry.dateDraft}
+            onChange={(event) => entry.setDateDraft(event.target.value)}
+            slotProps={{ inputLabel: { shrink: true } }}
+          />
 
-          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
-            {entry.dates.map((date) => (
-              <Chip
-                key={date}
-                label={date}
-                onDelete={() => entry.removeDate(date)}
-              />
-            ))}
-          </Stack>
+          <Button
+            variant="outlined"
+            disabled={!entry.employeeIds.length || !entry.dateDraft || !entry.codeId}
+            onClick={entry.addDrafts}
+          >
+            선택 일정 추가
+          </Button>
 
-          <ScheduleEntryPreview rows={entry.preview} codeLabel={entry.code?.label} />
+          <ScheduleEntryPreview rows={entry.drafts} onDelete={entry.removeDraft} />
 
-          <Alert severity="info">총 {entry.preview.length}건이 입력됩니다.</Alert>
+          <Alert severity="info">총 {entry.drafts.length}건을 저장합니다.</Alert>
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>취소</Button>
+        <Button onClick={close}>취소</Button>
         <Button
           variant="contained"
-          disabled={entry.isLoading || !entry.employeeIds.length || !entry.dates.length || !entry.codeId}
+          disabled={entry.isLoading || entry.drafts.length === 0}
           onClick={save}
         >
-          {entry.preview.length}건 일괄 저장
+          {entry.drafts.length}건 저장
         </Button>
       </DialogActions>
     </Dialog>

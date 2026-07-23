@@ -1,6 +1,7 @@
 import {
   attendManagerApi,
   type AttendManagerMonthParams,
+  type AttendManagerSendMailItem,
   type AttendManagerWeekParams,
 } from '@/api/attendManagerApi';
 import type {
@@ -25,6 +26,8 @@ export type AttendManagerRepository = {
   deleteShift: (shiftScheduleId: number | string) => Promise<void>;
   confirmOperationWeek: (params: AttendManagerWeekParams) => Promise<void>;
   cancelOperationWeek: (params: AttendManagerWeekParams) => Promise<void>;
+  deleteOperationWeekInfo: (idx: number | string) => Promise<void>;
+  sendMail: (items: AttendManagerSendMailItem[]) => Promise<void>;
 };
 
 const apiAttendManagerRepository: AttendManagerRepository = {
@@ -46,6 +49,12 @@ const apiAttendManagerRepository: AttendManagerRepository = {
   },
   async cancelOperationWeek(params) {
     await attendManagerApi.cancelOperationWeek(params);
+  },
+  async deleteOperationWeekInfo(idx) {
+    await attendManagerApi.deleteOperationWeekInfo(idx);
+  },
+  async sendMail(items) {
+    await attendManagerApi.sendMail(items);
   },
 };
 

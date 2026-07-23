@@ -51,6 +51,7 @@ export const adaptCommonCodeDtoToAttendanceCode = (dto: CommonCodeDto): Attendan
   return {
     id,
     label,
+    groupCode: dto.group_code ?? dto.groupCode,
     isActive: (dto.use_status ?? dto.useStatus ?? dto.use_yn ?? dto.useYn ?? 'Y') !== 'N',
     isExceptional: exceptional ?? exceptionalCodeIds.has(id),
     startDate: metadata.startDate ?? dto.start_date ?? dto.startDate ?? '2024-01-01',
@@ -63,7 +64,7 @@ export const adaptCommonCodeDtoToAttendanceCode = (dto: CommonCodeDto): Attendan
 export const adaptAttendanceCodeToCommonCodeDto = (
   code: AttendanceCode,
 ): CommonCodeDto => ({
-  group_code: 'G_ATTE_CODE',
+  group_code: code.groupCode || 'G_ATTE_CODE',
   detail_code: code.id,
   detail_code_name: code.label,
   sort_order: '',
