@@ -56,4 +56,5 @@ export { default as AttendanceCodeDialog } from './settings/AttendanceCodeDialog
 export { default as AttendanceCodeSettingsGrid } from './settings/AttendanceCodeSettingsGrid';
 export { default as EmployeeInfoOptionPanel } from './settings/EmployeeInfoOptionPanel';
 export { default as HolidaySettingsPanel } from './settings/HolidaySettingsPanel';
+export { default as MailMessageSettingsPanel } from './settings/MailMessageSettingsPanel';
 export { default as WorkTimePolicyPanel } from './settings/WorkTimePolicyPanel';

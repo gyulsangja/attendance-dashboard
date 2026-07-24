@@ -45,7 +45,7 @@ export default function TeamDialog({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
       <DialogTitle>{editingTeam ? TEXT.editTitle : TEXT.addTitle}</DialogTitle>
-      <DialogContent sx={{ pt: '12px !important' }}>
+      <DialogContent sx={{ pt: '24px !important' }}>
         <TextField
           autoFocus
           fullWidth

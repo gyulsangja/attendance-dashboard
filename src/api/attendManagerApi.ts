@@ -245,7 +245,7 @@ export const attendManagerApi = {
   },
 
   async sendMail(items: AttendManagerSendMailItem[]) {
-    const response = await apiClient<unknown>('/api/attend/manager/sendmail', {
+    const response = await apiClient<unknown>('/api/attend/manager/mail/sendmail', {
       method: 'POST',
       headers: { Accept: 'text/plain' },
       body: buildSendMailRequestBody(items),

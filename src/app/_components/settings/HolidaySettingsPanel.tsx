@@ -215,7 +215,7 @@ export default function HolidaySettingsPanel() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>{editingId ? TEXT.edit : TEXT.addHoliday}</DialogTitle>
-        <DialogContent sx={{ pt: 2 }}>
+        <DialogContent sx={{ pt: '24px !important' }}>
           <Stack spacing={2}>
             <TextField
               fullWidth

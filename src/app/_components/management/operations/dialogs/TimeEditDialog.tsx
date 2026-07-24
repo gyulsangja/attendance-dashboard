@@ -118,7 +118,7 @@ export default function TimeEditDialog({
   return (
     <Dialog open={Boolean(value)} onClose={() => onChange(null)} fullWidth maxWidth="sm">
       <DialogTitle>{value?.recordId ? '출입통제 및 근태 수정' : '출입통제 데이터 입력'}</DialogTitle>
-      <DialogContent sx={{ pt: '12px !important' }}>
+      <DialogContent sx={{ pt: '24px !important' }}>
         <Stack spacing={2.5}>
           {error && <Alert severity="error">{'저장 중 오류가 발생했습니다.'}</Alert>}
 

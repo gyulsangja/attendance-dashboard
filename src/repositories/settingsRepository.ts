@@ -2,12 +2,13 @@ import { settingsApi } from '@/api/settingsApi';
 import type { WorkTimePolicy } from '@/types/domain';
 
 const defaultPolicy: WorkTimePolicy = {
-  regularStart: '09:00',
-  regularEnd: '18:00',
-  halfAmStart: '14:00',
-  halfAmEnd: '18:00',
-  halfPmStart: '09:00',
-  halfPmEnd: '13:00',
+  regularStart: '',
+  regularEnd: '',
+  halfAmStart: '',
+  halfAmEnd: '',
+  halfPmStart: '',
+  halfPmEnd: '',
+  earlyLeaveTime: '',
   lateGraceMinutes: 0,
   earlyLeaveGraceMinutes: 0,
 };
@@ -48,31 +49,20 @@ const adaptSettingDtoToPolicy = (
       ?? setting.afternoon_off_time
       ?? defaultPolicy.halfPmStart,
     halfPmEnd: setting.halfPmEnd ?? setting.half_pm_end ?? defaultPolicy.halfPmEnd,
+    earlyLeaveTime: setting.earlyLeaveTime
+      ?? setting.early_leave_time
+      ?? defaultPolicy.earlyLeaveTime,
     lateGraceMinutes: 0,
     earlyLeaveGraceMinutes: 0,
   };
 };
 
 const adaptPolicyToSettingDto = (policy: WorkTimePolicy) => ({
-  regularStart: policy.regularStart,
-  regularEnd: policy.regularEnd,
-  halfAmStart: policy.halfAmStart,
-  halfAmEnd: policy.halfAmEnd,
-  halfPmStart: policy.halfPmStart,
-  halfPmEnd: policy.halfPmEnd,
-  regular_start: policy.regularStart,
   woking_time: policy.regularStart,
-  working_time: policy.regularStart,
-  regular_end: policy.regularEnd,
   leave_time: policy.regularEnd,
-  half_am_start: policy.halfAmStart,
   moring_off_time: policy.halfAmStart,
-  morning_off_time: policy.halfAmStart,
-  half_am_end: policy.halfAmEnd,
-  half_pm_start: policy.halfPmStart,
   afternoon_off_time: policy.halfPmStart,
-  half_pm_end: policy.halfPmEnd,
-  early_leave_time: policy.regularEnd,
+  early_leave_time: '',
 });
 
 export type SettingsRepository = {

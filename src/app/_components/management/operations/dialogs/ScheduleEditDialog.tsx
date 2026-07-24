@@ -76,7 +76,7 @@ export default function ScheduleEditDialog({ value, onChange, onSave }: Props) {
   return (
     <Dialog open={Boolean(value)} onClose={() => onChange(null)} fullWidth maxWidth="sm">
       <DialogTitle>근태일정 수정</DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ pt: '24px !important' }}>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <FormControl fullWidth>
             <InputLabel>직원</InputLabel>

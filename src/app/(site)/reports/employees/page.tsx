@@ -109,7 +109,7 @@ export default function Page() {
   });
   const [selected, setSelected] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [openTeams, setOpenTeams] = useState<string[]>([]);
+  const [openTeam, setOpenTeam] = useState<string | null>(null);
 
   const attendanceCodes = useMemo(
     () => (isApiDataSource ? apiAttendanceCodesQuery.data ?? [] : storeAttendanceCodes),
@@ -135,6 +135,9 @@ export default function Page() {
     ? selected
     : employees[0]?.key ?? null;
   const employee = employees.find((item) => item.key === effectiveSelected);
+  const effectiveOpenTeam = teams.some((team) => team.name === openTeam)
+    ? openTeam
+    : employee?.department ?? null;
   const rows: Row[] = attendanceRecords
     .filter((record) => (
       employee
@@ -167,11 +170,7 @@ export default function Page() {
     { field: 'time', headerName: TEXT.time, minWidth: 180, flex: 1 },
     { field: 'memo', headerName: TEXT.memo, minWidth: 180, flex: 1.2 },
   ];
-  const toggleTeam = (name: string) => setOpenTeams((current) =>
-    current.includes(name)
-      ? current.filter((item) => item !== name)
-      : [...current, name]
-  );
+  const toggleTeam = (name: string) => setOpenTeam((current) => (current === name ? null : name));
   const isApiEmpty = isApiDataSource && apiRecordsQuery.isSuccess && attendanceRecords.length === 0;
   const isApiError = isApiDataSource && (
     apiRecordsQuery.isError ||
@@ -193,7 +192,7 @@ export default function Page() {
           {teams.map((team) => {
             const matches = team.employees.filter((item) => item.name.includes(search.trim()));
             if (search.trim() && !matches.length) return null;
-            const isOpen = Boolean(search.trim()) || openTeams.includes(team.name);
+            const isOpen = effectiveOpenTeam === team.name;
             return (
               <div key={team.name}>
                 <ListItemButton onClick={() => toggleTeam(team.name)} sx={{ mt: 1, borderRadius: 2 }}>

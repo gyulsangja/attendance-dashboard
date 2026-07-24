@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, type SyntheticEvent } from 'react';
-import { Add } from '@mui/icons-material';
+import { Add, Delete, Edit } from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogTitle,
   FormControlLabel,
+  IconButton,
   Paper,
   Tab,
   Table,
@@ -23,6 +24,7 @@ import {
   TableRow,
   Tabs,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import type { CommonCode } from '@/adapters/commonCodeAdapter';
@@ -223,7 +225,7 @@ export default function EmployeeInfoOptionPanel() {
                 <TableCell>{category.fieldLabel}</TableCell>
                 <TableCell>{TEXT.status}</TableCell>
                 <TableCell>{TEXT.memo}</TableCell>
-                <TableCell align="right">{TEXT.manage}</TableCell>
+                <TableCell align="center">{TEXT.manage}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -240,9 +242,19 @@ export default function EmployeeInfoOptionPanel() {
                     />
                   </TableCell>
                   <TableCell>{code.etc || '-'}</TableCell>
-                  <TableCell align="right">
-                    <Button size="small" onClick={() => selectCode(code)}>{TEXT.edit}</Button>
-                    <Button size="small" color="error" onClick={() => deleteCode(code.detailCode)}>{TEXT.delete}</Button>
+                  <TableCell align="center">
+                    <div className="flex h-full items-center justify-center gap-1">
+                      <Tooltip title={TEXT.edit}>
+                        <IconButton size="small" onClick={() => selectCode(code)}>
+                          <Edit fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title={TEXT.delete}>
+                        <IconButton size="small" color="error" onClick={() => deleteCode(code.detailCode)}>
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -260,7 +272,7 @@ export default function EmployeeInfoOptionPanel() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>{category.title} {editingDetailCode ? TEXT.edit : TEXT.insert}</DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: '12px !important' }}>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: '24px !important' }}>
           <TextField
             fullWidth
             label={TEXT.code}

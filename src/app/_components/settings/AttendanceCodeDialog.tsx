@@ -54,7 +54,7 @@ export default function AttendanceCodeDialog({ open, code, groupCode, onClose, o
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>{code ? TEXT.editTitle : TEXT.addTitle}</DialogTitle>
-      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1.5 }}>
+      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '24px !important' }}>
         <TextField
           fullWidth
           label={TEXT.code}

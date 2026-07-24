@@ -53,7 +53,7 @@ export default function ShiftEntryDialog({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>교대근무 일정 입력</DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ pt: '24px !important' }}>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <Alert severity="info">
             교대근무자 1명과 근무 유형, 여러 날짜를 선택해 일정을 추가하세요. 여러 묶음을 추가한 뒤 한 번에 저장할 수 있습니다.

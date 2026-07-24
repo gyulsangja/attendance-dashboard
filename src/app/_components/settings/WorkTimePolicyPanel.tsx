@@ -20,30 +20,11 @@ const TEXT = {
   halfPm: '오후반차',
   saving: '저장 중',
   save: '저장',
-  start: '출근 기준',
-  end: '퇴근 기준',
+  regularStart: '출근 기준시간',
+  regularEnd: '퇴근 기준시간',
+  halfAmStart: '오전반차 출근 시간',
+  halfPmStart: '오후반차 퇴근 시간',
 };
-
-const workTimeGroups = [
-  {
-    label: TEXT.basicWork,
-    description: '일반 직원의 기본 출퇴근 기준시간입니다.',
-    startKey: 'regularStart',
-    endKey: 'regularEnd',
-  },
-  {
-    label: TEXT.halfAm,
-    description: '오전반차 사용자의 출퇴근 판단 기준입니다.',
-    startKey: 'halfAmStart',
-    endKey: 'halfAmEnd',
-  },
-  {
-    label: TEXT.halfPm,
-    description: '오후반차 사용자의 출퇴근 판단 기준입니다.',
-    startKey: 'halfPmStart',
-    endKey: 'halfPmEnd',
-  },
-] as const;
 
 export default function WorkTimePolicyPanel({
   policy,
@@ -71,30 +52,58 @@ export default function WorkTimePolicyPanel({
       </Paper>
 
       <div className="grid gap-4 md:grid-cols-3">
-        {workTimeGroups.map(({ label, description, startKey, endKey }) => (
-          <Paper key={label} elevation={0} className="border border-slate-200 bg-white p-5">
-            <p className="text-base font-bold">{label}</p>
-            <p className="mt-1 min-h-10 text-sm text-slate-500">{description}</p>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <TextField
-                type="time"
-                label={TEXT.start}
-                value={policy[startKey]}
-                disabled={readOnly}
-                onChange={(event) => onPolicyChange({ ...policy, [startKey]: event.target.value })}
-                slotProps={{ inputLabel: { shrink: true } }}
-              />
-              <TextField
-                type="time"
-                label={TEXT.end}
-                value={policy[endKey]}
-                disabled={readOnly}
-                onChange={(event) => onPolicyChange({ ...policy, [endKey]: event.target.value })}
-                slotProps={{ inputLabel: { shrink: true } }}
-              />
-            </div>
-          </Paper>
-        ))}
+        <Paper elevation={0} className="border border-slate-200 bg-white p-5">
+          <p className="text-base font-bold">{TEXT.basicWork}</p>
+          <p className="mt-1 min-h-10 text-sm text-slate-500">일반근무자의 기본 출퇴근 기준시간입니다.</p>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <TextField
+              type="time"
+              label={TEXT.regularStart}
+              value={policy.regularStart}
+              disabled={readOnly}
+              onChange={(event) => onPolicyChange({ ...policy, regularStart: event.target.value })}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+            <TextField
+              type="time"
+              label={TEXT.regularEnd}
+              value={policy.regularEnd}
+              disabled={readOnly}
+              onChange={(event) => onPolicyChange({ ...policy, regularEnd: event.target.value })}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+          </div>
+        </Paper>
+
+        <Paper elevation={0} className="border border-slate-200 bg-white p-5">
+          <p className="text-base font-bold">{TEXT.halfAm}</p>
+          <p className="mt-1 min-h-10 text-sm text-slate-500">오전반차 사용자의 출근 기준시간입니다.</p>
+          <TextField
+            fullWidth
+            type="time"
+            label={TEXT.halfAmStart}
+            value={policy.halfAmStart}
+            disabled={readOnly}
+            onChange={(event) => onPolicyChange({ ...policy, halfAmStart: event.target.value })}
+            slotProps={{ inputLabel: { shrink: true } }}
+            sx={{ mt: 2 }}
+          />
+        </Paper>
+
+        <Paper elevation={0} className="border border-slate-200 bg-white p-5">
+          <p className="text-base font-bold">{TEXT.halfPm}</p>
+          <p className="mt-1 min-h-10 text-sm text-slate-500">오후반차 사용자의 퇴근 기준시간입니다.</p>
+          <TextField
+            fullWidth
+            type="time"
+            label={TEXT.halfPmStart}
+            value={policy.halfPmStart}
+            disabled={readOnly}
+            onChange={(event) => onPolicyChange({ ...policy, halfPmStart: event.target.value })}
+            slotProps={{ inputLabel: { shrink: true } }}
+            sx={{ mt: 2 }}
+          />
+        </Paper>
       </div>
     </section>
   );

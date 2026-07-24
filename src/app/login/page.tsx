@@ -88,7 +88,7 @@ export default function Page() {
         <div className="mx-auto w-full max-w-[460px]">
           <h1 className="text-center text-4xl font-black">안녕하세요</h1>
           <p className="mt-4 text-center text-slate-500">
-            출퇴근 관리 시스템에 로그인해 주세요.
+            업무관리시스템에 로그인해 주세요.
           </p>
 
           {error && <Alert severity="error" sx={{ mt: 4 }}>{error}</Alert>}

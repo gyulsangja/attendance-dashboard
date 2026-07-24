@@ -24,12 +24,13 @@ const codePolicyDetail = (code: AttendanceCode) =>
 
 const initialState: AttendanceCodeState = {
   workTimePolicy: {
-    regularStart: '09:00',
-    regularEnd: '18:00',
-    halfAmStart: '14:00',
-    halfAmEnd: '18:00',
-    halfPmStart: '09:00',
-    halfPmEnd: '13:00',
+    regularStart: '',
+    regularEnd: '',
+    halfAmStart: '',
+    halfAmEnd: '',
+    halfPmStart: '',
+    halfPmEnd: '',
+    earlyLeaveTime: '',
     lateGraceMinutes: 0,
     earlyLeaveGraceMinutes: 0,
   },

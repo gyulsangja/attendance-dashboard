@@ -27,7 +27,7 @@ export default function Header() {
 
   return (
     <header className="fixed z-50 flex h-15 w-dvw items-center justify-between bg-white px-4 shadow-2xs">
-      <Link href="/" className="flex h-full items-center">
+      <Link href="/" className="flex h-full items-center gap-2">
         <Image
           src="/images/commons/logo.svg"
           alt="LX 로고"
@@ -35,7 +35,7 @@ export default function Header() {
           width={91}
           height={75}
         />
-        <span className="text-xl font-bold">엘엑스</span>
+        <span className="text-xl font-bold">엘엑스 업무관리시스템</span>
       </Link>
 
       {access.currentUser && (

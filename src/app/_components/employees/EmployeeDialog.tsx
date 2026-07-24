@@ -197,7 +197,7 @@ function EmployeeDialogContent({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>{employee ? TEXT.editTitle : TEXT.addTitle}</DialogTitle>
-      <DialogContent sx={{ pt: '12px !important' }}>
+      <DialogContent sx={{ pt: '24px !important' }}>
         <Stack spacing={2.5}>
           {isApiDataSource && (
             teams.length === 0 ||

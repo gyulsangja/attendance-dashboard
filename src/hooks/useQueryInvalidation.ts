@@ -54,3 +54,7 @@ export const invalidateHolidayQueries = (queryClient: QueryClient, year?: number
 
   void queryClient.invalidateQueries({ queryKey: ['holidays'] });
 };
+
+export const invalidateMailMessageQueries = (queryClient: QueryClient) => {
+  void queryClient.invalidateQueries({ queryKey: queryKeys.mailMessages });
+};

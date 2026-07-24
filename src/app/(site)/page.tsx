@@ -216,7 +216,7 @@ export default function Home() {
       <div className="mt-5 grid gap-5 2xl:grid-cols-2">
         <DashboardEventGrid
           title="주간 근태 특이사항"
-          description="출퇴근 정보에서 정상출근을 제외한 자동판정 결과를 표시합니다."
+          description="이상근태를 표시합니다."
           rows={dashboard.exceptionRows}
         />
         <DashboardEventGrid

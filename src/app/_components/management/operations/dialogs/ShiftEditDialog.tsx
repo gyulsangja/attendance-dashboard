@@ -49,7 +49,7 @@ function ShiftEditDialogForm({ value, onClose, onSave, onDelete }: Props & { val
   return (
     <Dialog open={Boolean(value)} onClose={onClose} fullWidth maxWidth="xs">
       <DialogTitle>교대근무 일정 수정</DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ pt: '24px !important' }}>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <TextField label="구성원" value={form?.name ?? ''} disabled />
           <TextField label="근무일" value={form?.date ?? ''} disabled />

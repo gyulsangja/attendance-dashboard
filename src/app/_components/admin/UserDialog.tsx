@@ -65,7 +65,7 @@ export default function UserDialog({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>사용자 추가</DialogTitle>
-      <DialogContent sx={{ pt: '12px !important' }}>
+      <DialogContent sx={{ pt: '24px !important' }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <Stack spacing={2.5}>
           <TextField

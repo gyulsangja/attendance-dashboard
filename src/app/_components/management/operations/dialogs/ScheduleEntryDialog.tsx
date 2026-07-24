@@ -50,7 +50,7 @@ export default function ScheduleEntryDialog({
   return (
     <Dialog open={open} onClose={close} fullWidth maxWidth="md">
       <DialogTitle>근태일정 일괄 입력</DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ pt: '24px !important' }}>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <Alert severity="info">
             직원, 근태코드, 날짜를 선택해 일정 묶음을 추가하세요. 여러 묶음을 추가한 뒤 한 번에 저장할 수 있습니다.

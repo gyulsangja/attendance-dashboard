@@ -45,5 +45,6 @@
   workTimePolicy: ['work-time-policy'] as const,
   users: ['users'] as const,
   holidays: (year: number) => ['holidays', year] as const,
+  mailMessages: ['mail-messages'] as const,
 };
 

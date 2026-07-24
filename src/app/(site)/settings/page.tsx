@@ -9,6 +9,7 @@ import {
   AttendanceCodeSettingsGrid,
   EmployeeInfoOptionPanel,
   HolidaySettingsPanel,
+  MailMessageSettingsPanel,
   WorkTimePolicyPanel,
 } from '@/app/_components';
 import {
@@ -48,6 +49,7 @@ const TEXT = {
   attendanceCodeTab: '근태코드',
   workTimeTab: '근무시간',
   holidayTab: '공휴일',
+  mailMessageTab: '메일 메시지',
   attendanceTitle: '근태코드 관리',
   attendanceDescription: '지각, 조퇴, 결근, 연차 등 운영관리와 상세보기에서 사용할 근태코드를 관리합니다.',
   addAttendanceCode: '근태코드 추가',
@@ -64,6 +66,7 @@ const settingsTabs = [
   { label: TEXT.attendanceCodeTab },
   { label: TEXT.workTimeTab },
   { label: TEXT.holidayTab },
+  { label: TEXT.mailMessageTab },
 ];
 
 const getErrorMessage = (error: unknown) =>
@@ -253,6 +256,8 @@ export default function Page() {
       )}
 
       {settingsTab === 3 && <HolidaySettingsPanel />}
+
+      {settingsTab === 4 && <MailMessageSettingsPanel />}
 
       <AttendanceCodeDialog
         key={dialogOpen ? editingCode?.id ?? `new-code-${codeDialogGroup}` : 'closed-code'}

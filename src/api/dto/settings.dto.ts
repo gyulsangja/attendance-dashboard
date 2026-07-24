@@ -19,6 +19,7 @@ export type SystemSettingDto = {
   half_pm_end?: string;
   woking_late_time?: string;
   working_late_time?: string;
+  earlyLeaveTime?: string;
   early_leave_time?: string;
   lateGraceMinutes?: number | string;
   late_grace_minutes?: number | string;

@@ -48,6 +48,7 @@ export type WorkTimePolicy = {
   halfAmEnd: string;
   halfPmStart: string;
   halfPmEnd: string;
+  earlyLeaveTime: string;
   lateGraceMinutes: number;
   earlyLeaveGraceMinutes: number;
 };
@@ -61,6 +62,15 @@ export type Holiday = {
   type: HolidayType;
   isActive: boolean;
   etc?: string;
+};
+
+export type MailMessage = {
+  id: string;
+  attendCode: string;
+  detailCode?: string;
+  message: string;
+  etc?: string;
+  regDate?: string;
 };
 
 export type ReportEmployee = {
