@@ -35,7 +35,7 @@ const buildSendMailRequestBody = (items: AttendManagerSendMailItem[]) => ({
     attend_date: item.attendDate,
     email: item.email,
     attend_code: item.attendCode,
-    mail_type: item.mailType ?? 1,
+    mail_type: 2,
     mail_message: item.mailMessage ?? '',
   })),
 });

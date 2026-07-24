@@ -18,7 +18,7 @@ type SendAttendanceMailItem = {
   attendDate: string;
   email: string;
   attendCode: string;
-  mailType: 1;
+  mailType: 2;
   mailMessage: string;
 };
 
@@ -295,7 +295,7 @@ export default function DevicePanel({
         attendDate: target.date,
         email: target.email,
         attendCode: target.attendCode,
-        mailType: 1,
+        mailType: 2,
         mailMessage: '',
       })));
       setMailMessage(`${selectedMailTargets.length}건의 근태확인 이메일을 발송했습니다.`);
